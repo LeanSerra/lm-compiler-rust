@@ -26,7 +26,7 @@ pub enum Token {
 
 [0-9]+                          let _ = writeln!(self.lexer_out,"Const: {}", self.yytext());return Ok(Token::Const);
 [a-zA-Z]([a-zA-Z]|[0-9])*       let _ = writeln!(self.lexer_out,"Id: {}", self.yytext());return Ok(Token::Id);
-"="                          let _ = writeln!(self.lexer_out,"Asign: {}", self.yytext());return Ok(Token::Asign);
+"="                             let _ = writeln!(self.lexer_out,"Asign: {}", self.yytext());return Ok(Token::Asign);
 "+"                             let _ = writeln!(self.lexer_out,"Sum: {}", self.yytext());return Ok(Token::Sum);
 "*"                             let _ = writeln!(self.lexer_out,"Mul: {}", self.yytext());return Ok(Token::Mul);
 "-"                             let _ = writeln!(self.lexer_out,"Sub: {}", self.yytext());return Ok(Token::Sub);
