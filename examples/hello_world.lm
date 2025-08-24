@@ -1,0 +1,7 @@
+main(){
+	int a;
+	int b;
+	a = 33;
+	b = 9;
+	c = a + b;
+}
