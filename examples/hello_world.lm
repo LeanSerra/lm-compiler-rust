@@ -1,7 +1,9 @@
 main(){
-	int a;
-	int b;
-	a = 33;
-	b = 9;
-	c = a + b;
+	init {
+		a: int
+		b: float
+		c: string
+	}
+	a := 33
+	b := 9
 }

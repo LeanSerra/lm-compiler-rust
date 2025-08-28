@@ -5,8 +5,10 @@ edition = "2024"
 
 [dependencies]
 rflex = "0.9.0"
+rustemo = "0.7.1"
 thiserror = "2.0.16"
 
 [build-dependencies]
 failure = "0.1.8"
 rflex = "0.9.0"
+rustemo-compiler = "0.7.1"
