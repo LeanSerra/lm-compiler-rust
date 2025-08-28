@@ -1,22 +1,4 @@
-use std::fs::File;
-use std::io::Write;
-
-#[derive(Clone, Debug)]
-pub enum Token {
-    Const,
-    Id,
-    Asign,
-    Sum,
-    Mul,
-    Sub,
-    Div,
-    ParOpen,
-    ParClose,
-    CBOpen,
-    CBClose,
-    Semicolon
-}
-
+use crate::grammar::TokenKind;
 
 
 use std::collections::HashMap;
@@ -53,106 +35,109 @@ pub struct Lexer<'a> {
 
     zz_at_eof: bool,
 
-    lexer_out: File,
 }
 
 impl<'a> Lexer<'a> {
-    pub const ZZ_ROW: [usize; 16] = [0, 17, 34, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 68, 85];
-    pub const ZZ_TRANS: [i32; 102] = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 13, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 13, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13];
-    pub const ZZ_ATTR: [i32; 16] = [0, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 1];
-    pub const ZZ_ACTION: [i32; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+    pub const ZZ_ROW: [usize; 40] = [0, 31, 62, 93, 124, 155, 186, 217, 248, 279, 310, 248, 248, 248, 248, 248, 248, 248, 248, 341, 372, 403, 434, 465, 496, 527, 248, 248, 558, 62, 589, 620, 651, 651, 62, 682, 713, 62, 744, 62];
+    pub const ZZ_TRANS: [i32; 775] = [-1, 1, 2, 2, 3, 2, 2, 2, 4, 2, 2, 5, 6, 7, 2, 8, 2, 9, 10, -1, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 18, -1, 2, 21, 2, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 22, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 23, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 24, 25, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 9, 9, -1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 26, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 27, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 18, 18, 18, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 18, -1, 28, 2, 29, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 2, 30, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, 2, 2, 31, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 24, -1, 25, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 32, 33, -1, -1, 32, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 34, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, 35, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 36, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 33, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 37, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 38, 2, 2, 2, 2, 2, 2, 2, 2, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 39, -1, 2, -1, 2, -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
+    pub const ZZ_ATTR: [i32; 40] = [0, 1, 1, 1, 1, 1, 1, 0, 9, 0, 1, 9, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 1, 1, 1, 0, 9, 9, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1];
+    pub const ZZ_ACTION: [i32; 40] = [0, 1, 2, 3, 4, 5, 6, 0, 7, 0, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 0, 23, 24, 25, 26, 27, 28, 0, 29, 30, 31, 32, 33, 34, 35];
     pub const ZZ_LEXSTATE: [i32; 2] = [0, 0];
     pub const YYINITIAL: usize = 0;
 
 
     pub const YYEOF: i32 = -1;
 
-    pub fn new(input: &'a str, lexer_out: File) -> Lexer<'a> {
+    pub fn new(input: &'a str) -> Lexer<'a> {
         let max_len = input.chars().clone().count();
         let mut cmap: Vec<usize> = Vec::with_capacity(256);
         cmap.resize(256, 0);
         let mut cmap2: HashMap<usize, usize> = HashMap::new();
-        cmap[9] = 16;
-        cmap[10] = 15;
-        cmap[11] = 15;
-        cmap[12] = 15;
-        cmap[13] = 14;
-        cmap[32] = 13;
-        cmap[40] = 8;
-        cmap[41] = 9;
-        cmap[42] = 5;
-        cmap[43] = 4;
-        cmap[45] = 6;
-        cmap[47] = 7;
-        cmap[48] = 1;
-        cmap[49] = 1;
-        cmap[50] = 1;
-        cmap[51] = 1;
-        cmap[52] = 1;
-        cmap[53] = 1;
-        cmap[54] = 1;
-        cmap[55] = 1;
-        cmap[56] = 1;
-        cmap[57] = 1;
-        cmap[59] = 12;
-        cmap[61] = 3;
-        cmap[65] = 2;
-        cmap[66] = 2;
-        cmap[67] = 2;
-        cmap[68] = 2;
-        cmap[69] = 2;
-        cmap[70] = 2;
-        cmap[71] = 2;
-        cmap[72] = 2;
-        cmap[73] = 2;
-        cmap[74] = 2;
-        cmap[75] = 2;
-        cmap[76] = 2;
-        cmap[77] = 2;
-        cmap[78] = 2;
-        cmap[79] = 2;
-        cmap[80] = 2;
-        cmap[81] = 2;
-        cmap[82] = 2;
-        cmap[83] = 2;
-        cmap[84] = 2;
-        cmap[85] = 2;
-        cmap[86] = 2;
-        cmap[87] = 2;
-        cmap[88] = 2;
-        cmap[89] = 2;
-        cmap[90] = 2;
-        cmap[97] = 2;
-        cmap[98] = 2;
-        cmap[99] = 2;
-        cmap[100] = 2;
-        cmap[101] = 2;
-        cmap[102] = 2;
-        cmap[103] = 2;
-        cmap[104] = 2;
-        cmap[105] = 2;
-        cmap[106] = 2;
-        cmap[107] = 2;
-        cmap[108] = 2;
-        cmap[109] = 2;
+        cmap[9] = 30;
+        cmap[10] = 29;
+        cmap[11] = 29;
+        cmap[12] = 29;
+        cmap[13] = 28;
+        cmap[32] = 27;
+        cmap[34] = 17;
+        cmap[40] = 22;
+        cmap[41] = 23;
+        cmap[42] = 20;
+        cmap[43] = 15;
+        cmap[45] = 11;
+        cmap[46] = 13;
+        cmap[47] = 21;
+        cmap[48] = 12;
+        cmap[49] = 12;
+        cmap[50] = 12;
+        cmap[51] = 12;
+        cmap[52] = 12;
+        cmap[53] = 12;
+        cmap[54] = 12;
+        cmap[55] = 12;
+        cmap[56] = 12;
+        cmap[57] = 12;
+        cmap[58] = 18;
+        cmap[59] = 26;
+        cmap[61] = 19;
+        cmap[65] = 16;
+        cmap[66] = 16;
+        cmap[67] = 16;
+        cmap[68] = 16;
+        cmap[69] = 14;
+        cmap[70] = 16;
+        cmap[71] = 16;
+        cmap[72] = 16;
+        cmap[73] = 16;
+        cmap[74] = 16;
+        cmap[75] = 16;
+        cmap[76] = 16;
+        cmap[77] = 16;
+        cmap[78] = 16;
+        cmap[79] = 16;
+        cmap[80] = 16;
+        cmap[81] = 16;
+        cmap[82] = 16;
+        cmap[83] = 16;
+        cmap[84] = 16;
+        cmap[85] = 16;
+        cmap[86] = 16;
+        cmap[87] = 16;
+        cmap[88] = 16;
+        cmap[89] = 16;
+        cmap[90] = 16;
+        cmap[92] = 17;
+        cmap[97] = 7;
+        cmap[98] = 16;
+        cmap[99] = 16;
+        cmap[100] = 16;
+        cmap[101] = 14;
+        cmap[102] = 4;
+        cmap[103] = 10;
+        cmap[104] = 16;
+        cmap[105] = 1;
+        cmap[106] = 16;
+        cmap[107] = 16;
+        cmap[108] = 5;
+        cmap[109] = 16;
         cmap[110] = 2;
-        cmap[111] = 2;
-        cmap[112] = 2;
-        cmap[113] = 2;
-        cmap[114] = 2;
-        cmap[115] = 2;
-        cmap[116] = 2;
-        cmap[117] = 2;
-        cmap[118] = 2;
-        cmap[119] = 2;
-        cmap[120] = 2;
-        cmap[121] = 2;
-        cmap[122] = 2;
-        cmap[123] = 10;
-        cmap[125] = 11;
-        cmap[133] = 15;
-        cmap2.insert(8232, 15);
-        cmap2.insert(8233, 15);
+        cmap[111] = 6;
+        cmap[112] = 16;
+        cmap[113] = 16;
+        cmap[114] = 9;
+        cmap[115] = 8;
+        cmap[116] = 3;
+        cmap[117] = 16;
+        cmap[118] = 16;
+        cmap[119] = 16;
+        cmap[120] = 16;
+        cmap[121] = 16;
+        cmap[122] = 16;
+        cmap[123] = 24;
+        cmap[125] = 25;
+        cmap[133] = 29;
+        cmap2.insert(8232, 29);
+        cmap2.insert(8233, 29);
 
 
         Lexer {
@@ -175,13 +160,9 @@ impl<'a> Lexer<'a> {
 
             zz_at_eof: false,
 
-            lexer_out,
         }
     }
 
-
-    #[allow(dead_code)]
-    pub fn get_lexer_out(&mut self) -> &mut File { &mut self.lexer_out }
 
     #[allow(dead_code)]
     pub fn is_eof(&self) -> bool {
@@ -239,7 +220,7 @@ impl<'a> Lexer<'a> {
     }
 
     #[allow(dead_code)]
-    pub fn yylex(&mut self) -> Result<Token, Error> {
+    pub fn yylex(&mut self) -> Result<TokenKind, Error> {
         let mut zz_input: i32 = -1;
 
         // cached
@@ -339,36 +320,76 @@ impl<'a> Lexer<'a> {
                     Lexer::ZZ_ACTION[zz_action as usize]
                 };
                 match action {
-                    1 => { let _ = writeln!(self.lexer_out,"Const: {}", self.yytext());return Ok(Token::Const); }
-                    16 => { /* nothing */ }
-                    2 => { let _ = writeln!(self.lexer_out,"Id: {}", self.yytext());return Ok(Token::Id); }
-                    17 => { /* nothing */ }
-                    3 => { let _ = writeln!(self.lexer_out,"Asign: {}", self.yytext());return Ok(Token::Asign); }
-                    18 => { /* nothing */ }
-                    4 => { let _ = writeln!(self.lexer_out,"Sum: {}", self.yytext());return Ok(Token::Sum); }
-                    19 => { /* nothing */ }
-                    5 => { let _ = writeln!(self.lexer_out,"Mul: {}", self.yytext());return Ok(Token::Mul); }
-                    20 => { /* nothing */ }
-                    6 => { let _ = writeln!(self.lexer_out,"Sub: {}", self.yytext());return Ok(Token::Sub); }
-                    21 => { /* nothing */ }
-                    7 => { let _ = writeln!(self.lexer_out,"Div: {}", self.yytext());return Ok(Token::Div); }
-                    22 => { /* nothing */ }
-                    8 => { let _ = writeln!(self.lexer_out,"ParOpen: {}", self.yytext());return Ok(Token::ParOpen); }
-                    23 => { /* nothing */ }
-                    9 => { let _ = writeln!(self.lexer_out,"ParClose: {}", self.yytext());return Ok(Token::ParClose); }
-                    24 => { /* nothing */ }
-                    10 => { let _ = writeln!(self.lexer_out,"CBOpen: {}", self.yytext());return Ok(Token::CBOpen); }
-                    25 => { /* nothing */ }
-                    11 => { let _ = writeln!(self.lexer_out,"CBClose: {}", self.yytext());return Ok(Token::CBClose); }
-                    26 => { /* nothing */ }
-                    12 => { let _ = writeln!(self.lexer_out,"Semicolon: {}", self.yytext());return Ok(Token::Semicolon); }
-                    27 => { /* nothing */ }
-                    13 => {  }
-                    28 => { /* nothing */ }
-                    14 => {  }
-                    29 => { /* nothing */ }
-                    15 => {  }
-                    30 => { /* nothing */ }
+                    1 => { return Ok(TokenKind::TokenId); }
+                    36 => { /* nothing */ }
+                    2 => { return Ok(TokenKind::TokenId); }
+                    37 => { /* nothing */ }
+                    3 => { return Ok(TokenKind::TokenId); }
+                    38 => { /* nothing */ }
+                    4 => { return Ok(TokenKind::TokenId); }
+                    39 => { /* nothing */ }
+                    5 => { return Ok(TokenKind::TokenSub); }
+                    40 => { /* nothing */ }
+                    6 => { return Ok(TokenKind::TokenIntLiteral); }
+                    41 => { /* nothing */ }
+                    7 => { return Ok(TokenKind::TokenSum); }
+                    42 => { /* nothing */ }
+                    8 => { return Ok(TokenKind::TokenColon); }
+                    43 => { /* nothing */ }
+                    9 => { return Ok(TokenKind::TokenMul); }
+                    44 => { /* nothing */ }
+                    10 => { return Ok(TokenKind::TokenDiv); }
+                    45 => { /* nothing */ }
+                    11 => { return Ok(TokenKind::TokenParOpen); }
+                    46 => { /* nothing */ }
+                    12 => { return Ok(TokenKind::TokenParClose); }
+                    47 => { /* nothing */ }
+                    13 => { return Ok(TokenKind::TokenCBOpen); }
+                    48 => { /* nothing */ }
+                    14 => { return Ok(TokenKind::TokenCBClose); }
+                    49 => { /* nothing */ }
+                    15 => { return Ok(TokenKind::TokenSemicolon); }
+                    50 => { /* nothing */ }
+                    16 => {  }
+                    51 => { /* nothing */ }
+                    17 => {  }
+                    52 => { /* nothing */ }
+                    18 => {  }
+                    53 => { /* nothing */ }
+                    19 => { return Ok(TokenKind::TokenId); }
+                    54 => { /* nothing */ }
+                    20 => { return Ok(TokenKind::TokenId); }
+                    55 => { /* nothing */ }
+                    21 => { return Ok(TokenKind::TokenId); }
+                    56 => { /* nothing */ }
+                    22 => { return Ok(TokenKind::TokenFloatLiteral); }
+                    57 => { /* nothing */ }
+                    23 => { return Ok(TokenKind::TokenStringLiteral) }
+                    58 => { /* nothing */ }
+                    24 => { return Ok(TokenKind::TokenAssign); }
+                    59 => { /* nothing */ }
+                    25 => { return Ok(TokenKind::TokenId); }
+                    60 => { /* nothing */ }
+                    26 => { return Ok(TokenKind::TokenInt); }
+                    61 => { /* nothing */ }
+                    27 => { return Ok(TokenKind::TokenId); }
+                    62 => { /* nothing */ }
+                    28 => { return Ok(TokenKind::TokenId); }
+                    63 => { /* nothing */ }
+                    29 => { return Ok(TokenKind::TokenFloatLiteral); }
+                    64 => { /* nothing */ }
+                    30 => { return Ok(TokenKind::TokenInit); }
+                    65 => { /* nothing */ }
+                    31 => { return Ok(TokenKind::TokenId); }
+                    66 => { /* nothing */ }
+                    32 => { return Ok(TokenKind::TokenId); }
+                    67 => { /* nothing */ }
+                    33 => { return Ok(TokenKind::TokenFloat); }
+                    68 => { /* nothing */ }
+                    34 => { return Ok(TokenKind::TokenId); }
+                    69 => { /* nothing */ }
+                    35 => { return Ok(TokenKind::TokenString); }
+                    70 => { /* nothing */ }
 
                     _ => {
                         return Err(Error::Unmatch);

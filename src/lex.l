@@ -1,41 +1,29 @@
-use std::fs::File;
-use std::io::Write;
-
-#[derive(Clone, Debug)]
-pub enum Token {
-    Const,
-    Id,
-    Asign,
-    Sum,
-    Mul,
-    Sub,
-    Div,
-    ParOpen,
-    ParClose,
-    CBOpen,
-    CBClose,
-    Semicolon
-}
-
+use crate::grammar::TokenKind;
 
 %%
 %class Lexer
-%field File lexer_out
-%result_type Token
+%result_type TokenKind
 
 
-[0-9]+                          let _ = writeln!(self.lexer_out,"Const: {}", self.yytext());return Ok(Token::Const);
-[a-zA-Z]([a-zA-Z]|[0-9])*       let _ = writeln!(self.lexer_out,"Id: {}", self.yytext());return Ok(Token::Id);
-"="                             let _ = writeln!(self.lexer_out,"Asign: {}", self.yytext());return Ok(Token::Asign);
-"+"                             let _ = writeln!(self.lexer_out,"Sum: {}", self.yytext());return Ok(Token::Sum);
-"*"                             let _ = writeln!(self.lexer_out,"Mul: {}", self.yytext());return Ok(Token::Mul);
-"-"                             let _ = writeln!(self.lexer_out,"Sub: {}", self.yytext());return Ok(Token::Sub);
-"/"                             let _ = writeln!(self.lexer_out,"Div: {}", self.yytext());return Ok(Token::Div);
-"("                             let _ = writeln!(self.lexer_out,"ParOpen: {}", self.yytext());return Ok(Token::ParOpen);
-")"                             let _ = writeln!(self.lexer_out,"ParClose: {}", self.yytext());return Ok(Token::ParClose);
-"{"                             let _ = writeln!(self.lexer_out,"CBOpen: {}", self.yytext());return Ok(Token::CBOpen);
-"}"                             let _ = writeln!(self.lexer_out,"CBClose: {}", self.yytext());return Ok(Token::CBClose);
-";"                             let _ = writeln!(self.lexer_out,"Semicolon: {}", self.yytext());return Ok(Token::Semicolon);
+"int"                                                           return Ok(TokenKind::TokenInt);
+"float"                                                         return Ok(TokenKind::TokenFloat);
+"string"                                                        return Ok(TokenKind::TokenString);
+"init"                                                          return Ok(TokenKind::TokenInit);
+("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
+("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
+[a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
+\"[^\n"]*\"                                                     return Ok(TokenKind::TokenStringLiteral)
+":""="                                                          return Ok(TokenKind::TokenAssign);
+"+"                                                             return Ok(TokenKind::TokenSum);
+"*"                                                             return Ok(TokenKind::TokenMul);
+"-"                                                             return Ok(TokenKind::TokenSub);
+"/"                                                             return Ok(TokenKind::TokenDiv);
+"("                                                             return Ok(TokenKind::TokenParOpen);
+")"                                                             return Ok(TokenKind::TokenParClose);
+"{"                                                             return Ok(TokenKind::TokenCBOpen);
+"}"                                                             return Ok(TokenKind::TokenCBClose);
+";"                                                             return Ok(TokenKind::TokenSemicolon);
+":"                                                             return Ok(TokenKind::TokenColon);
 " "                             
 (\r\n|\r|\n)
 (\n\t)
