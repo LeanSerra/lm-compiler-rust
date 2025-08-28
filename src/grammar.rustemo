@@ -1,0 +1,39 @@
+Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose;
+Body: TokenInit InitBody Expressions;
+InitBody: TokenCBOpen VarDeclarations TokenCBClose;
+VarDeclarations: VarDeclaration
+ | VarDeclaration VarDeclarations;
+VarDeclaration: TokenId TokenColon Data_Type;
+Expressions: Expression
+ | Expression Expressions;
+Expression: Assignment;
+Assignment: TokenId TokenAssign Literal;
+Literal: TokenIntLiteral
+ | TokenFloatLiteral
+ | TokenStringLiteral;
+Data_Type: TokenInt
+ | TokenFloat
+ | TokenString;
+
+
+terminals
+
+TokenInt:;
+TokenFloat:;
+TokenString:;
+TokenIntLiteral:;
+TokenFloatLiteral:;
+TokenStringLiteral:;
+TokenId:;
+TokenAssign:;
+TokenSum:;
+TokenMul:;
+TokenSub:;
+TokenDiv:;
+TokenParOpen:;
+TokenParClose:;
+TokenCBOpen:;
+TokenCBClose:;
+TokenSemicolon:;
+TokenColon:;
+TokenInit:;
