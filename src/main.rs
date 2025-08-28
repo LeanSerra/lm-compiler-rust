@@ -31,6 +31,8 @@ static OUTPUT_FILE: OnceLock<String> = OnceLock::new();
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input_path =
         PathBuf::from(OUTPUT_FILE.get_or_init(|| String::from("./examples/hello_world.lm")));
+    std::fs::File::create(input_path.with_extension("lexer"))?;
+    std::fs::File::create(input_path.with_extension("parser"))?;
 
     let program = grammar::GrammarParser::new(grammar_lexer::LexerAdapter::new())
         .parse(&std::fs::read_to_string(input_path).unwrap())

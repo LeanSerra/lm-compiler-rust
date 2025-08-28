@@ -98,6 +98,11 @@ pub fn program_c1(
     body: Body,
     token_cbclose: TokenCBClose,
 ) -> Program {
+    write_parser_output(
+        &format!(
+            "<Program> -> {token_id} {token_par_open} {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+        ),
+    );
     Program {
         token_id,
         token_par_open,
@@ -119,6 +124,7 @@ pub fn body_c1(
     init_body: InitBody,
     expressions: Expressions,
 ) -> Body {
+    write_parser_output(&format!("<Body> -> {token_init} <InitBody> <Expressions>"));
     Body {
         token_init,
         init_body,
@@ -137,6 +143,9 @@ pub fn init_body_c1(
     var_declarations: VarDeclarations,
     token_cbclose: TokenCBClose,
 ) -> InitBody {
+    write_parser_output(
+        &format!("<InitBody> -> {token_cbopen} <VarDeclarations> {token_cbclose}"),
+    );
     InitBody {
         token_cbopen,
         var_declarations,
@@ -157,6 +166,7 @@ pub fn var_declarations_var_declaration(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
+    write_parser_output("<VarDeclarations> -> <VarDeclaration>");
     VarDeclarations::VarDeclaration(var_declaration)
 }
 pub fn var_declarations_c2(
@@ -164,6 +174,7 @@ pub fn var_declarations_c2(
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
+    write_parser_output("<VarDeclarations> -> <VarDeclaration> <VarDeclaration>");
     VarDeclarations::C2(VarDeclarationsC2 {
         var_declaration,
         var_declarations: Box::new(var_declarations),
@@ -181,6 +192,9 @@ pub fn var_declaration_c1(
     token_colon: TokenColon,
     data_type: Data_Type,
 ) -> VarDeclaration {
+    write_parser_output(
+        &format!("<VarDeclaration> -> {token_id} {token_colon} <Data_Type>"),
+    );
     VarDeclaration {
         token_id,
         token_colon,
@@ -198,6 +212,7 @@ pub enum Expressions {
     C2(ExpressionsC2),
 }
 pub fn expressions_expression(_ctx: &Ctx, expression: Expression) -> Expressions {
+    write_parser_output("<Expression> -> <Expression>");
     Expressions::Expression(expression)
 }
 pub fn expressions_c2(
@@ -205,6 +220,7 @@ pub fn expressions_c2(
     expression: Expression,
     expressions: Expressions,
 ) -> Expressions {
+    write_parser_output("<Expressions> -> <Expression> <Expressions>");
     Expressions::C2(ExpressionsC2 {
         expression,
         expressions: Box::new(expressions),
@@ -212,6 +228,7 @@ pub fn expressions_c2(
 }
 pub type Expression = Assignment;
 pub fn expression_assignment(_ctx: &Ctx, assignment: Assignment) -> Expression {
+    write_parser_output("<Expression> -> <Assignment>");
     assignment
 }
 #[derive(Debug, Clone)]
@@ -226,6 +243,7 @@ pub fn assignment_c1(
     token_assign: TokenAssign,
     literal: Literal,
 ) -> Assignment {
+    write_parser_output(&format!("<Assignment> -> {token_id} {token_assign} <Literal>"));
     Assignment {
         token_id,
         token_assign,
@@ -242,18 +260,21 @@ pub fn literal_token_int_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
 ) -> Literal {
+    write_parser_output(&format!("<Literal> -> {token_int_literal}"));
     Literal::TokenIntLiteral(token_int_literal)
 }
 pub fn literal_token_float_literal(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Literal {
+    write_parser_output(&format!("<Literal> -> {token_float_literal}"));
     Literal::TokenFloatLiteral(token_float_literal)
 }
 pub fn literal_token_string_literal(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> Literal {
+    write_parser_output(&format!("<Literal> -> {token_string_literal}"));
     Literal::TokenStringLiteral(token_string_literal)
 }
 #[derive(Debug, Clone)]
@@ -263,20 +284,32 @@ pub enum Data_Type {
     TokenString(TokenString),
 }
 pub fn data_type_token_int(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
+    write_parser_output(&format!("<Data_Type> -> {token_int}"));
     Data_Type::TokenInt(token_int)
 }
 pub fn data_type_token_float(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
+    write_parser_output(&format!("<Data_Type> -> {token_float}"));
     Data_Type::TokenFloat(token_float)
 }
 pub fn data_type_token_string(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
+    write_parser_output(&format!("<Data_Type> -> {token_string}"));
     Data_Type::TokenString(token_string)
 }
-pub fn open_output_file() -> Result<File, std::io::Error> {
+pub fn open_lexer_output_file() -> Result<File, std::io::Error> {
     let mut path = PathBuf::from(OUTPUT_FILE.get().unwrap());
     path.set_extension("lexer");
     std::fs::OpenOptions::new().append(true).open(path)
 }
 pub fn write_lexer_output(token: &Token, tokenName: &str) -> Result<(), std::io::Error> {
-    let mut file = open_output_file()?;
+    let mut file = open_lexer_output_file()?;
     writeln!(file, "{tokenName}: {}", token.value)
+}
+pub fn open_parser_output_file() -> Result<File, std::io::Error> {
+    let mut path = PathBuf::from(OUTPUT_FILE.get().unwrap());
+    path.set_extension("parser");
+    std::fs::OpenOptions::new().append(true).open(path)
+}
+pub fn write_parser_output(rule: &str) -> Result<(), std::io::Error> {
+    let mut file = open_parser_output_file()?;
+    writeln!(file, "{}", rule)
 }
