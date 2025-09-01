@@ -62,8 +62,8 @@ pub type TokenInit = String;
 pub fn token_init(_ctx: &Ctx, token: Token) -> TokenInit {
     token.value.into()
 }
-pub type TokenComa = String;
-pub fn token_coma(_ctx: &Ctx, token: Token) -> TokenComa {
+pub type TokenComma = String;
+pub fn token_comma(_ctx: &Ctx, token: Token) -> TokenComma {
     token.value.into()
 }
 #[derive(Debug, Clone)]
@@ -75,7 +75,7 @@ pub struct Program {
     pub body: Body,
     pub token_cbclose: TokenCBClose,
 }
-pub fn program_c1(
+pub fn program_program(
     _ctx: &Ctx,
     token_id: TokenId,
     token_par_open: TokenParOpen,
@@ -94,40 +94,44 @@ pub fn program_c1(
     }
 }
 #[derive(Debug, Clone)]
-pub struct BodyC1 {
+pub struct BodyInitExpressions {
     pub token_init: TokenInit,
     pub init_body: InitBody,
     pub expressions: Expressions,
 }
 #[derive(Debug, Clone)]
-pub struct BodyC2 {
+pub struct BodyInit {
     pub token_init: TokenInit,
     pub init_body: InitBody,
 }
 pub type Body = Option<BodyNoO>;
 #[derive(Debug, Clone)]
 pub enum BodyNoO {
-    C1(BodyC1),
-    C2(BodyC2),
+    BodyInitExpressions(BodyInitExpressions),
+    BodyInit(BodyInit),
+    BodyExpressions(Expressions),
 }
-pub fn body_c1(
+pub fn body_body_init_expressions(
     _ctx: &Ctx,
     token_init: TokenInit,
     init_body: InitBody,
     expressions: Expressions,
 ) -> Body {
     Some(
-        BodyNoO::C1(BodyC1 {
+        BodyNoO::BodyInitExpressions(BodyInitExpressions {
             token_init,
             init_body,
             expressions,
         }),
     )
 }
-pub fn body_c2(_ctx: &Ctx, token_init: TokenInit, init_body: InitBody) -> Body {
-    Some(BodyNoO::C2(BodyC2 { token_init, init_body }))
+pub fn body_body_init(_ctx: &Ctx, token_init: TokenInit, init_body: InitBody) -> Body {
+    Some(BodyNoO::BodyInit(BodyInit { token_init, init_body }))
 }
-pub fn body_empty(_ctx: &Ctx) -> Body {
+pub fn body_body_expressions(_ctx: &Ctx, expressions: Expressions) -> Body {
+    Some(BodyNoO::BodyExpressions(expressions))
+}
+pub fn body_body_empty(_ctx: &Ctx) -> Body {
     None
 }
 #[derive(Debug, Clone)]
@@ -136,7 +140,7 @@ pub struct InitBody {
     pub var_declarations: VarDeclarations,
     pub token_cbclose: TokenCBClose,
 }
-pub fn init_body_c1(
+pub fn init_body_init_body(
     _ctx: &Ctx,
     token_cbopen: TokenCBOpen,
     var_declarations: VarDeclarations,
@@ -149,97 +153,100 @@ pub fn init_body_c1(
     }
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclarationsC2 {
+pub struct VarDeclarationsRecursive {
     pub var_declaration: VarDeclaration,
     pub var_declarations: Box<VarDeclarations>,
 }
 #[derive(Debug, Clone)]
 pub enum VarDeclarations {
-    VarDeclaration(VarDeclaration),
-    C2(VarDeclarationsC2),
+    VarDeclarationsSingle(VarDeclaration),
+    VarDeclarationsRecursive(VarDeclarationsRecursive),
 }
-pub fn var_declarations_var_declaration(
+pub fn var_declarations_var_declarations_single(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
-    VarDeclarations::VarDeclaration(var_declaration)
+    VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
-pub fn var_declarations_c2(
+pub fn var_declarations_var_declarations_recursive(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
-    VarDeclarations::C2(VarDeclarationsC2 {
+    VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
         var_declarations: Box::new(var_declarations),
     })
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclarationC1 {
+pub struct VarDeclarationSingle {
     pub token_id: TokenId,
     pub token_colon: TokenColon,
     pub data_type: Data_Type,
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclarationC2 {
+pub struct VarDeclarationRecursive {
     pub token_id: TokenId,
-    pub token_coma: TokenComa,
+    pub token_comma: TokenComma,
     pub var_declaration: Box<VarDeclaration>,
 }
 #[derive(Debug, Clone)]
 pub enum VarDeclaration {
-    C1(VarDeclarationC1),
-    C2(VarDeclarationC2),
+    VarDeclarationSingle(VarDeclarationSingle),
+    VarDeclarationRecursive(VarDeclarationRecursive),
 }
-pub fn var_declaration_c1(
+pub fn var_declaration_var_declaration_single(
     _ctx: &Ctx,
     token_id: TokenId,
     token_colon: TokenColon,
     data_type: Data_Type,
 ) -> VarDeclaration {
-    VarDeclaration::C1(VarDeclarationC1 {
+    VarDeclaration::VarDeclarationSingle(VarDeclarationSingle {
         token_id,
         token_colon,
         data_type,
     })
 }
-pub fn var_declaration_c2(
+pub fn var_declaration_var_declaration_recursive(
     _ctx: &Ctx,
     token_id: TokenId,
-    token_coma: TokenComa,
+    token_comma: TokenComma,
     var_declaration: VarDeclaration,
 ) -> VarDeclaration {
-    VarDeclaration::C2(VarDeclarationC2 {
+    VarDeclaration::VarDeclarationRecursive(VarDeclarationRecursive {
         token_id,
-        token_coma,
+        token_comma,
         var_declaration: Box::new(var_declaration),
     })
 }
 #[derive(Debug, Clone)]
-pub struct ExpressionsC2 {
+pub struct ExpressionRecursive {
     pub expression: Expression,
     pub expressions: Box<Expressions>,
 }
 #[derive(Debug, Clone)]
 pub enum Expressions {
-    Expression(Expression),
-    C2(ExpressionsC2),
+    ExpressionSingle(Expression),
+    ExpressionRecursive(ExpressionRecursive),
 }
-pub fn expressions_expression(_ctx: &Ctx, expression: Expression) -> Expressions {
-    Expressions::Expression(expression)
+pub fn expressions_expression_single(_ctx: &Ctx, expression: Expression) -> Expressions {
+    Expressions::ExpressionSingle(expression)
 }
-pub fn expressions_c2(
+pub fn expressions_expression_recursive(
     _ctx: &Ctx,
     expression: Expression,
     expressions: Expressions,
 ) -> Expressions {
-    Expressions::C2(ExpressionsC2 {
+    Expressions::ExpressionRecursive(ExpressionRecursive {
         expression,
         expressions: Box::new(expressions),
     })
 }
 pub type Expression = Assignment;
-pub fn expression_assignment(_ctx: &Ctx, assignment: Assignment) -> Expression {
+pub fn expression_expression_assignment(
+    _ctx: &Ctx,
+    assignment: Assignment,
+) -> Expression {
     assignment
 }
 #[derive(Debug, Clone)]
@@ -248,7 +255,7 @@ pub struct Assignment {
     pub token_assign: TokenAssign,
     pub literal: Literal,
 }
-pub fn assignment_c1(
+pub fn assignment_assignment(
     _ctx: &Ctx,
     token_id: TokenId,
     token_assign: TokenAssign,
@@ -262,40 +269,40 @@ pub fn assignment_c1(
 }
 #[derive(Debug, Clone)]
 pub enum Literal {
-    TokenIntLiteral(TokenIntLiteral),
-    TokenFloatLiteral(TokenFloatLiteral),
-    TokenStringLiteral(TokenStringLiteral),
+    IntegerLiteral(TokenIntLiteral),
+    FloatLiteral(TokenFloatLiteral),
+    StringLiteral(TokenStringLiteral),
 }
-pub fn literal_token_int_literal(
+pub fn literal_integer_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
 ) -> Literal {
-    Literal::TokenIntLiteral(token_int_literal)
+    Literal::IntegerLiteral(token_int_literal)
 }
-pub fn literal_token_float_literal(
+pub fn literal_float_literal(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Literal {
-    Literal::TokenFloatLiteral(token_float_literal)
+    Literal::FloatLiteral(token_float_literal)
 }
-pub fn literal_token_string_literal(
+pub fn literal_string_literal(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> Literal {
-    Literal::TokenStringLiteral(token_string_literal)
+    Literal::StringLiteral(token_string_literal)
 }
 #[derive(Debug, Clone)]
 pub enum Data_Type {
-    TokenInt(TokenInt),
-    TokenFloat(TokenFloat),
-    TokenString(TokenString),
+    IntType(TokenInt),
+    FloatType(TokenFloat),
+    StringType(TokenString),
 }
-pub fn data_type_token_int(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
-    Data_Type::TokenInt(token_int)
+pub fn data_type_int_type(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
+    Data_Type::IntType(token_int)
 }
-pub fn data_type_token_float(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
-    Data_Type::TokenFloat(token_float)
+pub fn data_type_float_type(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
+    Data_Type::FloatType(token_float)
 }
-pub fn data_type_token_string(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
-    Data_Type::TokenString(token_string)
+pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
+    Data_Type::StringType(token_string)
 }

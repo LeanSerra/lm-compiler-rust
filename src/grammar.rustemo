@@ -1,48 +1,68 @@
-Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose;
-Body: TokenInit InitBody Expressions
- | TokenInit InitBody
- | EMPTY;
-InitBody: TokenCBOpen VarDeclarations TokenCBClose;
-VarDeclarations: VarDeclaration
- | VarDeclaration VarDeclarations;
-VarDeclaration: TokenId TokenColon Data_Type
- | TokenId TokenComa VarDeclaration;
-Expressions: Expression
- | Expression Expressions;
-Expression: Assignment;
-Assignment: TokenId TokenAssign Literal;
-Literal: TokenIntLiteral
- | TokenFloatLiteral
- | TokenStringLiteral;
-Data_Type: TokenInt
- | TokenFloat
- | TokenString;
-WhileLoop: TokenWhile TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose;
-Condition: Expression ComparisonOp Expression
- | TokenTrue
- | TokenFalse
- | Expression ComparisonOp Expression Conjunction Condition;
-Conjunction: TokenAnd
- | TokenOr;
-ComparisonOp: TokenEqual
- | TokenNotEqual
- | TokenLess
- | TokenLessEqual
- | TokenGreater
- | TokenGreaterEqual;
-If: TokenIf TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose;
-Else: TokenElse TokenCBOpen Body TokenCBClose;
-ArithmeticOperation: TokenId ArithmeticOperator TokenId
- | TokenId ArithmeticOperator Number
- | Number ArithmeticOperator TokenId
- | Number ArithmeticOperator Number;
-Number: TokenIntLiteral
- | TokenFloatLiteral;
-ArithmeticOperator: TokenSum
- | TokenMul
- | TokenSub
- | TokenDiv;
-Not: TokenNot Condition;
+Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose {Program};
+
+Body: TokenInit InitBody Expressions {BodyInitExpressions}
+ | TokenInit InitBody {BodyInit}
+ | Expressions {BodyExpressions}
+ | EMPTY {BodyEmpty};
+
+InitBody: TokenCBOpen VarDeclarations TokenCBClose {InitBody};
+
+VarDeclarations: VarDeclaration {VarDeclarationsSingle}
+ | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
+
+VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
+ | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
+
+Expressions: Expression {ExpressionSingle}
+ | Expression Expressions {ExpressionRecursive};
+
+Expression: Assignment {ExpressionAssignment};
+
+Assignment: TokenId TokenAssign Literal {Assignment};
+
+Literal: TokenIntLiteral {IntegerLiteral}
+ | TokenFloatLiteral {FloatLiteral}
+ | TokenStringLiteral {StringLiteral};
+
+Data_Type: TokenInt {IntType}
+ | TokenFloat {FloatType}
+ | TokenString {StringType};
+
+WhileLoop: TokenWhile TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose {While};
+
+Condition: Expression ComparisonOp Expression {ConditionSingle}
+ | TokenTrue {ConditionTrue}
+ | TokenFalse {ConditionFalse}
+ | Expression ComparisonOp Expression Conjunction Condition {ConditionRecursive};
+
+Conjunction: TokenAnd {ConjunctionAnd}
+ | TokenOr {ConjunctionOr};
+
+ComparisonOp: TokenEqual {ComparisonOpEqual}
+ | TokenNotEqual {ComparisonOpNotEqual}
+ | TokenLess {ComparisonOpLess}
+ | TokenLessEqual {ComparisonOpLessEqual}
+ | TokenGreater {ComparisonOpGreater}
+ | TokenGreaterEqual {ComparisonOpGreaterEqual};
+
+If: TokenIf TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose {If};
+
+Else: TokenElse TokenCBOpen Body TokenCBClose {Else};
+
+ArithmeticOperation: TokenId ArithmeticOperator TokenId {ArithmeticOperationIdId}
+ | TokenId ArithmeticOperator Number {ArithmeticOperationIdNumber}
+ | Number ArithmeticOperator TokenId {ArithmeticOperationNumberId}
+ | Number ArithmeticOperator Number {ArithmeticOperationNumberNumber};
+
+Number: TokenIntLiteral {NumberInt}
+ | TokenFloatLiteral {NumberFloat};
+
+ArithmeticOperator: TokenSum {ArithmeticOperatorSum}
+ | TokenMul {ArithmeticOperatorMul}
+ | TokenSub {ArithmeticOperatorSub}
+ | TokenDiv {ArithmeticOperatorDiv};
+
+Not: TokenNot Condition {Not};
 
 terminals
 
@@ -76,7 +96,7 @@ TokenTrue:;
 TokenFalse:;
 TokenIf:;
 TokenElse:;
-TokenComa:;
+TokenComma:;
 TokenAnd:;
 TokenOr:;
 TokenNot:;
