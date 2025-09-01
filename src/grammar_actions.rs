@@ -284,8 +284,6 @@ pub fn assignment_assignment(
     write_to_parser_file(
         &format!("<Assignment> -> {token_id} {token_assign} <Literal>"),
     );
-    /// The rhs of an assignment to a literal is a symbol
-    literal.write_to_symbol_table();
     Assignment {
         token_id,
         token_assign,
@@ -303,14 +301,18 @@ pub fn literal_integer_literal(
     token_int_literal: TokenIntLiteral,
 ) -> Literal {
     write_to_parser_file(&format!("<Literal> -> {token_int_literal}"));
-    Literal::IntegerLiteral(token_int_literal)
+    let literal = Literal::IntegerLiteral(token_int_literal);
+    literal.write_to_symbol_table();
+    literal
 }
 pub fn literal_float_literal(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Literal {
     write_to_parser_file(&format!("<Literal> -> {token_float_literal}"));
-    Literal::FloatLiteral(token_float_literal)
+    let literal = Literal::FloatLiteral(token_float_literal);
+    literal.write_to_symbol_table();
+    literal
 }
 pub fn literal_string_literal(
     _ctx: &Ctx,
@@ -318,7 +320,9 @@ pub fn literal_string_literal(
 ) -> Literal {
     write_to_parser_file(&format!("<Literal> -> {token_string_literal}"));
     /// We remove the "" from the string literal
-    Literal::StringLiteral(token_string_literal.replace("\"", ""))
+    let literal = Literal::StringLiteral(token_string_literal.replace("\"", ""));
+    literal.write_to_symbol_table();
+    literal
 }
 #[derive(Debug, Clone)]
 pub enum Data_Type {
