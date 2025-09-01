@@ -12,8 +12,8 @@ use crate::grammar::TokenKind;
 ("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
 ("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
-\"[^\n"]*\"                                                     return Ok(TokenKind::TokenStringLiteral)
-":""="                                                          return Ok(TokenKind::TokenAssign);
+\"[^\n"]*\"                                                     return Ok(TokenKind::TokenStringLiteral);
+":="                                                            return Ok(TokenKind::TokenAssign);
 "+"                                                             return Ok(TokenKind::TokenSum);
 "*"                                                             return Ok(TokenKind::TokenMul);
 "-"                                                             return Ok(TokenKind::TokenSub);
@@ -24,9 +24,25 @@ use crate::grammar::TokenKind;
 "}"                                                             return Ok(TokenKind::TokenCBClose);
 ";"                                                             return Ok(TokenKind::TokenSemicolon);
 ":"                                                             return Ok(TokenKind::TokenColon);
-" "                             
+"while"                                                         return Ok(TokenKind::TokenWhile);
+"=="                                                            return Ok(TokenKind::TokenEqual);
+"!="                                                            return Ok(TokenKind::TokenNotEqual);
+"<"                                                             return Ok(TokenKind::TokenLess);
+"<="                                                            return Ok(TokenKind::TokenLessEqual);
+">"                                                             return Ok(TokenKind::TokenGreater);
+">="                                                            return Ok(TokenKind::TokenGreaterEqual);
+"true"                                                          return Ok(TokenKind::TokenTrue);
+"false"                                                         return Ok(TokenKind::TokenFalse);
+"if"                                                            return Ok(TokenKind::TokenIf);
+"else"                                                          return Ok(TokenKind::TokenElse);
+","                                                             return Ok(TokenKind::TokenComa);
+"and"                                                           return Ok(TokenKind::TokenAnd);
+"or"                                                            return Ok(TokenKind::TokenOr);
+"not"                                                           return Ok(TokenKind::TokenNot);
+" "
 (\r\n|\r|\n)
 (\n\t)
 (\t)
+"#+"([^\n]|\n)*"+#"
 
 %%

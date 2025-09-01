@@ -1,9 +1,12 @@
 Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose;
-Body: TokenInit InitBody Expressions;
+Body: TokenInit InitBody Expressions
+ | TokenInit InitBody
+ | EMPTY;
 InitBody: TokenCBOpen VarDeclarations TokenCBClose;
 VarDeclarations: VarDeclaration
  | VarDeclaration VarDeclarations;
-VarDeclaration: TokenId TokenColon Data_Type;
+VarDeclaration: TokenId TokenColon Data_Type
+ | TokenId TokenComa VarDeclaration;
 Expressions: Expression
  | Expression Expressions;
 Expression: Assignment;
@@ -14,7 +17,32 @@ Literal: TokenIntLiteral
 Data_Type: TokenInt
  | TokenFloat
  | TokenString;
-
+WhileLoop: TokenWhile TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose;
+Condition: Expression ComparisonOp Expression
+ | TokenTrue
+ | TokenFalse
+ | Expression ComparisonOp Expression Conjunction Condition;
+Conjunction: TokenAnd
+ | TokenOr;
+ComparisonOp: TokenEqual
+ | TokenNotEqual
+ | TokenLess
+ | TokenLessEqual
+ | TokenGreater
+ | TokenGreaterEqual;
+If: TokenIf TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose;
+Else: TokenElse TokenCBOpen Body TokenCBClose;
+ArithmeticOperation: TokenId ArithmeticOperator TokenId
+ | TokenId ArithmeticOperator Number
+ | Number ArithmeticOperator TokenId
+ | Number ArithmeticOperator Number;
+Number: TokenIntLiteral
+ | TokenFloatLiteral;
+ArithmeticOperator: TokenSum
+ | TokenMul
+ | TokenSub
+ | TokenDiv;
+Not: TokenNot Condition;
 
 terminals
 
@@ -37,3 +65,18 @@ TokenCBClose:;
 TokenSemicolon:;
 TokenColon:;
 TokenInit:;
+TokenWhile:;
+TokenEqual:;
+TokenNotEqual:;
+TokenLess:;
+TokenLessEqual:;
+TokenGreater:;
+TokenGreaterEqual:;
+TokenTrue:;
+TokenFalse:;
+TokenIf:;
+TokenElse:;
+TokenComa:;
+TokenAnd:;
+TokenOr:;
+TokenNot:;
