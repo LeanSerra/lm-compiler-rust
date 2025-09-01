@@ -2,7 +2,9 @@
 /// All manual changes will be preserved except non-doc comments.
 use super::grammar::{Context, TokenKind};
 use super::grammar_lexer::Input;
-use crate::context::{write_to_lexer_file, write_to_parser_file};
+use crate::context::{
+    write_to_lexer_file, write_to_parser_file, write_to_symbol_table_file,
+};
 use rustemo::Token as RustemoToken;
 use std::fs::File;
 use std::io::Write;
@@ -280,6 +282,8 @@ pub fn assignment_assignment(
     write_to_parser_file(
         &format!("<Assignment> -> {token_id} {token_assign} <Literal>"),
     );
+    /// The rhs of an assignment to a literal is a symbol
+    literal.write_to_symbol_table();
     Assignment {
         token_id,
         token_assign,
@@ -311,7 +315,8 @@ pub fn literal_string_literal(
     token_string_literal: TokenStringLiteral,
 ) -> Literal {
     write_to_parser_file(&format!("<Literal> -> {token_string_literal}"));
-    Literal::StringLiteral(token_string_literal)
+    /// We remove the "" from the string literal
+    Literal::StringLiteral(token_string_literal.replace("\"", ""))
 }
 #[derive(Debug, Clone)]
 pub enum Data_Type {
@@ -330,4 +335,25 @@ pub fn data_type_float_type(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
 pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
     write_to_parser_file(&format!("<Data_Type> -> {token_string}"));
     Data_Type::StringType(token_string)
+}
+impl Literal {
+    pub fn write_to_symbol_table(&self) {
+        match self {
+            Literal::IntegerLiteral(int) => {
+                write_to_symbol_table_file(
+                    &format!("{}|{}|{}|{}", int, "CONST_INT", int, int.len()),
+                )
+            }
+            Literal::FloatLiteral(float) => {
+                write_to_symbol_table_file(
+                    &format!("{}|{}|{}|{}", float, "CONST_FLOAT", float, float.len()),
+                )
+            }
+            Literal::StringLiteral(string) => {
+                write_to_symbol_table_file(
+                    &format!("{}|{}|{}|{}", string, "CONST_STRING", string, string.len()),
+                )
+            }
+        };
+    }
 }
