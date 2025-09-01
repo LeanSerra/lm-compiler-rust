@@ -1,0 +1,14 @@
+main(){
+    init {
+        a, b : int
+    }
+
+    a := 1
+    b := 3
+
+    while (a > b)
+    {
+        write("a es mas grande que b")
+        a := a + 1
+    }
+}
