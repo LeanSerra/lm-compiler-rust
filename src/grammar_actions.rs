@@ -173,6 +173,7 @@ pub fn var_declarations_var_declarations_single(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
+    var_declaration.write_to_symbol_table();
     write_to_parser_file("<VarDeclarations> -> <VarDeclaration>");
     VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
@@ -181,6 +182,7 @@ pub fn var_declarations_var_declarations_recursive(
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
+    var_declaration.write_to_symbol_table();
     write_to_parser_file("<VarDeclarations> -> <VarDeclaration> <VarDeclaration>");
     VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
@@ -355,5 +357,39 @@ impl Literal {
                 )
             }
         };
+    }
+}
+impl VarDeclaration {
+    pub fn write_to_symbol_table(&self) -> Data_Type {
+        match self {
+            Self::VarDeclarationSingle(single) => {
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", single.token_id, single.data_type.to_string(),
+                        "-", single.token_id.len()
+                    ),
+                );
+                single.data_type.clone()
+            }
+            Self::VarDeclarationRecursive(recursive) => {
+                let data_type = recursive.var_declaration.write_to_symbol_table();
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", recursive.token_id, data_type.to_string(), "-",
+                        recursive.token_id.len()
+                    ),
+                );
+                data_type
+            }
+        }
+    }
+}
+impl ToString for Data_Type {
+    fn to_string(&self) -> String {
+        match self {
+            Data_Type::IntType(_) => "VAR_INT".to_string(),
+            Data_Type::FloatType(_) => "VAR_FLOAT".to_string(),
+            Data_Type::StringType(_) => "VAR_STRING".to_string(),
+        }
     }
 }
