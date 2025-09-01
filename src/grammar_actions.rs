@@ -1,83 +1,69 @@
-use super::grammar::{Context, TokenKind};
-use super::grammar_lexer::Input;
-use crate::OUTPUT_FILE;
 /// This file is maintained by rustemo but can be modified manually.
 /// All manual changes will be preserved except non-doc comments.
 use rustemo::Token as RustemoToken;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
+use super::grammar::{TokenKind, Context};
+use super::grammar_lexer::Input;
 pub type Ctx<'i> = Context<'i, Input>;
 #[allow(dead_code)]
 pub type Token<'i> = RustemoToken<'i, Input, TokenKind>;
 pub type TokenInt = String;
 pub fn token_int(_ctx: &Ctx, token: Token) -> TokenInt {
-    write_lexer_output(&token, "INT");
     token.value.into()
 }
 pub type TokenFloat = String;
 pub fn token_float(_ctx: &Ctx, token: Token) -> TokenFloat {
-    write_lexer_output(&token, "FLOAT");
     token.value.into()
 }
 pub type TokenString = String;
 pub fn token_string(_ctx: &Ctx, token: Token) -> TokenString {
-    write_lexer_output(&token, "STRING");
     token.value.into()
 }
 pub type TokenIntLiteral = String;
 pub fn token_int_literal(_ctx: &Ctx, token: Token) -> TokenIntLiteral {
-    write_lexer_output(&token, "INTLITERAL");
     token.value.into()
 }
 pub type TokenFloatLiteral = String;
 pub fn token_float_literal(_ctx: &Ctx, token: Token) -> TokenFloatLiteral {
-    write_lexer_output(&token, "FLOATLITERAL");
     token.value.into()
 }
 pub type TokenStringLiteral = String;
 pub fn token_string_literal(_ctx: &Ctx, token: Token) -> TokenStringLiteral {
-    write_lexer_output(&token, "STRINGLITERAL");
     token.value.into()
 }
 pub type TokenId = String;
 pub fn token_id(_ctx: &Ctx, token: Token) -> TokenId {
-    write_lexer_output(&token, "ID");
     token.value.into()
 }
 pub type TokenAssign = String;
 pub fn token_assign(_ctx: &Ctx, token: Token) -> TokenAssign {
-    write_lexer_output(&token, "ASSIGN");
     token.value.into()
 }
 pub type TokenParOpen = String;
 pub fn token_par_open(_ctx: &Ctx, token: Token) -> TokenParOpen {
-    write_lexer_output(&token, "PAROPEN");
     token.value.into()
 }
 pub type TokenParClose = String;
 pub fn token_par_close(_ctx: &Ctx, token: Token) -> TokenParClose {
-    write_lexer_output(&token, "PARCLOSE");
     token.value.into()
 }
 pub type TokenCBOpen = String;
 pub fn token_cbopen(_ctx: &Ctx, token: Token) -> TokenCBOpen {
-    write_lexer_output(&token, "CBOPEN");
     token.value.into()
 }
 pub type TokenCBClose = String;
 pub fn token_cbclose(_ctx: &Ctx, token: Token) -> TokenCBClose {
-    write_lexer_output(&token, "CBCLOSE");
     token.value.into()
 }
 pub type TokenColon = String;
 pub fn token_colon(_ctx: &Ctx, token: Token) -> TokenColon {
-    write_lexer_output(&token, "COLON");
     token.value.into()
 }
 pub type TokenInit = String;
 pub fn token_init(_ctx: &Ctx, token: Token) -> TokenInit {
-    write_lexer_output(&token, "INIT");
+    token.value.into()
+}
+pub type TokenComa = String;
+pub fn token_coma(_ctx: &Ctx, token: Token) -> TokenComa {
     token.value.into()
 }
 #[derive(Debug, Clone)]
@@ -98,11 +84,6 @@ pub fn program_c1(
     body: Body,
     token_cbclose: TokenCBClose,
 ) -> Program {
-    write_parser_output(
-        &format!(
-            "<Program> -> {token_id} {token_par_open} {token_par_close} {token_cbopen} <Body> {token_cbclose}"
-        ),
-    );
     Program {
         token_id,
         token_par_open,
@@ -113,10 +94,21 @@ pub fn program_c1(
     }
 }
 #[derive(Debug, Clone)]
-pub struct Body {
+pub struct BodyC1 {
     pub token_init: TokenInit,
     pub init_body: InitBody,
     pub expressions: Expressions,
+}
+#[derive(Debug, Clone)]
+pub struct BodyC2 {
+    pub token_init: TokenInit,
+    pub init_body: InitBody,
+}
+pub type Body = Option<BodyNoO>;
+#[derive(Debug, Clone)]
+pub enum BodyNoO {
+    C1(BodyC1),
+    C2(BodyC2),
 }
 pub fn body_c1(
     _ctx: &Ctx,
@@ -124,12 +116,19 @@ pub fn body_c1(
     init_body: InitBody,
     expressions: Expressions,
 ) -> Body {
-    write_parser_output(&format!("<Body> -> {token_init} <InitBody> <Expressions>"));
-    Body {
-        token_init,
-        init_body,
-        expressions,
-    }
+    Some(
+        BodyNoO::C1(BodyC1 {
+            token_init,
+            init_body,
+            expressions,
+        }),
+    )
+}
+pub fn body_c2(_ctx: &Ctx, token_init: TokenInit, init_body: InitBody) -> Body {
+    Some(BodyNoO::C2(BodyC2 { token_init, init_body }))
+}
+pub fn body_empty(_ctx: &Ctx) -> Body {
+    None
 }
 #[derive(Debug, Clone)]
 pub struct InitBody {
@@ -143,9 +142,6 @@ pub fn init_body_c1(
     var_declarations: VarDeclarations,
     token_cbclose: TokenCBClose,
 ) -> InitBody {
-    write_parser_output(
-        &format!("<InitBody> -> {token_cbopen} <VarDeclarations> {token_cbclose}"),
-    );
     InitBody {
         token_cbopen,
         var_declarations,
@@ -166,7 +162,6 @@ pub fn var_declarations_var_declaration(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
-    write_parser_output("<VarDeclarations> -> <VarDeclaration>");
     VarDeclarations::VarDeclaration(var_declaration)
 }
 pub fn var_declarations_c2(
@@ -174,17 +169,27 @@ pub fn var_declarations_c2(
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
-    write_parser_output("<VarDeclarations> -> <VarDeclaration> <VarDeclaration>");
     VarDeclarations::C2(VarDeclarationsC2 {
         var_declaration,
         var_declarations: Box::new(var_declarations),
     })
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclaration {
+pub struct VarDeclarationC1 {
     pub token_id: TokenId,
     pub token_colon: TokenColon,
     pub data_type: Data_Type,
+}
+#[derive(Debug, Clone)]
+pub struct VarDeclarationC2 {
+    pub token_id: TokenId,
+    pub token_coma: TokenComa,
+    pub var_declaration: Box<VarDeclaration>,
+}
+#[derive(Debug, Clone)]
+pub enum VarDeclaration {
+    C1(VarDeclarationC1),
+    C2(VarDeclarationC2),
 }
 pub fn var_declaration_c1(
     _ctx: &Ctx,
@@ -192,14 +197,23 @@ pub fn var_declaration_c1(
     token_colon: TokenColon,
     data_type: Data_Type,
 ) -> VarDeclaration {
-    write_parser_output(
-        &format!("<VarDeclaration> -> {token_id} {token_colon} <Data_Type>"),
-    );
-    VarDeclaration {
+    VarDeclaration::C1(VarDeclarationC1 {
         token_id,
         token_colon,
         data_type,
-    }
+    })
+}
+pub fn var_declaration_c2(
+    _ctx: &Ctx,
+    token_id: TokenId,
+    token_coma: TokenComa,
+    var_declaration: VarDeclaration,
+) -> VarDeclaration {
+    VarDeclaration::C2(VarDeclarationC2 {
+        token_id,
+        token_coma,
+        var_declaration: Box::new(var_declaration),
+    })
 }
 #[derive(Debug, Clone)]
 pub struct ExpressionsC2 {
@@ -212,7 +226,6 @@ pub enum Expressions {
     C2(ExpressionsC2),
 }
 pub fn expressions_expression(_ctx: &Ctx, expression: Expression) -> Expressions {
-    write_parser_output("<Expression> -> <Expression>");
     Expressions::Expression(expression)
 }
 pub fn expressions_c2(
@@ -220,7 +233,6 @@ pub fn expressions_c2(
     expression: Expression,
     expressions: Expressions,
 ) -> Expressions {
-    write_parser_output("<Expressions> -> <Expression> <Expressions>");
     Expressions::C2(ExpressionsC2 {
         expression,
         expressions: Box::new(expressions),
@@ -228,7 +240,6 @@ pub fn expressions_c2(
 }
 pub type Expression = Assignment;
 pub fn expression_assignment(_ctx: &Ctx, assignment: Assignment) -> Expression {
-    write_parser_output("<Expression> -> <Assignment>");
     assignment
 }
 #[derive(Debug, Clone)]
@@ -243,7 +254,6 @@ pub fn assignment_c1(
     token_assign: TokenAssign,
     literal: Literal,
 ) -> Assignment {
-    write_parser_output(&format!("<Assignment> -> {token_id} {token_assign} <Literal>"));
     Assignment {
         token_id,
         token_assign,
@@ -260,21 +270,18 @@ pub fn literal_token_int_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
 ) -> Literal {
-    write_parser_output(&format!("<Literal> -> {token_int_literal}"));
     Literal::TokenIntLiteral(token_int_literal)
 }
 pub fn literal_token_float_literal(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Literal {
-    write_parser_output(&format!("<Literal> -> {token_float_literal}"));
     Literal::TokenFloatLiteral(token_float_literal)
 }
 pub fn literal_token_string_literal(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> Literal {
-    write_parser_output(&format!("<Literal> -> {token_string_literal}"));
     Literal::TokenStringLiteral(token_string_literal)
 }
 #[derive(Debug, Clone)]
@@ -284,32 +291,11 @@ pub enum Data_Type {
     TokenString(TokenString),
 }
 pub fn data_type_token_int(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
-    write_parser_output(&format!("<Data_Type> -> {token_int}"));
     Data_Type::TokenInt(token_int)
 }
 pub fn data_type_token_float(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
-    write_parser_output(&format!("<Data_Type> -> {token_float}"));
     Data_Type::TokenFloat(token_float)
 }
 pub fn data_type_token_string(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
-    write_parser_output(&format!("<Data_Type> -> {token_string}"));
     Data_Type::TokenString(token_string)
-}
-pub fn open_lexer_output_file() -> Result<File, std::io::Error> {
-    let mut path = PathBuf::from(OUTPUT_FILE.get().unwrap());
-    path.set_extension("lexer");
-    std::fs::OpenOptions::new().append(true).open(path)
-}
-pub fn write_lexer_output(token: &Token, tokenName: &str) -> Result<(), std::io::Error> {
-    let mut file = open_lexer_output_file()?;
-    writeln!(file, "{tokenName}: {}", token.value)
-}
-pub fn open_parser_output_file() -> Result<File, std::io::Error> {
-    let mut path = PathBuf::from(OUTPUT_FILE.get().unwrap());
-    path.set_extension("parser");
-    std::fs::OpenOptions::new().append(true).open(path)
-}
-pub fn write_parser_output(rule: &str) -> Result<(), std::io::Error> {
-    let mut file = open_parser_output_file()?;
-    writeln!(file, "{}", rule)
 }

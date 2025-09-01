@@ -30,7 +30,7 @@ static OUTPUT_FILE: OnceLock<String> = OnceLock::new();
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input_path =
-        PathBuf::from(OUTPUT_FILE.get_or_init(|| String::from("./examples/hello_world.lm")));
+        PathBuf::from(OUTPUT_FILE.get_or_init(|| String::from("./examples/init.lm")));
     std::fs::File::create(input_path.with_extension("lexer"))?;
     std::fs::File::create(input_path.with_extension("parser"))?;
 
