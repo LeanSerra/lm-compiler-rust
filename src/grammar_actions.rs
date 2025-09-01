@@ -1,8 +1,8 @@
+/// This file is maintained by rustemo but can be modified manually.
+/// All manual changes will be preserved except non-doc comments.
 use super::grammar::{Context, TokenKind};
 use super::grammar_lexer::Input;
 use crate::OUTPUT_FILE;
-/// This file is maintained by rustemo but can be modified manually.
-/// All manual changes will be preserved except non-doc comments.
 use rustemo::Token as RustemoToken;
 use std::fs::File;
 use std::io::Write;
@@ -80,6 +80,11 @@ pub fn token_init(_ctx: &Ctx, token: Token) -> TokenInit {
     write_lexer_output(&token, "INIT");
     token.value.into()
 }
+pub type TokenComma = String;
+pub fn token_comma(_ctx: &Ctx, token: Token) -> TokenComma {
+    write_lexer_output(&token, "COMMA");
+    token.value.into()
+}
 #[derive(Debug, Clone)]
 pub struct Program {
     pub token_id: TokenId,
@@ -89,7 +94,7 @@ pub struct Program {
     pub body: Body,
     pub token_cbclose: TokenCBClose,
 }
-pub fn program_c1(
+pub fn program_program(
     _ctx: &Ctx,
     token_id: TokenId,
     token_par_open: TokenParOpen,
@@ -118,7 +123,7 @@ pub struct Body {
     pub init_body: InitBody,
     pub expressions: Expressions,
 }
-pub fn body_c1(
+pub fn body_body(
     _ctx: &Ctx,
     token_init: TokenInit,
     init_body: InitBody,
@@ -137,7 +142,7 @@ pub struct InitBody {
     pub var_declarations: VarDeclarations,
     pub token_cbclose: TokenCBClose,
 }
-pub fn init_body_c1(
+pub fn init_body_init_body(
     _ctx: &Ctx,
     token_cbopen: TokenCBOpen,
     var_declarations: VarDeclarations,
@@ -153,40 +158,51 @@ pub fn init_body_c1(
     }
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclarationsC2 {
+pub struct VarDeclarationsRecursive {
     pub var_declaration: VarDeclaration,
     pub var_declarations: Box<VarDeclarations>,
 }
 #[derive(Debug, Clone)]
 pub enum VarDeclarations {
-    VarDeclaration(VarDeclaration),
-    C2(VarDeclarationsC2),
+    VarDeclarationsSingle(VarDeclaration),
+    VarDeclarationsRecursive(VarDeclarationsRecursive),
 }
-pub fn var_declarations_var_declaration(
+pub fn var_declarations_var_declarations_single(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
     write_parser_output("<VarDeclarations> -> <VarDeclaration>");
-    VarDeclarations::VarDeclaration(var_declaration)
+    VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
-pub fn var_declarations_c2(
+pub fn var_declarations_var_declarations_recursive(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
     write_parser_output("<VarDeclarations> -> <VarDeclaration> <VarDeclaration>");
-    VarDeclarations::C2(VarDeclarationsC2 {
+    VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
         var_declarations: Box::new(var_declarations),
     })
 }
 #[derive(Debug, Clone)]
-pub struct VarDeclaration {
+pub struct VarDeclarationSingle {
     pub token_id: TokenId,
     pub token_colon: TokenColon,
     pub data_type: Data_Type,
 }
-pub fn var_declaration_c1(
+#[derive(Debug, Clone)]
+pub struct VarDeclarationRecursive {
+    pub token_id: TokenId,
+    pub token_comma: TokenComma,
+    pub var_declaration: Box<VarDeclaration>,
+}
+#[derive(Debug, Clone)]
+pub enum VarDeclaration {
+    VarDeclarationSingle(VarDeclarationSingle),
+    VarDeclarationRecursive(VarDeclarationRecursive),
+}
+pub fn var_declaration_var_declaration_single(
     _ctx: &Ctx,
     token_id: TokenId,
     token_colon: TokenColon,
@@ -195,39 +211,57 @@ pub fn var_declaration_c1(
     write_parser_output(
         &format!("<VarDeclaration> -> {token_id} {token_colon} <Data_Type>"),
     );
-    VarDeclaration {
+    VarDeclaration::VarDeclarationSingle(VarDeclarationSingle {
         token_id,
         token_colon,
         data_type,
-    }
+    })
+}
+pub fn var_declaration_var_declaration_recursive(
+    _ctx: &Ctx,
+    token_id: TokenId,
+    token_comma: TokenComma,
+    var_declaration: VarDeclaration,
+) -> VarDeclaration {
+    write_parser_output(
+        &format!("<VarDeclaration> -> {token_id} {token_comma} <VarDeclaration>"),
+    );
+    VarDeclaration::VarDeclarationRecursive(VarDeclarationRecursive {
+        token_id,
+        token_comma,
+        var_declaration: Box::new(var_declaration),
+    })
 }
 #[derive(Debug, Clone)]
-pub struct ExpressionsC2 {
+pub struct ExpressionRecursive {
     pub expression: Expression,
     pub expressions: Box<Expressions>,
 }
 #[derive(Debug, Clone)]
 pub enum Expressions {
-    Expression(Expression),
-    C2(ExpressionsC2),
+    ExpressionSingle(Expression),
+    ExpressionRecursive(ExpressionRecursive),
 }
-pub fn expressions_expression(_ctx: &Ctx, expression: Expression) -> Expressions {
+pub fn expressions_expression_single(_ctx: &Ctx, expression: Expression) -> Expressions {
     write_parser_output("<Expression> -> <Expression>");
-    Expressions::Expression(expression)
+    Expressions::ExpressionSingle(expression)
 }
-pub fn expressions_c2(
+pub fn expressions_expression_recursive(
     _ctx: &Ctx,
     expression: Expression,
     expressions: Expressions,
 ) -> Expressions {
     write_parser_output("<Expressions> -> <Expression> <Expressions>");
-    Expressions::C2(ExpressionsC2 {
+    Expressions::ExpressionRecursive(ExpressionRecursive {
         expression,
         expressions: Box::new(expressions),
     })
 }
 pub type Expression = Assignment;
-pub fn expression_assignment(_ctx: &Ctx, assignment: Assignment) -> Expression {
+pub fn expression_expression_assignment(
+    _ctx: &Ctx,
+    assignment: Assignment,
+) -> Expression {
     write_parser_output("<Expression> -> <Assignment>");
     assignment
 }
@@ -237,7 +271,7 @@ pub struct Assignment {
     pub token_assign: TokenAssign,
     pub literal: Literal,
 }
-pub fn assignment_c1(
+pub fn assignment_assignment(
     _ctx: &Ctx,
     token_id: TokenId,
     token_assign: TokenAssign,
@@ -252,48 +286,48 @@ pub fn assignment_c1(
 }
 #[derive(Debug, Clone)]
 pub enum Literal {
-    TokenIntLiteral(TokenIntLiteral),
-    TokenFloatLiteral(TokenFloatLiteral),
-    TokenStringLiteral(TokenStringLiteral),
+    IntegerLiteral(TokenIntLiteral),
+    FloatLiteral(TokenFloatLiteral),
+    StringLiteral(TokenStringLiteral),
 }
-pub fn literal_token_int_literal(
+pub fn literal_integer_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
 ) -> Literal {
     write_parser_output(&format!("<Literal> -> {token_int_literal}"));
-    Literal::TokenIntLiteral(token_int_literal)
+    Literal::IntegerLiteral(token_int_literal)
 }
-pub fn literal_token_float_literal(
+pub fn literal_float_literal(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Literal {
     write_parser_output(&format!("<Literal> -> {token_float_literal}"));
-    Literal::TokenFloatLiteral(token_float_literal)
+    Literal::FloatLiteral(token_float_literal)
 }
-pub fn literal_token_string_literal(
+pub fn literal_string_literal(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> Literal {
     write_parser_output(&format!("<Literal> -> {token_string_literal}"));
-    Literal::TokenStringLiteral(token_string_literal)
+    Literal::StringLiteral(token_string_literal)
 }
 #[derive(Debug, Clone)]
 pub enum Data_Type {
-    TokenInt(TokenInt),
-    TokenFloat(TokenFloat),
-    TokenString(TokenString),
+    IntType(TokenInt),
+    FloatType(TokenFloat),
+    StringType(TokenString),
 }
-pub fn data_type_token_int(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
+pub fn data_type_int_type(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
     write_parser_output(&format!("<Data_Type> -> {token_int}"));
-    Data_Type::TokenInt(token_int)
+    Data_Type::IntType(token_int)
 }
-pub fn data_type_token_float(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
+pub fn data_type_float_type(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
     write_parser_output(&format!("<Data_Type> -> {token_float}"));
-    Data_Type::TokenFloat(token_float)
+    Data_Type::FloatType(token_float)
 }
-pub fn data_type_token_string(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
+pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
     write_parser_output(&format!("<Data_Type> -> {token_string}"));
-    Data_Type::TokenString(token_string)
+    Data_Type::StringType(token_string)
 }
 pub fn open_lexer_output_file() -> Result<File, std::io::Error> {
     let mut path = PathBuf::from(OUTPUT_FILE.get().unwrap());
@@ -311,5 +345,5 @@ pub fn open_parser_output_file() -> Result<File, std::io::Error> {
 }
 pub fn write_parser_output(rule: &str) -> Result<(), std::io::Error> {
     let mut file = open_parser_output_file()?;
-    writeln!(file, "{}", rule)
+    writeln!(file, "{rule}")
 }

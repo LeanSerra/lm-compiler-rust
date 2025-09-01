@@ -1,20 +1,29 @@
-Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose;
-Body: TokenInit InitBody Expressions;
-InitBody: TokenCBOpen VarDeclarations TokenCBClose;
-VarDeclarations: VarDeclaration
- | VarDeclaration VarDeclarations;
-VarDeclaration: TokenId TokenColon Data_Type;
-Expressions: Expression
- | Expression Expressions;
-Expression: Assignment;
-Assignment: TokenId TokenAssign Literal;
-Literal: TokenIntLiteral
- | TokenFloatLiteral
- | TokenStringLiteral;
-Data_Type: TokenInt
- | TokenFloat
- | TokenString;
+Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose {Program};
 
+Body: TokenInit InitBody Expressions {Body};
+
+InitBody: TokenCBOpen VarDeclarations TokenCBClose {InitBody};
+
+VarDeclarations: VarDeclaration {VarDeclarationsSingle}
+ | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
+
+VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
+ | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
+
+Expressions: Expression {ExpressionSingle}
+ | Expression Expressions {ExpressionRecursive};
+
+Expression: Assignment {ExpressionAssignment};
+
+Assignment: TokenId TokenAssign Literal {Assignment};
+
+Literal: TokenIntLiteral {IntegerLiteral}
+ | TokenFloatLiteral {FloatLiteral}
+ | TokenStringLiteral {StringLiteral};
+
+Data_Type: TokenInt {IntType}
+ | TokenFloat {FloatType}
+ | TokenString {StringType};
 
 terminals
 
@@ -37,3 +46,4 @@ TokenCBClose:;
 TokenSemicolon:;
 TokenColon:;
 TokenInit:;
+TokenComma:;
