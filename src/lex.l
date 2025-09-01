@@ -23,6 +23,7 @@ use crate::grammar::TokenKind;
 "{"                                                             return Ok(TokenKind::TokenCBOpen);
 "}"                                                             return Ok(TokenKind::TokenCBClose);
 ";"                                                             return Ok(TokenKind::TokenSemicolon);
+","                                                             return Ok(TokenKind::TokenComma);
 ":"                                                             return Ok(TokenKind::TokenColon);
 " "                             
 (\r\n|\r|\n)

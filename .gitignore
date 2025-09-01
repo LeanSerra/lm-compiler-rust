@@ -1,3 +1,4 @@
 /target
 *.lexer
 *.parser
+*.symbol_table

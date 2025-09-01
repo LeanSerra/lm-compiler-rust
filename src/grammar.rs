@@ -15,10 +15,10 @@ use rustemo::debug::{log, logn};
 #[cfg(debug_assertions)]
 use rustemo::colored::*;
 pub type Input = str;
-const STATE_COUNT: usize = 31usize;
+const STATE_COUNT: usize = 33usize;
 const MAX_RECOGNIZERS: usize = 3usize;
 #[allow(dead_code)]
-const TERMINAL_COUNT: usize = 20usize;
+const TERMINAL_COUNT: usize = 21usize;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TokenKind {
@@ -43,6 +43,7 @@ pub enum TokenKind {
     TokenSemicolon,
     TokenColon,
     TokenInit,
+    TokenComma,
 }
 use TokenKind as TK;
 impl From<TokenKind> for usize {
@@ -53,47 +54,59 @@ impl From<TokenKind> for usize {
 #[allow(clippy::enum_variant_names)]
 #[derive(Clone, Copy, PartialEq)]
 pub enum ProdKind {
-    ProgramP1,
-    BodyP1,
-    InitBodyP1,
-    VarDeclarationsP1,
-    VarDeclarationsP2,
-    VarDeclarationP1,
-    ExpressionsP1,
-    ExpressionsP2,
-    ExpressionP1,
-    AssignmentP1,
-    LiteralP1,
-    LiteralP2,
-    LiteralP3,
-    Data_TypeP1,
-    Data_TypeP2,
-    Data_TypeP3,
+    ProgramProgram,
+    BodyBody,
+    InitBodyInitBody,
+    VarDeclarationsVarDeclarationsSingle,
+    VarDeclarationsVarDeclarationsRecursive,
+    VarDeclarationVarDeclarationSingle,
+    VarDeclarationVarDeclarationRecursive,
+    ExpressionsExpressionSingle,
+    ExpressionsExpressionRecursive,
+    ExpressionExpressionAssignment,
+    AssignmentAssignment,
+    LiteralIntegerLiteral,
+    LiteralFloatLiteral,
+    LiteralStringLiteral,
+    Data_TypeIntType,
+    Data_TypeFloatType,
+    Data_TypeStringType,
 }
 use ProdKind as PK;
 impl std::fmt::Debug for ProdKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            ProdKind::ProgramP1 => {
+            ProdKind::ProgramProgram => {
                 "Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose"
             }
-            ProdKind::BodyP1 => "Body: TokenInit InitBody Expressions",
-            ProdKind::InitBodyP1 => "InitBody: TokenCBOpen VarDeclarations TokenCBClose",
-            ProdKind::VarDeclarationsP1 => "VarDeclarations: VarDeclaration",
-            ProdKind::VarDeclarationsP2 => {
+            ProdKind::BodyBody => "Body: TokenInit InitBody Expressions",
+            ProdKind::InitBodyInitBody => {
+                "InitBody: TokenCBOpen VarDeclarations TokenCBClose"
+            }
+            ProdKind::VarDeclarationsVarDeclarationsSingle => {
+                "VarDeclarations: VarDeclaration"
+            }
+            ProdKind::VarDeclarationsVarDeclarationsRecursive => {
                 "VarDeclarations: VarDeclaration VarDeclarations"
             }
-            ProdKind::VarDeclarationP1 => "VarDeclaration: TokenId TokenColon Data_Type",
-            ProdKind::ExpressionsP1 => "Expressions: Expression",
-            ProdKind::ExpressionsP2 => "Expressions: Expression Expressions",
-            ProdKind::ExpressionP1 => "Expression: Assignment",
-            ProdKind::AssignmentP1 => "Assignment: TokenId TokenAssign Literal",
-            ProdKind::LiteralP1 => "Literal: TokenIntLiteral",
-            ProdKind::LiteralP2 => "Literal: TokenFloatLiteral",
-            ProdKind::LiteralP3 => "Literal: TokenStringLiteral",
-            ProdKind::Data_TypeP1 => "Data_Type: TokenInt",
-            ProdKind::Data_TypeP2 => "Data_Type: TokenFloat",
-            ProdKind::Data_TypeP3 => "Data_Type: TokenString",
+            ProdKind::VarDeclarationVarDeclarationSingle => {
+                "VarDeclaration: TokenId TokenColon Data_Type"
+            }
+            ProdKind::VarDeclarationVarDeclarationRecursive => {
+                "VarDeclaration: TokenId TokenComma VarDeclaration"
+            }
+            ProdKind::ExpressionsExpressionSingle => "Expressions: Expression",
+            ProdKind::ExpressionsExpressionRecursive => {
+                "Expressions: Expression Expressions"
+            }
+            ProdKind::ExpressionExpressionAssignment => "Expression: Assignment",
+            ProdKind::AssignmentAssignment => "Assignment: TokenId TokenAssign Literal",
+            ProdKind::LiteralIntegerLiteral => "Literal: TokenIntLiteral",
+            ProdKind::LiteralFloatLiteral => "Literal: TokenFloatLiteral",
+            ProdKind::LiteralStringLiteral => "Literal: TokenStringLiteral",
+            ProdKind::Data_TypeIntType => "Data_Type: TokenInt",
+            ProdKind::Data_TypeFloatType => "Data_Type: TokenFloat",
+            ProdKind::Data_TypeStringType => "Data_Type: TokenString",
         };
         write!(f, "{name}")
     }
@@ -118,22 +131,29 @@ pub enum NonTermKind {
 impl From<ProdKind> for NonTermKind {
     fn from(prod: ProdKind) -> Self {
         match prod {
-            ProdKind::ProgramP1 => NonTermKind::Program,
-            ProdKind::BodyP1 => NonTermKind::Body,
-            ProdKind::InitBodyP1 => NonTermKind::InitBody,
-            ProdKind::VarDeclarationsP1 => NonTermKind::VarDeclarations,
-            ProdKind::VarDeclarationsP2 => NonTermKind::VarDeclarations,
-            ProdKind::VarDeclarationP1 => NonTermKind::VarDeclaration,
-            ProdKind::ExpressionsP1 => NonTermKind::Expressions,
-            ProdKind::ExpressionsP2 => NonTermKind::Expressions,
-            ProdKind::ExpressionP1 => NonTermKind::Expression,
-            ProdKind::AssignmentP1 => NonTermKind::Assignment,
-            ProdKind::LiteralP1 => NonTermKind::Literal,
-            ProdKind::LiteralP2 => NonTermKind::Literal,
-            ProdKind::LiteralP3 => NonTermKind::Literal,
-            ProdKind::Data_TypeP1 => NonTermKind::Data_Type,
-            ProdKind::Data_TypeP2 => NonTermKind::Data_Type,
-            ProdKind::Data_TypeP3 => NonTermKind::Data_Type,
+            ProdKind::ProgramProgram => NonTermKind::Program,
+            ProdKind::BodyBody => NonTermKind::Body,
+            ProdKind::InitBodyInitBody => NonTermKind::InitBody,
+            ProdKind::VarDeclarationsVarDeclarationsSingle => {
+                NonTermKind::VarDeclarations
+            }
+            ProdKind::VarDeclarationsVarDeclarationsRecursive => {
+                NonTermKind::VarDeclarations
+            }
+            ProdKind::VarDeclarationVarDeclarationSingle => NonTermKind::VarDeclaration,
+            ProdKind::VarDeclarationVarDeclarationRecursive => {
+                NonTermKind::VarDeclaration
+            }
+            ProdKind::ExpressionsExpressionSingle => NonTermKind::Expressions,
+            ProdKind::ExpressionsExpressionRecursive => NonTermKind::Expressions,
+            ProdKind::ExpressionExpressionAssignment => NonTermKind::Expression,
+            ProdKind::AssignmentAssignment => NonTermKind::Assignment,
+            ProdKind::LiteralIntegerLiteral => NonTermKind::Literal,
+            ProdKind::LiteralFloatLiteral => NonTermKind::Literal,
+            ProdKind::LiteralStringLiteral => NonTermKind::Literal,
+            ProdKind::Data_TypeIntType => NonTermKind::Data_Type,
+            ProdKind::Data_TypeFloatType => NonTermKind::Data_Type,
+            ProdKind::Data_TypeStringType => NonTermKind::Data_Type,
         }
     }
 }
@@ -160,18 +180,20 @@ pub enum State {
     ExpressionS16,
     AssignmentS17,
     TokenColonS18,
-    TokenCBCloseS19,
-    VarDeclarationsS20,
-    TokenAssignS21,
-    ExpressionsS22,
-    TokenIntS23,
-    TokenFloatS24,
-    TokenStringS25,
-    Data_TypeS26,
-    TokenIntLiteralS27,
-    TokenFloatLiteralS28,
-    TokenStringLiteralS29,
-    LiteralS30,
+    TokenCommaS19,
+    TokenCBCloseS20,
+    VarDeclarationsS21,
+    TokenAssignS22,
+    ExpressionsS23,
+    TokenIntS24,
+    TokenFloatS25,
+    TokenStringS26,
+    Data_TypeS27,
+    VarDeclarationS28,
+    TokenIntLiteralS29,
+    TokenFloatLiteralS30,
+    TokenStringLiteralS31,
+    LiteralS32,
 }
 impl StateT for State {
     fn default_layout() -> Option<Self> {
@@ -205,18 +227,20 @@ impl std::fmt::Debug for State {
             State::ExpressionS16 => "16:Expression",
             State::AssignmentS17 => "17:Assignment",
             State::TokenColonS18 => "18:TokenColon",
-            State::TokenCBCloseS19 => "19:TokenCBClose",
-            State::VarDeclarationsS20 => "20:VarDeclarations",
-            State::TokenAssignS21 => "21:TokenAssign",
-            State::ExpressionsS22 => "22:Expressions",
-            State::TokenIntS23 => "23:TokenInt",
-            State::TokenFloatS24 => "24:TokenFloat",
-            State::TokenStringS25 => "25:TokenString",
-            State::Data_TypeS26 => "26:Data_Type",
-            State::TokenIntLiteralS27 => "27:TokenIntLiteral",
-            State::TokenFloatLiteralS28 => "28:TokenFloatLiteral",
-            State::TokenStringLiteralS29 => "29:TokenStringLiteral",
-            State::LiteralS30 => "30:Literal",
+            State::TokenCommaS19 => "19:TokenComma",
+            State::TokenCBCloseS20 => "20:TokenCBClose",
+            State::VarDeclarationsS21 => "21:VarDeclarations",
+            State::TokenAssignS22 => "22:TokenAssign",
+            State::ExpressionsS23 => "23:Expressions",
+            State::TokenIntS24 => "24:TokenInt",
+            State::TokenFloatS25 => "25:TokenFloat",
+            State::TokenStringS26 => "26:TokenString",
+            State::Data_TypeS27 => "27:Data_Type",
+            State::VarDeclarationS28 => "28:VarDeclaration",
+            State::TokenIntLiteralS29 => "29:TokenIntLiteral",
+            State::TokenFloatLiteralS30 => "30:TokenFloatLiteral",
+            State::TokenStringLiteralS31 => "31:TokenStringLiteral",
+            State::LiteralS32 => "32:Literal",
         };
         write!(f, "{name}")
     }
@@ -243,6 +267,7 @@ pub enum Terminal {
     TokenCBClose(grammar_actions::TokenCBClose),
     TokenColon(grammar_actions::TokenColon),
     TokenInit(grammar_actions::TokenInit),
+    TokenComma(grammar_actions::TokenComma),
 }
 #[derive(Debug)]
 pub enum NonTerminal {
@@ -325,142 +350,172 @@ fn action_initbody_s9(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
 }
 fn action_tokencbclose_s10(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::STOP => Vec::from(&[Reduce(PK::ProgramP1, 6usize)]),
+        TK::STOP => Vec::from(&[Reduce(PK::ProgramProgram, 6usize)]),
         _ => vec![],
     }
 }
 fn action_tokenid_s11(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenColon => Vec::from(&[Shift(State::TokenColonS18)]),
+        TK::TokenComma => Vec::from(&[Shift(State::TokenCommaS19)]),
         _ => vec![],
     }
 }
 fn action_vardeclarations_s12(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS19)]),
+        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS20)]),
         _ => vec![],
     }
 }
 fn action_vardeclaration_s13(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Shift(State::TokenIdS11)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::VarDeclarationsP1, 1usize)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::VarDeclarationsVarDeclarationsSingle, 1usize)])
+        }
         _ => vec![],
     }
 }
 fn action_tokenid_s14(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS21)]),
+        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS22)]),
         _ => vec![],
     }
 }
 fn action_expressions_s15(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyP1, 3usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBody, 3usize)]),
         _ => vec![],
     }
 }
 fn action_expression_s16(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Shift(State::TokenIdS14)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::ExpressionsP1, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::ExpressionsExpressionSingle, 1usize)]),
         _ => vec![],
     }
 }
 fn action_assignment_s17(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::ExpressionP1, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::ExpressionP1, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::ExpressionExpressionAssignment, 1usize)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::ExpressionExpressionAssignment, 1usize)])
+        }
         _ => vec![],
     }
 }
 fn action_tokencolon_s18(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenInt => Vec::from(&[Shift(State::TokenIntS23)]),
-        TK::TokenFloat => Vec::from(&[Shift(State::TokenFloatS24)]),
-        TK::TokenString => Vec::from(&[Shift(State::TokenStringS25)]),
+        TK::TokenInt => Vec::from(&[Shift(State::TokenIntS24)]),
+        TK::TokenFloat => Vec::from(&[Shift(State::TokenFloatS25)]),
+        TK::TokenString => Vec::from(&[Shift(State::TokenStringS26)]),
         _ => vec![],
     }
 }
-fn action_tokencbclose_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencomma_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::InitBodyP1, 3usize)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS11)]),
         _ => vec![],
     }
 }
-fn action_vardeclarations_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbclose_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::VarDeclarationsP2, 2usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
         _ => vec![],
     }
 }
-fn action_tokenassign_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclarations_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS27)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS28)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS29)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::VarDeclarationsVarDeclarationsRecursive, 2usize)])
+        }
         _ => vec![],
     }
 }
-fn action_expressions_s22(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenassign_s22(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::ExpressionsP2, 2usize)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
         _ => vec![],
     }
 }
-fn action_tokenint_s23(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_expressions_s23(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeP1, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeP1, 1usize)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::ExpressionsExpressionRecursive, 2usize)])
+        }
         _ => vec![],
     }
 }
-fn action_tokenfloat_s24(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenint_s24(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeP2, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeP2, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeIntType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeIntType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenstring_s25(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfloat_s25(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeP3, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeP3, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeFloatType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeFloatType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_data_type_s26(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenstring_s26(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::VarDeclarationP1, 3usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::VarDeclarationP1, 3usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeStringType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeStringType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenintliteral_s27(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_data_type_s27(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::LiteralP1, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralP1, 1usize)]),
+        TK::TokenId => {
+            Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationSingle, 3usize)])
+        }
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationSingle, 3usize)])
+        }
         _ => vec![],
     }
 }
-fn action_tokenfloatliteral_s28(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclaration_s28(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::LiteralP2, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralP2, 1usize)]),
+        TK::TokenId => {
+            Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationRecursive, 3usize)])
+        }
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationRecursive, 3usize)])
+        }
         _ => vec![],
     }
 }
-fn action_tokenstringliteral_s29(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenintliteral_s29(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::LiteralP3, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralP3, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::LiteralIntegerLiteral, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralIntegerLiteral, 1usize)]),
         _ => vec![],
     }
 }
-fn action_literal_s30(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfloatliteral_s30(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::AssignmentP1, 3usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::AssignmentP1, 3usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::LiteralFloatLiteral, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralFloatLiteral, 1usize)]),
+        _ => vec![],
+    }
+}
+fn action_tokenstringliteral_s31(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::TokenId => Vec::from(&[Reduce(PK::LiteralStringLiteral, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::LiteralStringLiteral, 1usize)]),
+        _ => vec![],
+    }
+}
+fn action_literal_s32(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::TokenId => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
         _ => vec![],
     }
 }
@@ -524,7 +579,7 @@ fn goto_initbody_s9(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_vardeclaration_s13(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::VarDeclarations => State::VarDeclarationsS20,
+        NonTermKind::VarDeclarations => State::VarDeclarationsS21,
         NonTermKind::VarDeclaration => State::VarDeclarationS13,
         _ => {
             panic!(
@@ -536,7 +591,7 @@ fn goto_vardeclaration_s13(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_expression_s16(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Expressions => State::ExpressionsS22,
+        NonTermKind::Expressions => State::ExpressionsS23,
         NonTermKind::Expression => State::ExpressionS16,
         NonTermKind::Assignment => State::AssignmentS17,
         _ => {
@@ -549,7 +604,7 @@ fn goto_expression_s16(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokencolon_s18(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Data_Type => State::Data_TypeS26,
+        NonTermKind::Data_Type => State::Data_TypeS27,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -558,13 +613,24 @@ fn goto_tokencolon_s18(nonterm_kind: NonTermKind) -> State {
         }
     }
 }
-fn goto_tokenassign_s21(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencomma_s19(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Literal => State::LiteralS30,
+        NonTermKind::VarDeclaration => State::VarDeclarationS28,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenAssignS21
+                State::TokenCommaS19
+            )
+        }
+    }
+}
+fn goto_tokenassign_s22(nonterm_kind: NonTermKind) -> State {
+    match nonterm_kind {
+        NonTermKind::Literal => State::LiteralS32,
+        _ => {
+            panic!(
+                "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
+                State::TokenAssignS22
             )
         }
     }
@@ -593,18 +659,20 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_expression_s16,
         action_assignment_s17,
         action_tokencolon_s18,
-        action_tokencbclose_s19,
-        action_vardeclarations_s20,
-        action_tokenassign_s21,
-        action_expressions_s22,
-        action_tokenint_s23,
-        action_tokenfloat_s24,
-        action_tokenstring_s25,
-        action_data_type_s26,
-        action_tokenintliteral_s27,
-        action_tokenfloatliteral_s28,
-        action_tokenstringliteral_s29,
-        action_literal_s30,
+        action_tokencomma_s19,
+        action_tokencbclose_s20,
+        action_vardeclarations_s21,
+        action_tokenassign_s22,
+        action_expressions_s23,
+        action_tokenint_s24,
+        action_tokenfloat_s25,
+        action_tokenstring_s26,
+        action_data_type_s27,
+        action_vardeclaration_s28,
+        action_tokenintliteral_s29,
+        action_tokenfloatliteral_s30,
+        action_tokenstringliteral_s31,
+        action_literal_s32,
     ],
     gotos: [
         goto_aug_s0,
@@ -626,9 +694,11 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         goto_expression_s16,
         goto_invalid,
         goto_tokencolon_s18,
+        goto_tokencomma_s19,
         goto_invalid,
         goto_invalid,
-        goto_tokenassign_s21,
+        goto_tokenassign_s22,
+        goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
@@ -651,7 +721,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         [Some((TK::TokenId, false)), None, None],
         [Some((TK::TokenId, false)), None, None],
         [Some((TK::STOP, false)), None, None],
-        [Some((TK::TokenColon, false)), None, None],
+        [Some((TK::TokenColon, false)), Some((TK::TokenComma, false)), None],
         [Some((TK::TokenCBClose, false)), None, None],
         [Some((TK::TokenId, false)), Some((TK::TokenCBClose, false)), None],
         [Some((TK::TokenAssign, false)), None, None],
@@ -664,6 +734,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenString, false)),
         ],
         [Some((TK::TokenId, false)), None, None],
+        [Some((TK::TokenId, false)), None, None],
         [Some((TK::TokenCBClose, false)), None, None],
         [
             Some((TK::TokenIntLiteral, false)),
@@ -671,6 +742,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenStringLiteral, false)),
         ],
         [Some((TK::TokenCBClose, false)), None, None],
+        [Some((TK::TokenId, false)), Some((TK::TokenCBClose, false)), None],
         [Some((TK::TokenId, false)), Some((TK::TokenCBClose, false)), None],
         [Some((TK::TokenId, false)), Some((TK::TokenCBClose, false)), None],
         [Some((TK::TokenId, false)), Some((TK::TokenCBClose, false)), None],
@@ -842,6 +914,9 @@ for DefaultBuilder {
             TokenKind::TokenInit => {
                 Terminal::TokenInit(grammar_actions::token_init(context, token))
             }
+            TokenKind::TokenComma => {
+                Terminal::TokenComma(grammar_actions::token_comma(context, token))
+            }
             _ => panic!("Shift of unreachable terminal!"),
         };
         self.res_stack.push(Symbol::Terminal(val));
@@ -853,7 +928,7 @@ for DefaultBuilder {
         prod_len: usize,
     ) {
         let prod = match prod {
-            ProdKind::ProgramP1 => {
+            ProdKind::ProgramProgram => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 6usize)
@@ -875,13 +950,21 @@ for DefaultBuilder {
                         Symbol::Terminal(Terminal::TokenCBClose(p5)),
                     ) => {
                         NonTerminal::Program(
-                            grammar_actions::program_c1(context, p0, p1, p2, p3, p4, p5),
+                            grammar_actions::program_program(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                                p3,
+                                p4,
+                                p5,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::BodyP1 => {
+            ProdKind::BodyBody => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 3usize)
@@ -891,11 +974,15 @@ for DefaultBuilder {
                         Symbol::Terminal(Terminal::TokenInit(p0)),
                         Symbol::NonTerminal(NonTerminal::InitBody(p1)),
                         Symbol::NonTerminal(NonTerminal::Expressions(p2)),
-                    ) => NonTerminal::Body(grammar_actions::body_c1(context, p0, p1, p2)),
+                    ) => {
+                        NonTerminal::Body(
+                            grammar_actions::body_body(context, p0, p1, p2),
+                        )
+                    }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::InitBodyP1 => {
+            ProdKind::InitBodyInitBody => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 3usize)
@@ -907,13 +994,13 @@ for DefaultBuilder {
                         Symbol::Terminal(Terminal::TokenCBClose(p2)),
                     ) => {
                         NonTerminal::InitBody(
-                            grammar_actions::init_body_c1(context, p0, p1, p2),
+                            grammar_actions::init_body_init_body(context, p0, p1, p2),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::VarDeclarationsP1 => {
+            ProdKind::VarDeclarationsVarDeclarationsSingle => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -921,7 +1008,7 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::NonTerminal(NonTerminal::VarDeclaration(p0)) => {
                         NonTerminal::VarDeclarations(
-                            grammar_actions::var_declarations_var_declaration(
+                            grammar_actions::var_declarations_var_declarations_single(
                                 context,
                                 p0,
                             ),
@@ -930,7 +1017,7 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::VarDeclarationsP2 => {
+            ProdKind::VarDeclarationsVarDeclarationsRecursive => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 2usize)
@@ -941,13 +1028,17 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::VarDeclarations(p1)),
                     ) => {
                         NonTerminal::VarDeclarations(
-                            grammar_actions::var_declarations_c2(context, p0, p1),
+                            grammar_actions::var_declarations_var_declarations_recursive(
+                                context,
+                                p0,
+                                p1,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::VarDeclarationP1 => {
+            ProdKind::VarDeclarationVarDeclarationSingle => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 3usize)
@@ -959,13 +1050,41 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::Data_Type(p2)),
                     ) => {
                         NonTerminal::VarDeclaration(
-                            grammar_actions::var_declaration_c1(context, p0, p1, p2),
+                            grammar_actions::var_declaration_var_declaration_single(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::ExpressionsP1 => {
+            ProdKind::VarDeclarationVarDeclarationRecursive => {
+                let mut i = self
+                    .res_stack
+                    .split_off(self.res_stack.len() - 3usize)
+                    .into_iter();
+                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                    (
+                        Symbol::Terminal(Terminal::TokenId(p0)),
+                        Symbol::Terminal(Terminal::TokenComma(p1)),
+                        Symbol::NonTerminal(NonTerminal::VarDeclaration(p2)),
+                    ) => {
+                        NonTerminal::VarDeclaration(
+                            grammar_actions::var_declaration_var_declaration_recursive(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                            ),
+                        )
+                    }
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::ExpressionsExpressionSingle => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -973,13 +1092,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::NonTerminal(NonTerminal::Expression(p0)) => {
                         NonTerminal::Expressions(
-                            grammar_actions::expressions_expression(context, p0),
+                            grammar_actions::expressions_expression_single(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::ExpressionsP2 => {
+            ProdKind::ExpressionsExpressionRecursive => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 2usize)
@@ -990,13 +1109,17 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::Expressions(p1)),
                     ) => {
                         NonTerminal::Expressions(
-                            grammar_actions::expressions_c2(context, p0, p1),
+                            grammar_actions::expressions_expression_recursive(
+                                context,
+                                p0,
+                                p1,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::ExpressionP1 => {
+            ProdKind::ExpressionExpressionAssignment => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1004,13 +1127,16 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::NonTerminal(NonTerminal::Assignment(p0)) => {
                         NonTerminal::Expression(
-                            grammar_actions::expression_assignment(context, p0),
+                            grammar_actions::expression_expression_assignment(
+                                context,
+                                p0,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::AssignmentP1 => {
+            ProdKind::AssignmentAssignment => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 3usize)
@@ -1022,13 +1148,13 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::Literal(p2)),
                     ) => {
                         NonTerminal::Assignment(
-                            grammar_actions::assignment_c1(context, p0, p1, p2),
+                            grammar_actions::assignment_assignment(context, p0, p1, p2),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::LiteralP1 => {
+            ProdKind::LiteralIntegerLiteral => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1036,13 +1162,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenIntLiteral(p0)) => {
                         NonTerminal::Literal(
-                            grammar_actions::literal_token_int_literal(context, p0),
+                            grammar_actions::literal_integer_literal(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::LiteralP2 => {
+            ProdKind::LiteralFloatLiteral => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1050,13 +1176,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenFloatLiteral(p0)) => {
                         NonTerminal::Literal(
-                            grammar_actions::literal_token_float_literal(context, p0),
+                            grammar_actions::literal_float_literal(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::LiteralP3 => {
+            ProdKind::LiteralStringLiteral => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1064,13 +1190,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenStringLiteral(p0)) => {
                         NonTerminal::Literal(
-                            grammar_actions::literal_token_string_literal(context, p0),
+                            grammar_actions::literal_string_literal(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeP1 => {
+            ProdKind::Data_TypeIntType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1078,13 +1204,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenInt(p0)) => {
                         NonTerminal::Data_Type(
-                            grammar_actions::data_type_token_int(context, p0),
+                            grammar_actions::data_type_int_type(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeP2 => {
+            ProdKind::Data_TypeFloatType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1092,13 +1218,13 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenFloat(p0)) => {
                         NonTerminal::Data_Type(
-                            grammar_actions::data_type_token_float(context, p0),
+                            grammar_actions::data_type_float_type(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeP3 => {
+            ProdKind::Data_TypeStringType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
@@ -1106,7 +1232,7 @@ for DefaultBuilder {
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenString(p0)) => {
                         NonTerminal::Data_Type(
-                            grammar_actions::data_type_token_string(context, p0),
+                            grammar_actions::data_type_string_type(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
