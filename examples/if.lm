@@ -8,10 +8,10 @@ main(){
 
     if (a > b)
     {
-        write("a es mas grande que b")
+        write("aaaaaaaaaaaaaab")
     }
     else
     {
-        write("a es mas chico o igual a b")
+        write("a es b")
     }
 }

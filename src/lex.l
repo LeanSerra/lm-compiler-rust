@@ -5,6 +5,7 @@ use crate::grammar::TokenKind;
 %result_type TokenKind
 
 
+"#+"((.+)|(.+\n))+"+#"
 "int"                                                           return Ok(TokenKind::TokenInt);
 "float"                                                         return Ok(TokenKind::TokenFloat);
 "string"                                                        return Ok(TokenKind::TokenString);
@@ -17,6 +18,8 @@ use crate::grammar::TokenKind;
 "and"                                                           return Ok(TokenKind::TokenAnd);
 "or"                                                            return Ok(TokenKind::TokenOr);
 "not"                                                           return Ok(TokenKind::TokenNot);
+"read"                                                          return Ok(TokenKind::TokenRead);
+"write"                                                         return Ok(TokenKind::TokenWrite);
 ("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
 ("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
@@ -43,6 +46,5 @@ use crate::grammar::TokenKind;
 (\r\n|\r|\n)
 (\n\t)
 (\t)
-"#+"([^\n]|\n)*"+#"
 
 %%

@@ -8,7 +8,7 @@ main(){
 
     while (a > b)
     {
-        write("a es mas grande que b")
+        write("a es mas que b")
         a := a + 1
     }
 }

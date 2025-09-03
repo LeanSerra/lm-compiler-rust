@@ -7,8 +7,8 @@ main(){
     b := 1
     c := 2
 
-    if (NOT a > b)
+    if (not a > b)
     {
-        write("a no es mas grande que b")
+        write("a b")
     }
 }

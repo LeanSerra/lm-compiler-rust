@@ -138,6 +138,14 @@ pub type TokenNot = String;
 pub fn token_not(_ctx: &Ctx, token: Token) -> TokenNot {
     token.value.into()
 }
+pub type TokenRead = String;
+pub fn token_read(_ctx: &Ctx, token: Token) -> TokenRead {
+    token.value.into()
+}
+pub type TokenWrite = String;
+pub fn token_write(_ctx: &Ctx, token: Token) -> TokenWrite {
+    token.value.into()
+}
 #[derive(Debug, Clone)]
 pub struct Program {
     pub token_id: TokenId,
@@ -225,6 +233,48 @@ pub fn init_body_init_body(
     }
 }
 #[derive(Debug, Clone)]
+pub struct FunctionRead {
+    pub token_read: TokenRead,
+    pub token_par_open: TokenParOpen,
+    pub token_id: TokenId,
+    pub token_par_close: TokenParClose,
+}
+pub fn function_read_function_read_call(
+    _ctx: &Ctx,
+    token_read: TokenRead,
+    token_par_open: TokenParOpen,
+    token_id: TokenId,
+    token_par_close: TokenParClose,
+) -> FunctionRead {
+    FunctionRead {
+        token_read,
+        token_par_open,
+        token_id,
+        token_par_close,
+    }
+}
+#[derive(Debug, Clone)]
+pub struct FunctionWrite {
+    pub token_write: TokenWrite,
+    pub token_par_open: TokenParOpen,
+    pub simple_expression: SimpleExpression,
+    pub token_par_close: TokenParClose,
+}
+pub fn function_write_function_write_call(
+    _ctx: &Ctx,
+    token_write: TokenWrite,
+    token_par_open: TokenParOpen,
+    simple_expression: SimpleExpression,
+    token_par_close: TokenParClose,
+) -> FunctionWrite {
+    FunctionWrite {
+        token_write,
+        token_par_open,
+        simple_expression,
+        token_par_close,
+    }
+}
+#[derive(Debug, Clone)]
 pub struct VarDeclarationsRecursive {
     pub var_declaration: VarDeclaration,
     pub var_declarations: Box<VarDeclarations>,
@@ -266,6 +316,7 @@ pub struct VarDeclarationRecursive {
 pub enum VarDeclaration {
     VarDeclarationSingle(VarDeclarationSingle),
     VarDeclarationRecursive(VarDeclarationRecursive),
+    VarDeclarationRead(FunctionRead),
 }
 pub fn var_declaration_var_declaration_single(
     _ctx: &Ctx,
@@ -290,6 +341,12 @@ pub fn var_declaration_var_declaration_recursive(
         token_comma,
         var_declaration: Box::new(var_declaration),
     })
+}
+pub fn var_declaration_var_declaration_read(
+    _ctx: &Ctx,
+    function_read: FunctionRead,
+) -> VarDeclaration {
+    VarDeclaration::VarDeclarationRead(function_read)
 }
 #[derive(Debug, Clone)]
 pub struct ExpressionRecursive {
@@ -320,6 +377,7 @@ pub enum Statement {
     StatementIfStatement(Si),
     StatementElseStatement(Sino),
     StatementWhile(WhileLoop),
+    StatementWrite(FunctionWrite),
 }
 pub fn statement_statement_assignment(_ctx: &Ctx, assignment: Assignment) -> Statement {
     Statement::StatementAssignment(assignment)
@@ -332,6 +390,12 @@ pub fn statement_statement_else_statement(_ctx: &Ctx, sino: Sino) -> Statement {
 }
 pub fn statement_statement_while(_ctx: &Ctx, while_loop: WhileLoop) -> Statement {
     Statement::StatementWhile(while_loop)
+}
+pub fn statement_statement_write(
+    _ctx: &Ctx,
+    function_write: FunctionWrite,
+) -> Statement {
+    Statement::StatementWrite(function_write)
 }
 #[derive(Debug, Clone)]
 pub struct Assignment {

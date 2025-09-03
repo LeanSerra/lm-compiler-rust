@@ -7,11 +7,16 @@ Body: TokenInit InitBody Expressions {BodyInitExpressions}
 
 InitBody: TokenCBOpen VarDeclarations TokenCBClose {InitBody};
 
+FunctionRead: TokenRead TokenParOpen TokenId TokenParClose {FunctionReadCall};
+
+FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionWriteCall};
+
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
 
 VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
- | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
+ | TokenId TokenComma VarDeclaration {VarDeclarationRecursive}
+ | FunctionRead {VarDeclarationRead};
 
 Expressions: Statement {ExpressionSingle}
  | Statement Expressions {ExpressionRecursive};
@@ -19,7 +24,8 @@ Expressions: Statement {ExpressionSingle}
 Statement: Assignment {StatementAssignment}
  | Si {StatementIfStatement}
  | Sino {StatementElseStatement}
- | WhileLoop {StatementWhile};
+ | WhileLoop {StatementWhile}
+ | FunctionWrite {StatementWrite};
 
 Assignment: TokenId TokenAssign SimpleExpression {Assignment};
 
@@ -112,3 +118,5 @@ TokenComma:;
 TokenAnd:;
 TokenOr:;
 TokenNot:;
+TokenRead:;
+TokenWrite:;

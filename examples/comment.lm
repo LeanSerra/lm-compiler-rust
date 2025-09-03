@@ -1,3 +1,10 @@
 main(){
-    #+ Esto es un comentario +#
+    init {
+        a : int
+    }
+    
+    #+ Esto es 
+    un comentario +#
+
+    a := 1
 }
