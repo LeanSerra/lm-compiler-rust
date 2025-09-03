@@ -91,7 +91,6 @@ pub fn open_symbol_table_file() -> Result<(), io::Error> {
     })
 }
 
-#[allow(unused)]
 pub fn write_to_symbol_table_file(line: &str) -> Result<(), io::Error> {
     SYMBOL_TABLE_FILE.with(|f| {
         if let Some(mut file) = f.borrow_mut().as_ref() {

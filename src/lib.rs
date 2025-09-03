@@ -13,7 +13,12 @@ mod grammar;
 #[allow(clippy::all)]
 #[allow(warnings)]
 mod grammar_actions;
+mod context;
 mod grammar_lexer;
 
+pub use context::{
+    CompilerError, open_lexer_file, open_parser_file, open_symbol_table_file,
+    read_source_to_string, set_source_file_path,
+};
 pub use grammar::GrammarParser;
 pub use grammar_lexer::LexerAdapter;
