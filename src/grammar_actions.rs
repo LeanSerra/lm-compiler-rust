@@ -352,30 +352,6 @@ pub fn assignment_assignment(
     }
 }
 #[derive(Debug, Clone)]
-pub enum Literal {
-    IntegerLiteral(TokenIntLiteral),
-    FloatLiteral(TokenFloatLiteral),
-    StringLiteral(TokenStringLiteral),
-}
-pub fn literal_integer_literal(
-    _ctx: &Ctx,
-    token_int_literal: TokenIntLiteral,
-) -> Literal {
-    Literal::IntegerLiteral(token_int_literal)
-}
-pub fn literal_float_literal(
-    _ctx: &Ctx,
-    token_float_literal: TokenFloatLiteral,
-) -> Literal {
-    Literal::FloatLiteral(token_float_literal)
-}
-pub fn literal_string_literal(
-    _ctx: &Ctx,
-    token_string_literal: TokenStringLiteral,
-) -> Literal {
-    Literal::StringLiteral(token_string_literal)
-}
-#[derive(Debug, Clone)]
 pub enum Data_Type {
     IntType(TokenInt),
     FloatType(TokenFloat),
@@ -561,27 +537,17 @@ pub fn boolean_expression_chain_boolean_expression_chain_empty(
 }
 #[derive(Debug, Clone)]
 pub enum SimpleExpression {
-    SimpleExpressionArithmetic(ArithmeticOperation),
-    SimpleExpressionTokenId(TokenId),
-    SimpleExpressionLiteral(Literal),
+    SimpleExpressionE(E),
+    SimpleExpressionString(TokenStringLiteral),
 }
-pub fn simple_expression_simple_expression_arithmetic(
-    _ctx: &Ctx,
-    arithmetic_operation: ArithmeticOperation,
-) -> SimpleExpression {
-    SimpleExpression::SimpleExpressionArithmetic(arithmetic_operation)
+pub fn simple_expression_simple_expression_e(_ctx: &Ctx, e: E) -> SimpleExpression {
+    SimpleExpression::SimpleExpressionE(e)
 }
-pub fn simple_expression_simple_expression_token_id(
+pub fn simple_expression_simple_expression_string(
     _ctx: &Ctx,
-    token_id: TokenId,
+    token_string_literal: TokenStringLiteral,
 ) -> SimpleExpression {
-    SimpleExpression::SimpleExpressionTokenId(token_id)
-}
-pub fn simple_expression_simple_expression_literal(
-    _ctx: &Ctx,
-    literal: Literal,
-) -> SimpleExpression {
-    SimpleExpression::SimpleExpressionLiteral(literal)
+    SimpleExpression::SimpleExpressionString(token_string_literal)
 }
 #[derive(Debug, Clone)]
 pub enum Conjunction {
@@ -640,85 +606,6 @@ pub fn comparison_op_comparison_op_greater_equal(
     ComparisonOp::ComparisonOpGreaterEqual(token_greater_equal)
 }
 #[derive(Debug, Clone)]
-pub struct ArithmeticOperationIdId {
-    pub token_id_1: TokenId,
-    pub arithmetic_operator: ArithmeticOperator,
-    pub token_id_3: TokenId,
-}
-#[derive(Debug, Clone)]
-pub struct ArithmeticOperationIdNumber {
-    pub token_id: TokenId,
-    pub arithmetic_operator: ArithmeticOperator,
-    pub number: Number,
-}
-#[derive(Debug, Clone)]
-pub struct ArithmeticOperationNumberId {
-    pub number: Number,
-    pub arithmetic_operator: ArithmeticOperator,
-    pub token_id: TokenId,
-}
-#[derive(Debug, Clone)]
-pub struct ArithmeticOperationNumberNumber {
-    pub number_1: Number,
-    pub arithmetic_operator: ArithmeticOperator,
-    pub number_3: Number,
-}
-#[derive(Debug, Clone)]
-pub enum ArithmeticOperation {
-    ArithmeticOperationIdId(ArithmeticOperationIdId),
-    ArithmeticOperationIdNumber(ArithmeticOperationIdNumber),
-    ArithmeticOperationNumberId(ArithmeticOperationNumberId),
-    ArithmeticOperationNumberNumber(ArithmeticOperationNumberNumber),
-}
-pub fn arithmetic_operation_arithmetic_operation_id_id(
-    _ctx: &Ctx,
-    token_id_1: TokenId,
-    arithmetic_operator: ArithmeticOperator,
-    token_id_3: TokenId,
-) -> ArithmeticOperation {
-    ArithmeticOperation::ArithmeticOperationIdId(ArithmeticOperationIdId {
-        token_id_1,
-        arithmetic_operator,
-        token_id_3,
-    })
-}
-pub fn arithmetic_operation_arithmetic_operation_id_number(
-    _ctx: &Ctx,
-    token_id: TokenId,
-    arithmetic_operator: ArithmeticOperator,
-    number: Number,
-) -> ArithmeticOperation {
-    ArithmeticOperation::ArithmeticOperationIdNumber(ArithmeticOperationIdNumber {
-        token_id,
-        arithmetic_operator,
-        number,
-    })
-}
-pub fn arithmetic_operation_arithmetic_operation_number_id(
-    _ctx: &Ctx,
-    number: Number,
-    arithmetic_operator: ArithmeticOperator,
-    token_id: TokenId,
-) -> ArithmeticOperation {
-    ArithmeticOperation::ArithmeticOperationNumberId(ArithmeticOperationNumberId {
-        number,
-        arithmetic_operator,
-        token_id,
-    })
-}
-pub fn arithmetic_operation_arithmetic_operation_number_number(
-    _ctx: &Ctx,
-    number_1: Number,
-    arithmetic_operator: ArithmeticOperator,
-    number_3: Number,
-) -> ArithmeticOperation {
-    ArithmeticOperation::ArithmeticOperationNumberNumber(ArithmeticOperationNumberNumber {
-        number_1,
-        arithmetic_operator,
-        number_3,
-    })
-}
-#[derive(Debug, Clone)]
 pub enum Number {
     NumberInt(TokenIntLiteral),
     NumberFloat(TokenFloatLiteral),
@@ -731,37 +618,6 @@ pub fn number_number_float(
     token_float_literal: TokenFloatLiteral,
 ) -> Number {
     Number::NumberFloat(token_float_literal)
-}
-#[derive(Debug, Clone)]
-pub enum ArithmeticOperator {
-    ArithmeticOperatorSum(TokenSum),
-    ArithmeticOperatorMul(TokenMul),
-    ArithmeticOperatorSub(TokenSub),
-    ArithmeticOperatorDiv(TokenDiv),
-}
-pub fn arithmetic_operator_arithmetic_operator_sum(
-    _ctx: &Ctx,
-    token_sum: TokenSum,
-) -> ArithmeticOperator {
-    ArithmeticOperator::ArithmeticOperatorSum(token_sum)
-}
-pub fn arithmetic_operator_arithmetic_operator_mul(
-    _ctx: &Ctx,
-    token_mul: TokenMul,
-) -> ArithmeticOperator {
-    ArithmeticOperator::ArithmeticOperatorMul(token_mul)
-}
-pub fn arithmetic_operator_arithmetic_operator_sub(
-    _ctx: &Ctx,
-    token_sub: TokenSub,
-) -> ArithmeticOperator {
-    ArithmeticOperator::ArithmeticOperatorSub(token_sub)
-}
-pub fn arithmetic_operator_arithmetic_operator_div(
-    _ctx: &Ctx,
-    token_div: TokenDiv,
-) -> ArithmeticOperator {
-    ArithmeticOperator::ArithmeticOperatorDiv(token_div)
 }
 #[derive(Debug, Clone)]
 pub struct NotStatement {
@@ -777,4 +633,104 @@ pub fn not_statement_not(
         token_not,
         boolean_expression: Box::new(boolean_expression),
     }
+}
+#[derive(Debug, Clone)]
+pub struct ESumT {
+    pub e: Box<E>,
+    pub token_sum: TokenSum,
+    pub t: T,
+}
+#[derive(Debug, Clone)]
+pub struct ESubT {
+    pub e: Box<E>,
+    pub token_sub: TokenSub,
+    pub t: T,
+}
+#[derive(Debug, Clone)]
+pub enum E {
+    ESumT(ESumT),
+    ESubT(ESubT),
+    ET(T),
+}
+pub fn e_esum_t(_ctx: &Ctx, e: E, token_sum: TokenSum, t: T) -> E {
+    E::ESumT(ESumT {
+        e: Box::new(e),
+        token_sum,
+        t,
+    })
+}
+pub fn e_esub_t(_ctx: &Ctx, e: E, token_sub: TokenSub, t: T) -> E {
+    E::ESubT(ESubT {
+        e: Box::new(e),
+        token_sub,
+        t,
+    })
+}
+pub fn e_et(_ctx: &Ctx, t: T) -> E {
+    E::ET(t)
+}
+#[derive(Debug, Clone)]
+pub struct TMulF {
+    pub t: Box<T>,
+    pub token_mul: TokenMul,
+    pub f: F,
+}
+#[derive(Debug, Clone)]
+pub struct TDivF {
+    pub t: Box<T>,
+    pub token_div: TokenDiv,
+    pub f: F,
+}
+#[derive(Debug, Clone)]
+pub enum T {
+    TMulF(TMulF),
+    TDivF(TDivF),
+    TF(F),
+}
+pub fn t_tmul_f(_ctx: &Ctx, t: T, token_mul: TokenMul, f: F) -> T {
+    T::TMulF(TMulF {
+        t: Box::new(t),
+        token_mul,
+        f,
+    })
+}
+pub fn t_tdiv_f(_ctx: &Ctx, t: T, token_div: TokenDiv, f: F) -> T {
+    T::TDivF(TDivF {
+        t: Box::new(t),
+        token_div,
+        f,
+    })
+}
+pub fn t_tf(_ctx: &Ctx, f: F) -> T {
+    T::TF(f)
+}
+#[derive(Debug, Clone)]
+pub struct FParen {
+    pub token_par_open: TokenParOpen,
+    pub e: Box<E>,
+    pub token_par_close: TokenParClose,
+}
+#[derive(Debug, Clone)]
+pub enum F {
+    FId(TokenId),
+    FNumber(Number),
+    FParen(FParen),
+}
+pub fn f_fid(_ctx: &Ctx, token_id: TokenId) -> F {
+    F::FId(token_id)
+}
+pub fn f_fnumber(_ctx: &Ctx, number: Number) -> F {
+    F::FNumber(number)
+}
+pub fn f_fparen(
+    _ctx: &Ctx,
+    token_par_open: TokenParOpen,
+    e: E,
+    token_par_close: TokenParClose,
+) -> F {
+    F::FParen(FParen {
+        token_par_open,
+        e: Box::new(e),
+        token_par_close,
+    })
 }

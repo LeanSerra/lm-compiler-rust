@@ -46,9 +46,8 @@ BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSim
  BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
  | EMPTY {BooleanExpressionChainEmpty};
 
-SimpleExpression: ArithmeticOperation {SimpleExpressionArithmetic}
- | TokenId {SimpleExpressionTokenId}
- | Literal {SimpleExpressionLiteral};
+SimpleExpression: E {SimpleExpressionE}
+ | TokenStringLiteral {SimpleExpressionString};
 
 Conjunction: TokenAnd {ConjunctionAnd}
  | TokenOr {ConjunctionOr};
@@ -60,20 +59,22 @@ ComparisonOp: TokenEqual {ComparisonOpEqual}
  | TokenGreater {ComparisonOpGreater}
  | TokenGreaterEqual {ComparisonOpGreaterEqual};
 
-ArithmeticOperation: TokenId ArithmeticOperator TokenId {ArithmeticOperationIdId}
- | TokenId ArithmeticOperator Number {ArithmeticOperationIdNumber}
- | Number ArithmeticOperator TokenId {ArithmeticOperationNumberId}
- | Number ArithmeticOperator Number {ArithmeticOperationNumberNumber};
-
 Number: TokenIntLiteral {NumberInt}
  | TokenFloatLiteral {NumberFloat};
 
-ArithmeticOperator: TokenSum {ArithmeticOperatorSum}
- | TokenMul {ArithmeticOperatorMul}
- | TokenSub {ArithmeticOperatorSub}
- | TokenDiv {ArithmeticOperatorDiv};
-
 NotStatement: TokenNot BooleanExpression {Not};
+
+E: E TokenSum T {ESumT}
+| E TokenSub T {ESubT}
+| T {ET};
+
+T: T TokenMul F {TMulF}
+| T TokenDiv F {TDivF}
+| F {TF};
+
+F: TokenId {FId}
+| Number {FNumber}
+| TokenParOpen E TokenParClose {FParen};
 
 terminals
 
