@@ -9,6 +9,14 @@ use crate::grammar::TokenKind;
 "float"                                                         return Ok(TokenKind::TokenFloat);
 "string"                                                        return Ok(TokenKind::TokenString);
 "init"                                                          return Ok(TokenKind::TokenInit);
+"while"                                                         return Ok(TokenKind::TokenWhile);
+"true"                                                          return Ok(TokenKind::TokenTrue);
+"false"                                                         return Ok(TokenKind::TokenFalse);
+"if"                                                            return Ok(TokenKind::TokenIf);
+"else"                                                          return Ok(TokenKind::TokenElse);
+"and"                                                           return Ok(TokenKind::TokenAnd);
+"or"                                                            return Ok(TokenKind::TokenOr);
+"not"                                                           return Ok(TokenKind::TokenNot);
 ("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
 ("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
@@ -25,20 +33,12 @@ use crate::grammar::TokenKind;
 ";"                                                             return Ok(TokenKind::TokenSemicolon);
 ","                                                             return Ok(TokenKind::TokenComma);
 ":"                                                             return Ok(TokenKind::TokenColon);
-"while"                                                         return Ok(TokenKind::TokenWhile);
 "=="                                                            return Ok(TokenKind::TokenEqual);
 "!="                                                            return Ok(TokenKind::TokenNotEqual);
 "<"                                                             return Ok(TokenKind::TokenLess);
 "<="                                                            return Ok(TokenKind::TokenLessEqual);
 ">"                                                             return Ok(TokenKind::TokenGreater);
 ">="                                                            return Ok(TokenKind::TokenGreaterEqual);
-"true"                                                          return Ok(TokenKind::TokenTrue);
-"false"                                                         return Ok(TokenKind::TokenFalse);
-"if"                                                            return Ok(TokenKind::TokenIf);
-"else"                                                          return Ok(TokenKind::TokenElse);
-"and"                                                           return Ok(TokenKind::TokenAnd);
-"or"                                                            return Ok(TokenKind::TokenOr);
-"not"                                                           return Ok(TokenKind::TokenNot);
 " "
 (\r\n|\r|\n)
 (\n\t)

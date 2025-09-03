@@ -13,12 +13,15 @@ VarDeclarations: VarDeclaration {VarDeclarationsSingle}
 VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
  | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
 
-Expressions: Expression {ExpressionSingle}
- | Expression Expressions {ExpressionRecursive};
+Expressions: Statement {ExpressionSingle}
+ | Statement Expressions {ExpressionRecursive};
 
-Expression: Assignment {ExpressionAssignment};
+Statement: Assignment {StatementAssignment}
+ | Si {StatementIfStatement}
+ | Sino {StatementElseStatement}
+ | WhileLoop {StatementWhile};
 
-Assignment: TokenId TokenAssign Literal {Assignment};
+Assignment: TokenId TokenAssign SimpleExpression {Assignment};
 
 Literal: TokenIntLiteral {IntegerLiteral}
  | TokenFloatLiteral {FloatLiteral}
@@ -28,12 +31,24 @@ Data_Type: TokenInt {IntType}
  | TokenFloat {FloatType}
  | TokenString {StringType};
 
-WhileLoop: TokenWhile TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose {While};
+WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {While};
 
-Condition: Expression ComparisonOp Expression {ConditionSingle}
- | TokenTrue {ConditionTrue}
- | TokenFalse {ConditionFalse}
- | Expression ComparisonOp Expression Conjunction Condition {ConditionRecursive};
+Si: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
+
+Sino: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
+
+BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSimpleExpression}
+ | TokenTrue {BooleanExpressionTrue}
+ | TokenFalse {BooleanExpressionFalse}
+ | SimpleExpression BooleanExpressionChain Conjunction BooleanExpression {BooleanExpressionSimpleExpressionRecursive}
+ | NotStatement {BooleanExpressionNotStatement};
+
+ BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
+ | EMPTY {BooleanExpressionChainEmpty};
+
+SimpleExpression: ArithmeticOperation {SimpleExpressionArithmetic}
+ | TokenId {SimpleExpressionTokenId}
+ | Literal {SimpleExpressionLiteral};
 
 Conjunction: TokenAnd {ConjunctionAnd}
  | TokenOr {ConjunctionOr};
@@ -44,10 +59,6 @@ ComparisonOp: TokenEqual {ComparisonOpEqual}
  | TokenLessEqual {ComparisonOpLessEqual}
  | TokenGreater {ComparisonOpGreater}
  | TokenGreaterEqual {ComparisonOpGreaterEqual};
-
-If: TokenIf TokenParOpen Condition TokenParClose TokenCBOpen Body TokenCBClose {If};
-
-Else: TokenElse TokenCBOpen Body TokenCBClose {Else};
 
 ArithmeticOperation: TokenId ArithmeticOperator TokenId {ArithmeticOperationIdId}
  | TokenId ArithmeticOperator Number {ArithmeticOperationIdNumber}
@@ -62,7 +73,7 @@ ArithmeticOperator: TokenSum {ArithmeticOperatorSum}
  | TokenSub {ArithmeticOperatorSub}
  | TokenDiv {ArithmeticOperatorDiv};
 
-Not: TokenNot Condition {Not};
+NotStatement: TokenNot BooleanExpression {Not};
 
 terminals
 
