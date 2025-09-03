@@ -12,3 +12,11 @@ thiserror = "2.0.16"
 failure = "0.1.8"
 rflex = "0.9.0"
 rustemo-compiler = "0.7.1"
+
+[dev-dependencies]
+datatest-stable = "0.3.2"
+
+[[test]]
+name = "integration-test"
+path = "src/tests/run.rs"
+harness = false

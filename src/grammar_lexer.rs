@@ -7,6 +7,7 @@ use std::iter;
 pub type Input = str;
 pub type Ctx<'i> = LRContext<'i, Input, State, TokenKind>;
 
+#[derive(Default)]
 pub struct LexerAdapter();
 
 impl LexerAdapter {
