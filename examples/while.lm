@@ -8,7 +8,7 @@ main(){
 
     while (a > b)
     {
-        write("a es mas que b")
+        write("qwertyuiopasdfghjklzxcvbnm")
         a := a + 1
     }
 }

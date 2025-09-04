@@ -5,7 +5,7 @@ use crate::grammar::TokenKind;
 %result_type TokenKind
 
 
-"#+"((.+)|(.+\n))+"+#"
+#\+(.|\n)*\+#
 "int"                                                           return Ok(TokenKind::TokenInt);
 "float"                                                         return Ok(TokenKind::TokenFloat);
 "string"                                                        return Ok(TokenKind::TokenString);
@@ -20,10 +20,12 @@ use crate::grammar::TokenKind;
 "not"                                                           return Ok(TokenKind::TokenNot);
 "read"                                                          return Ok(TokenKind::TokenRead);
 "write"                                                         return Ok(TokenKind::TokenWrite);
+"isZero"                                                        return Ok(TokenKind::TokenIsZero);
+"convDate"                                                      return Ok(TokenKind::TokenConvDate);
 ("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
 ("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
-\"[^\n"]*\"                                                     return Ok(TokenKind::TokenStringLiteral);
+\"([^\"\\#]|\\.)*\"                                             return Ok(TokenKind::TokenStringLiteral);
 ":="                                                            return Ok(TokenKind::TokenAssign);
 "+"                                                             return Ok(TokenKind::TokenSum);
 "*"                                                             return Ok(TokenKind::TokenMul);

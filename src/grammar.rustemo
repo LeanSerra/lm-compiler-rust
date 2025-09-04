@@ -11,6 +11,10 @@ FunctionRead: TokenRead TokenParOpen TokenId TokenParClose {FunctionReadCall};
 
 FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionWriteCall};
 
+FunctionIsZero: TokenIsZero TokenParOpen E TokenParClose {FunctionIsZeroCall};
+
+FunctionConvDate: TokenConvDate TokenParOpen IntegerToken TokenComma IntegerToken TokenComma IntegerToken TokenParClose {FunctionConvDateVariableCall};
+
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
 
@@ -25,7 +29,8 @@ Statement: Assignment {StatementAssignment}
  | Si {StatementIfStatement}
  | Sino {StatementElseStatement}
  | WhileLoop {StatementWhile}
- | FunctionWrite {StatementWrite};
+ | FunctionWrite {StatementWrite}
+ | FunctionConvDate {StatementConvDate};
 
 Assignment: TokenId TokenAssign SimpleExpression {Assignment};
 
@@ -47,7 +52,8 @@ BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSim
  | TokenTrue {BooleanExpressionTrue}
  | TokenFalse {BooleanExpressionFalse}
  | SimpleExpression BooleanExpressionChain Conjunction BooleanExpression {BooleanExpressionSimpleExpressionRecursive}
- | NotStatement {BooleanExpressionNotStatement};
+ | NotStatement {BooleanExpressionNotStatement}
+ | FunctionIsZero {BooleanExpressionIsZero};
 
  BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
  | EMPTY {BooleanExpressionChainEmpty};
@@ -81,6 +87,9 @@ T: T TokenMul F {TMulF}
 F: TokenId {FId}
 | Number {FNumber}
 | TokenParOpen E TokenParClose {FParen};
+
+IntegerToken: TokenIntLiteral {IntTokenIntLiteral} 
+| TokenId {IntTokenId};
 
 terminals
 
@@ -120,3 +129,5 @@ TokenOr:;
 TokenNot:;
 TokenRead:;
 TokenWrite:;
+TokenIsZero:;
+TokenConvDate:;

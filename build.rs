@@ -8,7 +8,7 @@ fn main() {
     let parser_rules = root_dir.join("src/grammar.rustemo");
 
     if let Err(e) = Settings::new()
-        .force(true) // Don't force regeneration of files grammar.rs and grammar_actions.rs
+        .force(false) // Don't force regeneration of files grammar.rs and grammar_actions.rs
         .out_dir_actions_root(root_dir.clone()) // Output directory for generated actions
         .out_dir_root(root_dir.clone()) // Output directory for generated parser
         .lexer_type(LexerType::Custom) // Use our own Lexer
