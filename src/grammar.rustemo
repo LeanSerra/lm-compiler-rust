@@ -11,7 +11,7 @@ FunctionRead: TokenRead TokenParOpen TokenId TokenParClose {FunctionReadCall};
 
 FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionWriteCall};
 
-FunctionIsZero: TokenIsZero TokenParOpen E TokenParClose {FunctionIsZeroCall};
+FunctionIsZero: TokenIsZero TokenParOpen ArithmeticExpression TokenParClose {FunctionIsZeroCall};
 
 FunctionConvDate: TokenConvDate TokenParOpen IntegerToken TokenComma IntegerToken TokenComma IntegerToken TokenParClose {FunctionConvDateVariableCall};
 
@@ -58,7 +58,7 @@ BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSim
  BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
  | EMPTY {BooleanExpressionChainEmpty};
 
-SimpleExpression: E {SimpleExpressionE}
+SimpleExpression: ArithmeticExpression {SimpleExpressionArithmetic}
  | TokenStringLiteral {SimpleExpressionString};
 
 Conjunction: TokenAnd {ConjunctionAnd}
@@ -76,17 +76,17 @@ Number: TokenIntLiteral {NumberInt}
 
 NotStatement: TokenNot BooleanExpression {Not};
 
-E: E TokenSum T {ESumT}
-| E TokenSub T {ESubT}
-| T {ET};
+ArithmeticExpression: ArithmeticExpression TokenSum Term {ArithmeticExpressionSumTerm}
+| ArithmeticExpression TokenSub Term {ArithmeticExpressionSubTerm}
+| Term {ArithmeticExpressionTerm};
 
-T: T TokenMul F {TMulF}
-| T TokenDiv F {TDivF}
-| F {TF};
+Term: Term TokenMul Factor {TermMulFactor}
+| Term TokenDiv Factor {TermDivFactor}
+| Factor {TermFactor};
 
-F: TokenId {FId}
-| Number {FNumber}
-| TokenParOpen E TokenParClose {FParen};
+Factor: TokenId {FactorId}
+| Number {FactorNumber}
+| TokenParOpen ArithmeticExpression TokenParClose {FactorParen};
 
 IntegerToken: TokenIntLiteral {IntTokenIntLiteral} 
 | TokenId {IntTokenId};

@@ -1,9 +1,9 @@
+use super::grammar::{Context, TokenKind};
+use super::grammar_lexer::Input;
+use crate::context::{write_to_lexer_file, write_to_parser_file};
 /// This file is maintained by rustemo but can be modified manually.
 /// All manual changes will be preserved except non-doc comments.
 use rustemo::Token as RustemoToken;
-use crate::context::{write_to_lexer_file, write_to_parser_file};
-use super::grammar::{TokenKind, Context};
-use super::grammar_lexer::Input;
 pub type Ctx<'i> = Context<'i, Input>;
 #[allow(dead_code)]
 pub type Token<'i> = RustemoToken<'i, Input, TokenKind>;
@@ -346,14 +346,14 @@ pub fn function_write_function_write_call(
 pub struct FunctionIsZero {
     pub token_is_zero: TokenIsZero,
     pub token_par_open: TokenParOpen,
-    pub e: E,
+    pub arithmetic_expression: ArithmeticExpression,
     pub token_par_close: TokenParClose,
 }
 pub fn function_is_zero_function_is_zero_call(
     _ctx: &Ctx,
     token_is_zero: TokenIsZero,
     token_par_open: TokenParOpen,
-    e: E,
+    arithmetic_expression: ArithmeticExpression,
     token_par_close: TokenParClose,
 ) -> FunctionIsZero {
     write_to_parser_file(
@@ -364,7 +364,7 @@ pub fn function_is_zero_function_is_zero_call(
     FunctionIsZero {
         token_is_zero,
         token_par_open,
-        e,
+        arithmetic_expression,
         token_par_close,
     }
 }
@@ -800,12 +800,15 @@ pub fn boolean_expression_chain_boolean_expression_chain_empty(
 }
 #[derive(Debug, Clone)]
 pub enum SimpleExpression {
-    SimpleExpressionE(E),
+    SimpleExpressionArithmeticExpression(ArithmeticExpression),
     SimpleExpressionString(TokenStringLiteral),
 }
-pub fn simple_expression_simple_expression_e(_ctx: &Ctx, e: E) -> SimpleExpression {
+pub fn simple_expression_simple_expression_arithmetic(
+    _ctx: &Ctx,
+    arithmetic_expression: ArithmeticExpression,
+) -> SimpleExpression {
     ///write_to_parser_file(&format!("<SimpleExpression> -> <E>"));
-    SimpleExpression::SimpleExpressionE(e)
+    SimpleExpression::SimpleExpressionArithmeticExpression(arithmetic_expression)
 }
 pub fn simple_expression_simple_expression_string(
     _ctx: &Ctx,
@@ -911,103 +914,125 @@ pub fn not_statement_not(
     }
 }
 #[derive(Debug, Clone)]
-pub struct ESumT {
-    pub e: Box<E>,
+pub struct ArithmeticExpressionSumTerm {
+    pub arithmetic_expression: Box<ArithmeticExpression>,
     pub token_sum: TokenSum,
-    pub t: T,
+    pub term: Term,
 }
 #[derive(Debug, Clone)]
-pub struct ESubT {
-    pub e: Box<E>,
+pub struct ArithmeticExpressionSubTerm {
+    pub arithmetic_expression: Box<ArithmeticExpression>,
     pub token_sub: TokenSub,
-    pub t: T,
+    pub term: Term,
 }
 #[derive(Debug, Clone)]
-pub enum E {
-    ESumT(ESumT),
-    ESubT(ESubT),
-    ET(T),
+pub enum ArithmeticExpression {
+    ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm),
+    ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm),
+    ArithmeticExpressionTerm(Term),
 }
-pub fn e_esum_t(_ctx: &Ctx, e: E, token_sum: TokenSum, t: T) -> E {
-    E::ESumT(ESumT {
-        e: Box::new(e),
+pub fn arithmetic_expression_arithmetic_expression_sum_term(
+    _ctx: &Ctx,
+    arithmetic_expression: ArithmeticExpression,
+    token_sum: TokenSum,
+    term: Term,
+) -> ArithmeticExpression {
+    ArithmeticExpression::ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm {
+        arithmetic_expression: Box::new(arithmetic_expression),
         token_sum,
-        t,
+        term,
     })
 }
-pub fn e_esub_t(_ctx: &Ctx, e: E, token_sub: TokenSub, t: T) -> E {
-    E::ESubT(ESubT {
-        e: Box::new(e),
+pub fn arithmetic_expression_arithmetic_expression_sub_term(
+    _ctx: &Ctx,
+    arithmetic_expression: ArithmeticExpression,
+    token_sub: TokenSub,
+    term: Term,
+) -> ArithmeticExpression {
+    ArithmeticExpression::ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm {
+        arithmetic_expression: Box::new(arithmetic_expression),
         token_sub,
-        t,
+        term,
     })
 }
-pub fn e_et(_ctx: &Ctx, t: T) -> E {
-    E::ET(t)
+pub fn arithmetic_expression_arithmetic_expression_term(
+    _ctx: &Ctx,
+    term: Term,
+) -> ArithmeticExpression {
+    ArithmeticExpression::ArithmeticExpressionTerm(term)
 }
 #[derive(Debug, Clone)]
-pub struct TMulF {
-    pub t: Box<T>,
+pub struct TermMulFactor {
+    pub term: Box<Term>,
     pub token_mul: TokenMul,
-    pub f: F,
+    pub factor: Factor,
 }
 #[derive(Debug, Clone)]
-pub struct TDivF {
-    pub t: Box<T>,
+pub struct TermDivFactor {
+    pub term: Box<Term>,
     pub token_div: TokenDiv,
-    pub f: F,
+    pub factor: Factor,
 }
 #[derive(Debug, Clone)]
-pub enum T {
-    TMulF(TMulF),
-    TDivF(TDivF),
-    TF(F),
+pub enum Term {
+    TermMulFactor(TermMulFactor),
+    TermDivFactor(TermDivFactor),
+    TermFactor(Factor),
 }
-pub fn t_tmul_f(_ctx: &Ctx, t: T, token_mul: TokenMul, f: F) -> T {
-    T::TMulF(TMulF {
-        t: Box::new(t),
+pub fn term_term_mul_factor(
+    _ctx: &Ctx,
+    term: Term,
+    token_mul: TokenMul,
+    factor: Factor,
+) -> Term {
+    Term::TermMulFactor(TermMulFactor {
+        term: Box::new(term),
         token_mul,
-        f,
+        factor,
     })
 }
-pub fn t_tdiv_f(_ctx: &Ctx, t: T, token_div: TokenDiv, f: F) -> T {
-    T::TDivF(TDivF {
-        t: Box::new(t),
+pub fn term_term_div_factor(
+    _ctx: &Ctx,
+    term: Term,
+    token_div: TokenDiv,
+    factor: Factor,
+) -> Term {
+    Term::TermDivFactor(TermDivFactor {
+        term: Box::new(term),
         token_div,
-        f,
+        factor,
     })
 }
-pub fn t_tf(_ctx: &Ctx, f: F) -> T {
-    T::TF(f)
+pub fn term_term_factor(_ctx: &Ctx, factor: Factor) -> Term {
+    Term::TermFactor(factor)
 }
 #[derive(Debug, Clone)]
-pub struct FParen {
+pub struct FactorParen {
     pub token_par_open: TokenParOpen,
-    pub e: Box<E>,
+    pub arithmetic_expression: Box<ArithmeticExpression>,
     pub token_par_close: TokenParClose,
 }
 #[derive(Debug, Clone)]
-pub enum F {
-    FId(TokenId),
-    FNumber(Number),
-    FParen(FParen),
+pub enum Factor {
+    FactorId(TokenId),
+    FactorNumber(Number),
+    FactorParen(FactorParen),
 }
-pub fn f_fid(_ctx: &Ctx, token_id: TokenId) -> F {
-    F::FId(token_id)
+pub fn factor_factor_id(_ctx: &Ctx, token_id: TokenId) -> Factor {
+    Factor::FactorId(token_id)
 }
-pub fn f_fnumber(_ctx: &Ctx, number: Number) -> F {
-    F::FNumber(number)
+pub fn factor_factor_number(_ctx: &Ctx, number: Number) -> Factor {
+    Factor::FactorNumber(number)
 }
-pub fn f_fparen(
+pub fn factor_factor_paren(
     _ctx: &Ctx,
     token_par_open: TokenParOpen,
-    e: E,
+    arithmetic_expression: ArithmeticExpression,
     token_par_close: TokenParClose,
-) -> F {
-    write_to_parser_file(&format!("<F> -> {token_par_open} <E> {token_par_close}"));
-    F::FParen(FParen {
+) -> Factor {
+    Factor::FactorParen(FactorParen {
         token_par_open,
-        e: Box::new(e),
+        arithmetic_expression: Box::new(arithmetic_expression),
         token_par_close,
     })
 }
