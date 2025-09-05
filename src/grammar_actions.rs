@@ -517,8 +517,8 @@ pub fn expressions_expression_recursive(
 #[derive(Debug, Clone)]
 pub enum Statement {
     StatementAssignment(Assignment),
-    StatementIfStatement(Si),
-    StatementElseStatement(Sino),
+    StatementIfStatement(IfStatement),
+    StatementElseStatement(ElseStatement),
     StatementWhile(WhileLoop),
     StatementWrite(FunctionWrite),
     StatementConvDate(FunctionConvDate),
@@ -527,13 +527,19 @@ pub fn statement_statement_assignment(_ctx: &Ctx, assignment: Assignment) -> Sta
     ///write_to_parser_file(&format!("<Statement> -> <Assignment>"));
     Statement::StatementAssignment(assignment)
 }
-pub fn statement_statement_if_statement(_ctx: &Ctx, si: Si) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <Si>"));
-    Statement::StatementIfStatement(si)
+pub fn statement_statement_if_statement(
+    _ctx: &Ctx,
+    if_statement: IfStatement,
+) -> Statement {
+    ///write_to_parser_file(&format!("<Statement> -> <IfStatement>"));
+    Statement::StatementIfStatement(if_statement)
 }
-pub fn statement_statement_else_statement(_ctx: &Ctx, sino: Sino) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <Sino>"));
-    Statement::StatementElseStatement(sino)
+pub fn statement_statement_else_statement(
+    _ctx: &Ctx,
+    else_statement: ElseStatement,
+) -> Statement {
+    ///write_to_parser_file(&format!("<Statement> -> <ElseStatement>"));
+    Statement::StatementElseStatement(else_statement)
 }
 pub fn statement_statement_while(_ctx: &Ctx, while_loop: WhileLoop) -> Statement {
     ///write_to_parser_file(&format!("<Statement> -> <WhileLoop>"));
@@ -628,7 +634,7 @@ pub fn while_loop_while(
     }
 }
 #[derive(Debug, Clone)]
-pub struct Si {
+pub struct IfStatement {
     pub token_if: TokenIf,
     pub token_par_open: TokenParOpen,
     pub boolean_expression: BooleanExpression,
@@ -637,7 +643,7 @@ pub struct Si {
     pub body: Box<Body>,
     pub token_cbclose: TokenCBClose,
 }
-pub fn si_if_statement(
+pub fn if_statement_if_statement(
     _ctx: &Ctx,
     token_if: TokenIf,
     token_par_open: TokenParOpen,
@@ -646,13 +652,13 @@ pub fn si_if_statement(
     token_cbopen: TokenCBOpen,
     body: Body,
     token_cbclose: TokenCBClose,
-) -> Si {
+) -> IfStatement {
     write_to_parser_file(
         &format!(
-            "<Si> -> {token_if} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+            "<IfStatement> -> {token_if} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
         ),
     );
-    Si {
+    IfStatement {
         token_if,
         token_par_open,
         boolean_expression,
@@ -663,23 +669,23 @@ pub fn si_if_statement(
     }
 }
 #[derive(Debug, Clone)]
-pub struct Sino {
+pub struct ElseStatement {
     pub token_else: TokenElse,
     pub token_cbopen: TokenCBOpen,
     pub body: Box<Body>,
     pub token_cbclose: TokenCBClose,
 }
-pub fn sino_else_statement(
+pub fn else_statement_else_statement(
     _ctx: &Ctx,
     token_else: TokenElse,
     token_cbopen: TokenCBOpen,
     body: Body,
     token_cbclose: TokenCBClose,
-) -> Sino {
+) -> ElseStatement {
     write_to_parser_file(
-        &format!("<Sino> -> {token_else} {token_cbopen} <Body> {token_cbclose}"),
+        &format!("<ElseStatement> -> {token_else} {token_cbopen} <Body> {token_cbclose}"),
     );
-    Sino {
+    ElseStatement {
         token_else,
         token_cbopen,
         body: Box::new(body),

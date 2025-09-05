@@ -26,8 +26,8 @@ Expressions: Statement {ExpressionSingle}
  | Statement Expressions {ExpressionRecursive};
 
 Statement: Assignment {StatementAssignment}
- | Si {StatementIfStatement}
- | Sino {StatementElseStatement}
+ | IfStatement {StatementIfStatement}
+ | ElseStatement {StatementElseStatement}
  | WhileLoop {StatementWhile}
  | FunctionWrite {StatementWrite}
  | FunctionConvDate {StatementConvDate};
@@ -44,9 +44,9 @@ Data_Type: TokenInt {IntType}
 
 WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {While};
 
-Si: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
+IfStatement: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
 
-Sino: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
+ElseStatement: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
 
 BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSimpleExpression}
  | TokenTrue {BooleanExpressionTrue}

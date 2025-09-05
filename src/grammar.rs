@@ -103,8 +103,8 @@ pub enum ProdKind {
     Data_TypeFloatType,
     Data_TypeStringType,
     WhileLoopWhile,
-    SiIfStatement,
-    SinoElseStatement,
+    IfStatementIfStatement,
+    ElseStatementElseStatement,
     BooleanExpressionBooleanExpressionSimpleExpression,
     BooleanExpressionBooleanExpressionTrue,
     BooleanExpressionBooleanExpressionFalse,
@@ -182,8 +182,8 @@ impl std::fmt::Debug for ProdKind {
                 "Expressions: Statement Expressions"
             }
             ProdKind::StatementStatementAssignment => "Statement: Assignment",
-            ProdKind::StatementStatementIfStatement => "Statement: Si",
-            ProdKind::StatementStatementElseStatement => "Statement: Sino",
+            ProdKind::StatementStatementIfStatement => "Statement: IfStatement",
+            ProdKind::StatementStatementElseStatement => "Statement: ElseStatement",
             ProdKind::StatementStatementWhile => "Statement: WhileLoop",
             ProdKind::StatementStatementWrite => "Statement: FunctionWrite",
             ProdKind::StatementStatementConvDate => "Statement: FunctionConvDate",
@@ -199,11 +199,11 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::WhileLoopWhile => {
                 "WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose"
             }
-            ProdKind::SiIfStatement => {
-                "Si: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose"
+            ProdKind::IfStatementIfStatement => {
+                "IfStatement: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose"
             }
-            ProdKind::SinoElseStatement => {
-                "Sino: TokenElse TokenCBOpen Body TokenCBClose"
+            ProdKind::ElseStatementElseStatement => {
+                "ElseStatement: TokenElse TokenCBOpen Body TokenCBClose"
             }
             ProdKind::BooleanExpressionBooleanExpressionSimpleExpression => {
                 "BooleanExpression: SimpleExpression BooleanExpressionChain"
@@ -292,8 +292,8 @@ pub enum NonTermKind {
     Literal,
     Data_Type,
     WhileLoop,
-    Si,
-    Sino,
+    IfStatement,
+    ElseStatement,
     BooleanExpression,
     BooleanExpressionChain,
     SimpleExpression,
@@ -348,8 +348,8 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::Data_TypeFloatType => NonTermKind::Data_Type,
             ProdKind::Data_TypeStringType => NonTermKind::Data_Type,
             ProdKind::WhileLoopWhile => NonTermKind::WhileLoop,
-            ProdKind::SiIfStatement => NonTermKind::Si,
-            ProdKind::SinoElseStatement => NonTermKind::Sino,
+            ProdKind::IfStatementIfStatement => NonTermKind::IfStatement,
+            ProdKind::ElseStatementElseStatement => NonTermKind::ElseStatement,
             ProdKind::BooleanExpressionBooleanExpressionSimpleExpression => {
                 NonTermKind::BooleanExpression
             }
@@ -435,8 +435,8 @@ pub enum State {
     StatementS17,
     AssignmentS18,
     WhileLoopS19,
-    SiS20,
-    SinoS21,
+    IfStatementS20,
+    ElseStatementS21,
     TokenAssignS22,
     TokenCBOpenS23,
     InitBodyS24,
@@ -566,8 +566,8 @@ impl std::fmt::Debug for State {
             State::StatementS17 => "17:Statement",
             State::AssignmentS18 => "18:Assignment",
             State::WhileLoopS19 => "19:WhileLoop",
-            State::SiS20 => "20:Si",
-            State::SinoS21 => "21:Sino",
+            State::IfStatementS20 => "20:IfStatement",
+            State::ElseStatementS21 => "21:ElseStatement",
             State::TokenAssignS22 => "22:TokenAssign",
             State::TokenCBOpenS23 => "23:TokenCBOpen",
             State::InitBodyS24 => "24:InitBody",
@@ -729,8 +729,8 @@ pub enum NonTerminal {
     Assignment(grammar_actions::Assignment),
     Data_Type(grammar_actions::Data_Type),
     WhileLoop(grammar_actions::WhileLoop),
-    Si(grammar_actions::Si),
-    Sino(grammar_actions::Sino),
+    IfStatement(grammar_actions::IfStatement),
+    ElseStatement(grammar_actions::ElseStatement),
     BooleanExpression(grammar_actions::BooleanExpression),
     BooleanExpressionChain(grammar_actions::BooleanExpressionChain),
     SimpleExpression(grammar_actions::SimpleExpression),
@@ -910,7 +910,7 @@ fn action_whileloop_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_si_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_ifstatement_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
         TK::TokenCBClose => {
@@ -926,7 +926,7 @@ fn action_si_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_sino_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_elsestatement_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementElseStatement, 1usize)]),
         TK::TokenCBClose => {
@@ -1829,13 +1829,13 @@ fn action_tokenparclose_s83(token_kind: TokenKind) -> Vec<Action<State, ProdKind
 }
 fn action_tokencbclose_s84(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenWhile => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenIf => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenElse => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenWrite => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::SinoElseStatement, 4usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenWhile => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenIf => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenElse => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenWrite => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
+        TK::TokenConvDate => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         _ => vec![],
     }
 }
@@ -2401,13 +2401,13 @@ fn action_tokencbclose_s113(token_kind: TokenKind) -> Vec<Action<State, ProdKind
 }
 fn action_tokencbclose_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenWhile => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenIf => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenElse => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenWrite => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::SiIfStatement, 7usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenWhile => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenIf => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenElse => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenWrite => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
+        TK::TokenConvDate => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         _ => vec![],
     }
 }
@@ -2477,8 +2477,8 @@ fn goto_tokencbopen_s5(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2506,8 +2506,8 @@ fn goto_statement_s17(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2552,8 +2552,8 @@ fn goto_initbody_s24(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2607,8 +2607,8 @@ fn goto_tokencbopen_s27(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2833,8 +2833,8 @@ fn goto_tokencbopen_s99(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2882,8 +2882,8 @@ fn goto_tokencbopen_s104(nonterm_kind: NonTermKind) -> State {
         NonTermKind::Statement => State::StatementS17,
         NonTermKind::Assignment => State::AssignmentS18,
         NonTermKind::WhileLoop => State::WhileLoopS19,
-        NonTermKind::Si => State::SiS20,
-        NonTermKind::Sino => State::SinoS21,
+        NonTermKind::IfStatement => State::IfStatementS20,
+        NonTermKind::ElseStatement => State::ElseStatementS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2928,8 +2928,8 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_statement_s17,
         action_assignment_s18,
         action_whileloop_s19,
-        action_si_s20,
-        action_sino_s21,
+        action_ifstatement_s20,
+        action_elsestatement_s21,
         action_tokenassign_s22,
         action_tokencbopen_s23,
         action_initbody_s24,
@@ -6366,7 +6366,7 @@ for DefaultBuilder {
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
-                    Symbol::NonTerminal(NonTerminal::Si(p0)) => {
+                    Symbol::NonTerminal(NonTerminal::IfStatement(p0)) => {
                         NonTerminal::Statement(
                             grammar_actions::statement_statement_if_statement(
                                 context,
@@ -6383,7 +6383,7 @@ for DefaultBuilder {
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
-                    Symbol::NonTerminal(NonTerminal::Sino(p0)) => {
+                    Symbol::NonTerminal(NonTerminal::ElseStatement(p0)) => {
                         NonTerminal::Statement(
                             grammar_actions::statement_statement_else_statement(
                                 context,
@@ -6535,7 +6535,7 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::SiIfStatement => {
+            ProdKind::IfStatementIfStatement => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 7usize)
@@ -6558,8 +6558,8 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::Body(p5)),
                         Symbol::Terminal(Terminal::TokenCBClose(p6)),
                     ) => {
-                        NonTerminal::Si(
-                            grammar_actions::si_if_statement(
+                        NonTerminal::IfStatement(
+                            grammar_actions::if_statement_if_statement(
                                 context,
                                 p0,
                                 p1,
@@ -6574,7 +6574,7 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::SinoElseStatement => {
+            ProdKind::ElseStatementElseStatement => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 4usize)
@@ -6591,8 +6591,14 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::Body(p2)),
                         Symbol::Terminal(Terminal::TokenCBClose(p3)),
                     ) => {
-                        NonTerminal::Sino(
-                            grammar_actions::sino_else_statement(context, p0, p1, p2, p3),
+                        NonTerminal::ElseStatement(
+                            grammar_actions::else_statement_else_statement(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                                p3,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
