@@ -25,8 +25,6 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
         input: &'i Self::Input,
         _expected_tokens: Vec<(TokenKind, bool)>,
     ) -> Box<dyn Iterator<Item = Token<'i, Self::Input, TokenKind>> + 'i> {
-        dbg!(&input);
-        dbg!(&context);
         let mut pos = context.position();
 
         let value;
@@ -38,16 +36,13 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
         } else {
             let input = input.get(context.position()..input.len()).unwrap();
             let mut lexer = crate::lex::Lexer::new(input);
-            token = lexer.yylex().unwrap_or(TokenKind::STOP); // no esta cazando los lexer_Errors
+            // TODO: handle errors correctly
+            token = lexer.yylex().unwrap_or(TokenKind::STOP);
 
             let range = lexer.yytextpos();
             pos += range.start;
             value = unsafe { input.get_unchecked(range) };
         }
-
-        dbg!(&token);
-        dbg!(&value);
-        eprintln!("----------------------------------------------------------");
 
         context.set_position(pos);
 
