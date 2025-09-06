@@ -23,8 +23,8 @@ thread_local! {
     pub static SYMBOL_TABLE_FILE: RefCell<Option<File>> = const { RefCell::new(None) };
 }
 
-pub fn set_source_file_path(path: &str) {
-    SOURCE_CODE_PATH.set(Some(PathBuf::from(path)));
+pub fn set_source_file_path(path: PathBuf) {
+    SOURCE_CODE_PATH.set(Some(path));
 }
 
 pub fn open_lexer_file() -> Result<(), io::Error> {
