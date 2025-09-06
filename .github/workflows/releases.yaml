@@ -14,7 +14,7 @@ permissions:
   contents: write
   packages: write
 
-  jobs:
+jobs:
   build-compiler:
     strategy:
       matrix:
@@ -26,7 +26,7 @@ permissions:
             os: linux
             arch: aarch64
           - platform: macos-latest
-            os: linux
+            os: macos
             arch: aarch64
     runs-on: ${{ matrix.platform }}
     steps:
