@@ -6,6 +6,7 @@ use crate::context::{
 /// This file is maintained by rustemo but can be modified manually.
 /// All manual changes will be preserved except non-doc comments.
 use rustemo::{Input as RustemoInput, Token as RustemoToken};
+use std::fmt::Display;
 pub type Ctx<'i> = Context<'i, Input>;
 #[allow(dead_code)]
 pub type Token<'i> = RustemoToken<'i, Input, TokenKind>;
@@ -270,7 +271,7 @@ pub fn body_body_expressions(_ctx: &Ctx, expressions: Expressions) -> Body {
     Some(BodyNoO::BodyExpressions(expressions))
 }
 pub fn body_body_empty(_ctx: &Ctx) -> Body {
-    write_to_parser_file(&format!("<Body> -> EMPTY"));
+    write_to_parser_file("<Body> -> EMPTY");
     None
 }
 #[derive(Debug, Clone)]
@@ -805,7 +806,7 @@ pub fn boolean_expression_chain_boolean_expression_chain_aux(
 pub fn boolean_expression_chain_boolean_expression_chain_empty(
     _ctx: &Ctx,
 ) -> BooleanExpressionChain {
-    write_to_parser_file(&format!("<BooleanExpressionChain> -> EMPTY"));
+    write_to_parser_file("<BooleanExpressionChain> -> EMPTY");
     None
 }
 #[derive(Debug, Clone)]
@@ -1061,7 +1062,7 @@ pub fn factor_factor_id(_ctx: &Ctx, token_id: TokenId) -> Factor {
     Factor::FactorId(token_id)
 }
 pub fn factor_factor_number(_ctx: &Ctx, number: Number) -> Factor {
-    write_to_parser_file(&format!("<Factor> -> <Number>"));
+    write_to_parser_file("<Factor> -> <Number>");
     Factor::FactorNumber(number)
 }
 pub fn factor_factor_paren(
@@ -1084,51 +1085,6 @@ pub enum IntegerValue {
     IntegerValueLiteral(TokenIntLiteral),
     IntegerValueId(TokenId),
 }
-pub fn integer_token_int_token_int_literal(
-    _ctx: &Ctx,
-    token_int_literal: TokenIntLiteral,
-) -> IntegerValue {
-    write_to_parser_file(&format!("<IntegerValue> -> {token_int_literal}"));
-    IntegerValue::IntegerValueLiteral(token_int_literal)
-}
-pub fn integer_token_int_token_id(_ctx: &Ctx, token_id: TokenId) -> IntegerValue {
-    write_to_parser_file(&format!("<IntegerValue> -> {token_id}"));
-    IntegerValue::IntegerValueId(token_id)
-}
-impl VarDeclaration {
-    pub fn write_to_symbol_table(&self) -> DataType {
-        match self {
-            Self::VarDeclarationSingle(single) => {
-                write_to_symbol_table_file(
-                    &format!(
-                        "{}|{}|{}|{}", single.token_id, single.data_type.to_string(),
-                        "-", single.token_id.len()
-                    ),
-                );
-                single.data_type.clone()
-            }
-            Self::VarDeclarationRecursive(recursive) => {
-                let data_type = recursive.var_declaration.write_to_symbol_table();
-                write_to_symbol_table_file(
-                    &format!(
-                        "{}|{}|{}|{}", recursive.token_id, data_type.to_string(), "-",
-                        recursive.token_id.len()
-                    ),
-                );
-                data_type
-            }
-        }
-    }
-}
-impl ToString for DataType {
-    fn to_string(&self) -> String {
-        match self {
-            DataType::IntType(_) => "VAR_INT".to_string(),
-            DataType::FloatType(_) => "VAR_FLOAT".to_string(),
-            DataType::StringType(_) => "VAR_STRING".to_string(),
-        }
-    }
-}
 pub fn integer_value_integer_value_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
@@ -1139,8 +1095,45 @@ pub fn integer_value_integer_value_literal(
             token_int_literal.len()
         ),
     );
+    write_to_parser_file(&format!("<IntegerValue> -> {token_int_literal}"));
     IntegerValue::IntegerValueLiteral(token_int_literal)
 }
 pub fn integer_value_integer_value_id(_ctx: &Ctx, token_id: TokenId) -> IntegerValue {
+    write_to_parser_file(&format!("<IntegerValue> -> {token_id}"));
     IntegerValue::IntegerValueId(token_id)
+}
+impl VarDeclaration {
+    pub fn write_to_symbol_table(&self) -> DataType {
+        match self {
+            Self::VarDeclarationSingle(single) => {
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", single.token_id, single.data_type, "-", single
+                        .token_id.len()
+                    ),
+                );
+                single.data_type.clone()
+            }
+            Self::VarDeclarationRecursive(recursive) => {
+                let data_type = recursive.var_declaration.write_to_symbol_table();
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", recursive.token_id, data_type, "-", recursive
+                        .token_id.len()
+                    ),
+                );
+                data_type
+            }
+        }
+    }
+}
+impl Display for DataType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            DataType::IntType(_) => "VAR_INT",
+            DataType::FloatType(_) => "VAR_FLOAT",
+            DataType::StringType(_) => "VAR_STRING",
+        };
+        write!(f, "{}", s)
+    }
 }
