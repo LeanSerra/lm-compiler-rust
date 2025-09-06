@@ -96,9 +96,6 @@ pub enum ProdKind {
     StatementStatementRead,
     StatementStatementConvDate,
     AssignmentAssignment,
-    LiteralIntegerLiteral,
-    LiteralFloatLiteral,
-    LiteralStringLiteral,
     DataTypeIntType,
     DataTypeFloatType,
     DataTypeStringType,
@@ -135,8 +132,8 @@ pub enum ProdKind {
     FactorFactorId,
     FactorFactorNumber,
     FactorFactorParen,
-    IntegerTokenIntTokenIntLiteral,
-    IntegerTokenIntTokenId,
+    IntegerValueIntegerValueLiteral,
+    IntegerValueIntegerValueId,
 }
 use ProdKind as PK;
 impl std::fmt::Debug for ProdKind {
@@ -162,7 +159,7 @@ impl std::fmt::Debug for ProdKind {
                 "FunctionIsZero: TokenIsZero TokenParOpen ArithmeticExpression TokenParClose"
             }
             ProdKind::FunctionConvDateFunctionConvDateVariableCall => {
-                "FunctionConvDate: TokenConvDate TokenParOpen IntegerToken TokenComma IntegerToken TokenComma IntegerToken TokenParClose"
+                "FunctionConvDate: TokenConvDate TokenParOpen IntegerValue TokenComma IntegerValue TokenComma IntegerValue TokenParClose"
             }
             ProdKind::VarDeclarationsVarDeclarationsSingle => {
                 "VarDeclarations: VarDeclaration"
@@ -190,9 +187,6 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::AssignmentAssignment => {
                 "Assignment: TokenId TokenAssign SimpleExpression"
             }
-            ProdKind::LiteralIntegerLiteral => "Literal: TokenIntLiteral",
-            ProdKind::LiteralFloatLiteral => "Literal: TokenFloatLiteral",
-            ProdKind::LiteralStringLiteral => "Literal: TokenStringLiteral",
             ProdKind::DataTypeIntType => "DataType: TokenInt",
             ProdKind::DataTypeFloatType => "DataType: TokenFloat",
             ProdKind::DataTypeStringType => "DataType: TokenString",
@@ -265,8 +259,8 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::FactorFactorParen => {
                 "Factor: TokenParOpen ArithmeticExpression TokenParClose"
             }
-            ProdKind::IntegerTokenIntTokenIntLiteral => "IntegerToken: TokenIntLiteral",
-            ProdKind::IntegerTokenIntTokenId => "IntegerToken: TokenId",
+            ProdKind::IntegerValueIntegerValueLiteral => "IntegerValue: TokenIntLiteral",
+            ProdKind::IntegerValueIntegerValueId => "IntegerValue: TokenId",
         };
         write!(f, "{name}")
     }
@@ -289,7 +283,6 @@ pub enum NonTermKind {
     Expressions,
     Statement,
     Assignment,
-    Literal,
     DataType,
     WhileLoop,
     IfStatement,
@@ -304,7 +297,7 @@ pub enum NonTermKind {
     ArithmeticExpression,
     Term,
     Factor,
-    IntegerToken,
+    IntegerValue,
 }
 impl From<ProdKind> for NonTermKind {
     fn from(prod: ProdKind) -> Self {
@@ -341,9 +334,6 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::StatementStatementRead => NonTermKind::Statement,
             ProdKind::StatementStatementConvDate => NonTermKind::Statement,
             ProdKind::AssignmentAssignment => NonTermKind::Assignment,
-            ProdKind::LiteralIntegerLiteral => NonTermKind::Literal,
-            ProdKind::LiteralFloatLiteral => NonTermKind::Literal,
-            ProdKind::LiteralStringLiteral => NonTermKind::Literal,
             ProdKind::DataTypeIntType => NonTermKind::DataType,
             ProdKind::DataTypeFloatType => NonTermKind::DataType,
             ProdKind::DataTypeStringType => NonTermKind::DataType,
@@ -406,8 +396,8 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::FactorFactorId => NonTermKind::Factor,
             ProdKind::FactorFactorNumber => NonTermKind::Factor,
             ProdKind::FactorFactorParen => NonTermKind::Factor,
-            ProdKind::IntegerTokenIntTokenIntLiteral => NonTermKind::IntegerToken,
-            ProdKind::IntegerTokenIntTokenId => NonTermKind::IntegerToken,
+            ProdKind::IntegerValueIntegerValueLiteral => NonTermKind::IntegerValue,
+            ProdKind::IntegerValueIntegerValueId => NonTermKind::IntegerValue,
         }
     }
 }
@@ -478,7 +468,7 @@ pub enum State {
     SimpleExpressionS60,
     TokenIntLiteralS61,
     TokenIdS62,
-    IntegerTokenS63,
+    IntegerValueS63,
     ArithmeticExpressionS64,
     TokenSumS65,
     TokenSubS66,
@@ -521,7 +511,7 @@ pub enum State {
     ConjunctionS103,
     SimpleExpressionS104,
     TokenCBOpenS105,
-    IntegerTokenS106,
+    IntegerValueS106,
     TokenParCloseS107,
     BodyS108,
     BooleanExpressionS109,
@@ -530,7 +520,7 @@ pub enum State {
     TokenCommaS112,
     TokenCBCloseS113,
     TokenCBCloseS114,
-    IntegerTokenS115,
+    IntegerValueS115,
     TokenParCloseS116,
 }
 impl StateT for State {
@@ -609,7 +599,7 @@ impl std::fmt::Debug for State {
             State::SimpleExpressionS60 => "60:SimpleExpression",
             State::TokenIntLiteralS61 => "61:TokenIntLiteral",
             State::TokenIdS62 => "62:TokenId",
-            State::IntegerTokenS63 => "63:IntegerToken",
+            State::IntegerValueS63 => "63:IntegerValue",
             State::ArithmeticExpressionS64 => "64:ArithmeticExpression",
             State::TokenSumS65 => "65:TokenSum",
             State::TokenSubS66 => "66:TokenSub",
@@ -652,7 +642,7 @@ impl std::fmt::Debug for State {
             State::ConjunctionS103 => "103:Conjunction",
             State::SimpleExpressionS104 => "104:SimpleExpression",
             State::TokenCBOpenS105 => "105:TokenCBOpen",
-            State::IntegerTokenS106 => "106:IntegerToken",
+            State::IntegerValueS106 => "106:IntegerValue",
             State::TokenParCloseS107 => "107:TokenParClose",
             State::BodyS108 => "108:Body",
             State::BooleanExpressionS109 => "109:BooleanExpression",
@@ -661,7 +651,7 @@ impl std::fmt::Debug for State {
             State::TokenCommaS112 => "112:TokenComma",
             State::TokenCBCloseS113 => "113:TokenCBClose",
             State::TokenCBCloseS114 => "114:TokenCBClose",
-            State::IntegerTokenS115 => "115:IntegerToken",
+            State::IntegerValueS115 => "115:IntegerValue",
             State::TokenParCloseS116 => "116:TokenParClose",
         };
         write!(f, "{name}")
@@ -741,7 +731,7 @@ pub enum NonTerminal {
     ArithmeticExpression(grammar_actions::ArithmeticExpression),
     Term(grammar_actions::Term),
     Factor(grammar_actions::Factor),
-    IntegerToken(grammar_actions::IntegerToken),
+    IntegerValue(grammar_actions::IntegerValue),
 }
 type ActionFn = fn(token: TokenKind) -> Vec<Action<State, ProdKind>>;
 pub struct GrammarParserDefinition {
@@ -1596,22 +1586,22 @@ fn action_simpleexpression_s60(token_kind: TokenKind) -> Vec<Action<State, ProdK
 fn action_tokenintliteral_s61(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
-            Vec::from(&[Reduce(PK::IntegerTokenIntTokenIntLiteral, 1usize)])
+            Vec::from(&[Reduce(PK::IntegerValueIntegerValueLiteral, 1usize)])
         }
         TK::TokenComma => {
-            Vec::from(&[Reduce(PK::IntegerTokenIntTokenIntLiteral, 1usize)])
+            Vec::from(&[Reduce(PK::IntegerValueIntegerValueLiteral, 1usize)])
         }
         _ => vec![],
     }
 }
 fn action_tokenid_s62(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParClose => Vec::from(&[Reduce(PK::IntegerTokenIntTokenId, 1usize)]),
-        TK::TokenComma => Vec::from(&[Reduce(PK::IntegerTokenIntTokenId, 1usize)]),
+        TK::TokenParClose => Vec::from(&[Reduce(PK::IntegerValueIntegerValueId, 1usize)]),
+        TK::TokenComma => Vec::from(&[Reduce(PK::IntegerValueIntegerValueId, 1usize)]),
         _ => vec![],
     }
 }
-fn action_integertoken_s63(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_integervalue_s63(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenComma => Vec::from(&[Shift(State::TokenCommaS88)]),
         _ => vec![],
@@ -2360,7 +2350,7 @@ fn action_tokencbopen_s105(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         _ => vec![],
     }
 }
-fn action_integertoken_s106(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_integervalue_s106(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenComma => Vec::from(&[Shift(State::TokenCommaS112)]),
         _ => vec![],
@@ -2456,7 +2446,7 @@ fn action_tokencbclose_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         _ => vec![],
     }
 }
-fn action_integertoken_s115(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_integervalue_s115(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS116)]),
         _ => vec![],
@@ -2687,7 +2677,7 @@ fn goto_tokenparopen_s31(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokenparopen_s32(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::IntegerToken => State::IntegerTokenS63,
+        NonTermKind::IntegerValue => State::IntegerValueS63,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2866,7 +2856,7 @@ fn goto_comparisonop_s83(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokencomma_s88(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::IntegerToken => State::IntegerTokenS106,
+        NonTermKind::IntegerValue => State::IntegerValueS106,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2947,7 +2937,7 @@ fn goto_tokencbopen_s105(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokencomma_s112(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::IntegerToken => State::IntegerTokenS115,
+        NonTermKind::IntegerValue => State::IntegerValueS115,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -3024,7 +3014,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_simpleexpression_s60,
         action_tokenintliteral_s61,
         action_tokenid_s62,
-        action_integertoken_s63,
+        action_integervalue_s63,
         action_arithmeticexpression_s64,
         action_tokensum_s65,
         action_tokensub_s66,
@@ -3067,7 +3057,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_conjunction_s103,
         action_simpleexpression_s104,
         action_tokencbopen_s105,
-        action_integertoken_s106,
+        action_integervalue_s106,
         action_tokenparclose_s107,
         action_body_s108,
         action_booleanexpression_s109,
@@ -3076,7 +3066,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_tokencomma_s112,
         action_tokencbclose_s113,
         action_tokencbclose_s114,
-        action_integertoken_s115,
+        action_integervalue_s115,
         action_tokenparclose_s116,
     ],
     gotos: [
@@ -6356,11 +6346,11 @@ for DefaultBuilder {
                     (
                         Symbol::Terminal(Terminal::TokenConvDate(p0)),
                         Symbol::Terminal(Terminal::TokenParOpen(p1)),
-                        Symbol::NonTerminal(NonTerminal::IntegerToken(p2)),
+                        Symbol::NonTerminal(NonTerminal::IntegerValue(p2)),
                         Symbol::Terminal(Terminal::TokenComma(p3)),
-                        Symbol::NonTerminal(NonTerminal::IntegerToken(p4)),
+                        Symbol::NonTerminal(NonTerminal::IntegerValue(p4)),
                         Symbol::Terminal(Terminal::TokenComma(p5)),
-                        Symbol::NonTerminal(NonTerminal::IntegerToken(p6)),
+                        Symbol::NonTerminal(NonTerminal::IntegerValue(p6)),
                         Symbol::Terminal(Terminal::TokenParClose(p7)),
                     ) => {
                         NonTerminal::FunctionConvDate(
@@ -7286,15 +7276,15 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::IntegerTokenIntTokenIntLiteral => {
+            ProdKind::IntegerValueIntegerValueLiteral => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenIntLiteral(p0)) => {
-                        NonTerminal::IntegerToken(
-                            grammar_actions::integer_token_int_token_int_literal(
+                        NonTerminal::IntegerValue(
+                            grammar_actions::integer_value_integer_value_literal(
                                 context,
                                 p0,
                             ),
@@ -7303,21 +7293,20 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::IntegerTokenIntTokenId => {
+            ProdKind::IntegerValueIntegerValueId => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenId(p0)) => {
-                        NonTerminal::IntegerToken(
-                            grammar_actions::integer_token_int_token_id(context, p0),
+                        NonTerminal::IntegerValue(
+                            grammar_actions::integer_value_integer_value_id(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            _ => panic!("Reduce of unreachable nonterminal!"),
         };
         self.res_stack.push(Symbol::NonTerminal(prod));
     }

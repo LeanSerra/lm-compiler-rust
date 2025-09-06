@@ -1,9 +1,11 @@
 use super::grammar::{Context, TokenKind};
 use super::grammar_lexer::Input;
-use crate::context::{write_to_lexer_file, write_to_parser_file};
+use crate::context::{
+    write_to_lexer_file, write_to_parser_file, write_to_symbol_table_file,
+};
 /// This file is maintained by rustemo but can be modified manually.
 /// All manual changes will be preserved except non-doc comments.
-use rustemo::Token as RustemoToken;
+use rustemo::{Input as RustemoInput, Token as RustemoToken};
 pub type Ctx<'i> = Context<'i, Input>;
 #[allow(dead_code)]
 pub type Token<'i> = RustemoToken<'i, Input, TokenKind>;
@@ -33,7 +35,9 @@ pub fn token_float_literal(_ctx: &Ctx, token: Token) -> TokenFloatLiteral {
     token.value.into()
 }
 pub type TokenStringLiteral = String;
-pub fn token_string_literal(_ctx: &Ctx, token: Token) -> TokenStringLiteral {
+/// Parses a TokenStringLiteral by removing the "" and returning an owned string
+pub fn token_string_literal(_ctx: &Ctx, mut token: Token) -> TokenStringLiteral {
+    token.value = token.value.slice(1..token.value.len() - 1);
     write_to_lexer_file(&format!("STRING_LITERAL: {}", token.value));
     token.value.into()
 }
@@ -372,27 +376,27 @@ pub fn function_is_zero_function_is_zero_call(
 pub struct FunctionConvDate {
     pub token_conv_date: TokenConvDate,
     pub token_par_open: TokenParOpen,
-    pub integer_token_3: IntegerToken,
+    pub integer_token_3: IntegerValue,
     pub token_comma_4: TokenComma,
-    pub integer_token_5: IntegerToken,
+    pub integer_token_5: IntegerValue,
     pub token_comma_6: TokenComma,
-    pub integer_token_7: IntegerToken,
+    pub integer_token_7: IntegerValue,
     pub token_par_close: TokenParClose,
 }
 pub fn function_conv_date_function_conv_date_variable_call(
     _ctx: &Ctx,
     token_conv_date: TokenConvDate,
     token_par_open: TokenParOpen,
-    integer_token_3: IntegerToken,
+    integer_token_3: IntegerValue,
     token_comma_4: TokenComma,
-    integer_token_5: IntegerToken,
+    integer_token_5: IntegerValue,
     token_comma_6: TokenComma,
-    integer_token_7: IntegerToken,
+    integer_token_7: IntegerValue,
     token_par_close: TokenParClose,
 ) -> FunctionConvDate {
     write_to_parser_file(
         &format!(
-            "<FunctionConvDate> -> {token_conv_date} {token_par_open} <IntegerToken> {token_comma_4} <IntegerToken> {token_comma_6} <IntegerToken> {token_par_close}"
+            "<FunctionConvDate> -> {token_conv_date} {token_par_open} <IntegerValue> {token_comma_4} <IntegerValue> {token_comma_6} <IntegerValue> {token_par_close}"
         ),
     );
     FunctionConvDate {
@@ -420,6 +424,7 @@ pub fn var_declarations_var_declarations_single(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
+    var_declaration.write_to_symbol_table();
     ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration>"));
     VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
@@ -428,6 +433,7 @@ pub fn var_declarations_var_declarations_recursive(
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
+    var_declaration.write_to_symbol_table();
     ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration> <VarDeclarations>"));
     VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
@@ -818,6 +824,12 @@ pub fn simple_expression_simple_expression_string(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> SimpleExpression {
+    write_to_symbol_table_file(
+        &format!(
+            "{}|{}|{}|{}", token_string_literal, "CONST_STRING", token_string_literal,
+            token_string_literal.len()
+        ),
+    );
     write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
@@ -891,6 +903,12 @@ pub enum Number {
     NumberFloat(TokenFloatLiteral),
 }
 pub fn number_number_int(_ctx: &Ctx, token_int_literal: TokenIntLiteral) -> Number {
+    write_to_symbol_table_file(
+        &format!(
+            "{}|{}|{}|{}", token_int_literal, "CONST_INT", token_int_literal,
+            token_int_literal.len()
+        ),
+    );
     write_to_parser_file(&format!("<Number> -> {token_int_literal}"));
     Number::NumberInt(token_int_literal)
 }
@@ -898,6 +916,12 @@ pub fn number_number_float(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Number {
+    write_to_symbol_table_file(
+        &format!(
+            "{}|{}|{}|{}", token_float_literal, "CONST_FLOAT", token_float_literal,
+            token_float_literal.len()
+        ),
+    );
     write_to_parser_file(&format!("<Number> -> {token_float_literal}"));
     Number::NumberFloat(token_float_literal)
 }
@@ -1056,18 +1080,67 @@ pub fn factor_factor_paren(
     })
 }
 #[derive(Debug, Clone)]
-pub enum IntegerToken {
-    IntTokenIntLiteral(TokenIntLiteral),
-    IntTokenId(TokenId),
+pub enum IntegerValue {
+    IntegerValueLiteral(TokenIntLiteral),
+    IntegerValueId(TokenId),
 }
 pub fn integer_token_int_token_int_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
-) -> IntegerToken {
-    write_to_parser_file(&format!("<IntegerToken> -> {token_int_literal}"));
-    IntegerToken::IntTokenIntLiteral(token_int_literal)
+) -> IntegerValue {
+    write_to_parser_file(&format!("<IntegerValue> -> {token_int_literal}"));
+    IntegerValue::IntegerValueLiteral(token_int_literal)
 }
-pub fn integer_token_int_token_id(_ctx: &Ctx, token_id: TokenId) -> IntegerToken {
-    write_to_parser_file(&format!("<IntegerToken> -> {token_id}"));
-    IntegerToken::IntTokenId(token_id)
+pub fn integer_token_int_token_id(_ctx: &Ctx, token_id: TokenId) -> IntegerValue {
+    write_to_parser_file(&format!("<IntegerValue> -> {token_id}"));
+    IntegerValue::IntegerValueId(token_id)
+}
+impl VarDeclaration {
+    pub fn write_to_symbol_table(&self) -> DataType {
+        match self {
+            Self::VarDeclarationSingle(single) => {
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", single.token_id, single.data_type.to_string(),
+                        "-", single.token_id.len()
+                    ),
+                );
+                single.data_type.clone()
+            }
+            Self::VarDeclarationRecursive(recursive) => {
+                let data_type = recursive.var_declaration.write_to_symbol_table();
+                write_to_symbol_table_file(
+                    &format!(
+                        "{}|{}|{}|{}", recursive.token_id, data_type.to_string(), "-",
+                        recursive.token_id.len()
+                    ),
+                );
+                data_type
+            }
+        }
+    }
+}
+impl ToString for DataType {
+    fn to_string(&self) -> String {
+        match self {
+            DataType::IntType(_) => "VAR_INT".to_string(),
+            DataType::FloatType(_) => "VAR_FLOAT".to_string(),
+            DataType::StringType(_) => "VAR_STRING".to_string(),
+        }
+    }
+}
+pub fn integer_value_integer_value_literal(
+    _ctx: &Ctx,
+    token_int_literal: TokenIntLiteral,
+) -> IntegerValue {
+    write_to_symbol_table_file(
+        &format!(
+            "{}|{}|{}|{}", token_int_literal, "CONST_INT", token_int_literal,
+            token_int_literal.len()
+        ),
+    );
+    IntegerValue::IntegerValueLiteral(token_int_literal)
+}
+pub fn integer_value_integer_value_id(_ctx: &Ctx, token_id: TokenId) -> IntegerValue {
+    IntegerValue::IntegerValueId(token_id)
 }

@@ -13,7 +13,7 @@ FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionW
 
 FunctionIsZero: TokenIsZero TokenParOpen ArithmeticExpression TokenParClose {FunctionIsZeroCall};
 
-FunctionConvDate: TokenConvDate TokenParOpen IntegerToken TokenComma IntegerToken TokenComma IntegerToken TokenParClose {FunctionConvDateVariableCall};
+FunctionConvDate: TokenConvDate TokenParOpen IntegerValue TokenComma IntegerValue TokenComma IntegerValue TokenParClose {FunctionConvDateVariableCall};
 
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
@@ -33,10 +33,6 @@ Statement: Assignment {StatementAssignment}
  | FunctionConvDate {StatementConvDate};
 
 Assignment: TokenId TokenAssign SimpleExpression {Assignment};
-
-Literal: TokenIntLiteral {IntegerLiteral}
- | TokenFloatLiteral {FloatLiteral}
- | TokenStringLiteral {StringLiteral};
 
 DataType: TokenInt {IntType}
  | TokenFloat {FloatType}
@@ -88,8 +84,8 @@ Factor: TokenId {FactorId}
 | Number {FactorNumber}
 | TokenParOpen ArithmeticExpression TokenParClose {FactorParen};
 
-IntegerToken: TokenIntLiteral {IntTokenIntLiteral} 
-| TokenId {IntTokenId};
+IntegerValue: TokenIntLiteral {IntegerValueLiteral} 
+| TokenId {IntegerValueId};
 
 terminals
 
