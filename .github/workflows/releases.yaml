@@ -1,0 +1,93 @@
+name: lm-compiler release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - ".github/workflows/releases.yaml"
+
+permissions:
+  contents: write
+  packages: write
+
+  jobs:
+  build-compiler:
+    strategy:
+      matrix:
+        include:
+          - platform: ubuntu-24.04
+            os: linux
+            arch: x86_64
+          - platform: ubuntu-24.04-arm
+            os: linux
+            arch: aarch64
+          - platform: macos-latest
+            os: linux
+            arch: aarch64
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Build compiler
+        run: |
+          cargo build --release
+          mv target/release/lm-compiler lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
+          path: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
+
+  create-release:
+    # if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-compiler
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./bin
+          pattern: "lm-compiler*"
+
+      - name: Get previous tag
+        run: |
+          name=$(git --no-pager tag --sort=creatordate --merged ${{ github.ref_name }} | tail -2 | head -1)
+          echo "PREVIOUS_TAG: $name"
+          echo "PREVIOUS_TAG=$name" >> $GITHUB_ENV
+
+      - name: Update CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fromTag: ${{ github.ref_name }}
+          toTag: ${{ env.PREVIOUS_TAG }}
+          writeToFile: false
+
+      - name: test
+        run: |
+          echo "Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ github.ref_name}}/README.md)"
+
+      # - name: Finalize Release
+      #   uses: softprops/action-gh-release@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     files: ./bin/**/*
+      #     draft: false
+      #     prerelease: false
+      #     tag_name: ${{ github.ref_name }}
+      #     name: "ethrex: ${{ github.ref_name }}"
+      #     body: >
+      #       Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ env.PREVIOUS_TAG}}/README.md)
+
+      #       ${{ steps.changelog.outputs.changes }}
