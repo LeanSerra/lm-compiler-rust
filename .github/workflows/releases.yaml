@@ -50,13 +50,15 @@ jobs:
           cargo build --release
           exe_ext=""
           if [[ "${{ matrix.os }}" == "windows" ]]; then exe_ext=".exe"; fi
-          mv target/release/lm-compiler$exe_ext lm-compiler-${{ matrix.os }}_${{ matrix.arch }}$exe_ext
+          FILENAME="lm-compiler-${{ matrix.os }}_${{ matrix.arch }}$exe_ext"
+          mv target/release/lm-compiler$exe_ext $FILENAME
+          echo "ARTIFACT=$FILENAME" >> $GITHUB_ENV
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
-          path: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/')
