@@ -15,7 +15,7 @@ use std::path::PathBuf;
 struct Cli {
     #[arg(
         help = "Path to the source code file",
-        default_value = "./Inputs/test.txt"
+        default_value = "./inputs/test.txt"
     )]
     input: PathBuf,
 }
