@@ -30,13 +30,21 @@ jobs:
             arch: aarch64
     runs-on: ${{ matrix.platform }}
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.89.0
+
       - name: Build compiler
         run: |
           cargo build --release
           mv target/release/lm-compiler lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
           path: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
@@ -48,12 +56,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: ./bin
           pattern: "lm-compiler*"
