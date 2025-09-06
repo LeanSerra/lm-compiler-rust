@@ -19,8 +19,7 @@ VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
 
 VarDeclaration: TokenId TokenColon DataType {VarDeclarationSingle}
- | TokenId TokenComma VarDeclaration {VarDeclarationRecursive}
- | FunctionRead {VarDeclarationRead};
+ | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
 
 Expressions: Statement {ExpressionSingle}
  | Statement Expressions {ExpressionRecursive};
@@ -30,6 +29,7 @@ Statement: Assignment {StatementAssignment}
  | ElseStatement {StatementElseStatement}
  | WhileLoop {StatementWhile}
  | FunctionWrite {StatementWrite}
+ | FunctionRead {StatementRead}
  | FunctionConvDate {StatementConvDate};
 
 Assignment: TokenId TokenAssign SimpleExpression {Assignment};

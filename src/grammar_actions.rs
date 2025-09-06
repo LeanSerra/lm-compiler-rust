@@ -450,7 +450,6 @@ pub struct VarDeclarationRecursive {
 pub enum VarDeclaration {
     VarDeclarationSingle(VarDeclarationSingle),
     VarDeclarationRecursive(VarDeclarationRecursive),
-    VarDeclarationRead(FunctionRead),
 }
 pub fn var_declaration_var_declaration_single(
     _ctx: &Ctx,
@@ -481,13 +480,6 @@ pub fn var_declaration_var_declaration_recursive(
         token_comma,
         var_declaration: Box::new(var_declaration),
     })
-}
-pub fn var_declaration_var_declaration_read(
-    _ctx: &Ctx,
-    function_read: FunctionRead,
-) -> VarDeclaration {
-    ///write_to_parser_file(&format!("<VarDeclaration> -> <FunctionRead>"));
-    VarDeclaration::VarDeclarationRead(function_read)
 }
 #[derive(Debug, Clone)]
 pub struct ExpressionRecursive {
@@ -521,6 +513,7 @@ pub enum Statement {
     StatementElseStatement(ElseStatement),
     StatementWhile(WhileLoop),
     StatementWrite(FunctionWrite),
+    StatementRead(FunctionRead),
     StatementConvDate(FunctionConvDate),
 }
 pub fn statement_statement_assignment(_ctx: &Ctx, assignment: Assignment) -> Statement {
@@ -551,6 +544,10 @@ pub fn statement_statement_write(
 ) -> Statement {
     ///write_to_parser_file(&format!("<Statement> -> <FunctionWrite>"));
     Statement::StatementWrite(function_write)
+}
+pub fn statement_statement_read(_ctx: &Ctx, function_read: FunctionRead) -> Statement {
+    ///write_to_parser_file(&format!("<Statement> -> <FunctionRead>"));
+    Statement::StatementRead(function_read)
 }
 pub fn statement_statement_conv_date(
     _ctx: &Ctx,
