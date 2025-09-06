@@ -11,4 +11,3 @@ main(){
         write("a b")
     }
 }
-

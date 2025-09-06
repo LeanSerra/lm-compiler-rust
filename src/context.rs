@@ -1,19 +1,22 @@
 use std::{
     cell::RefCell,
     fs::{File, OpenOptions, read_to_string},
-    io,
-    io::Write,
+    io::{self, Read, Seek, Write},
     path::PathBuf,
 };
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CompilerError {
-    #[error("ParsingError: {0:?}")]
-    Parser(rustemo::Error),
-    #[error("ContextError: {0}")]
+    #[error("Parser internal error: {0:?}")]
+    ParserInternal(rustemo::Error),
+    #[error("Parser error: {0}")]
+    Parser(String),
+    #[error("Lexer error: {0}")]
+    Lexer(String),
+    #[error("Context error: {0}")]
     Context(String),
-    #[error("IOError: {0:?}")]
+    #[error("IO error: {0:?}")]
     IO(io::Error),
 }
 
@@ -24,8 +27,8 @@ thread_local! {
     pub static SYMBOL_TABLE_FILE: RefCell<Option<File>> = const { RefCell::new(None) };
 }
 
-pub fn set_source_file_path(path: &str) {
-    SOURCE_CODE_PATH.set(Some(PathBuf::from(path)));
+pub fn set_source_file_path(path: PathBuf) {
+    SOURCE_CODE_PATH.set(Some(path));
 }
 
 pub fn open_lexer_file() -> Result<(), io::Error> {
@@ -60,6 +63,7 @@ pub fn open_parser_file() -> Result<(), io::Error> {
                     .create(true)
                     .truncate(true)
                     .write(true)
+                    .read(true)
                     .open(path.with_extension("parser"))?,
             ));
         }
@@ -107,6 +111,21 @@ pub fn read_source_to_string() -> Result<String, CompilerError> {
         } else {
             Err(CompilerError::Context(
                 "Tried to open source code file without setting the path".into(),
+            ))
+        }
+    })
+}
+
+pub fn read_parser_file_to_string() -> Result<String, CompilerError> {
+    PARSER_FILE.with(|f| {
+        let mut buf = String::new();
+        if let Some(mut file) = f.borrow().as_ref() {
+            file.rewind().map_err(CompilerError::IO)?;
+            file.read_to_string(&mut buf).map_err(CompilerError::IO)?;
+            Ok(buf)
+        } else {
+            Err(CompilerError::Context(
+                "Tried to open parser file before creating it".into(),
             ))
         }
     })

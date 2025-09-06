@@ -2,6 +2,9 @@ use rustemo_compiler::{LexerType, Settings};
 use std::path::PathBuf;
 
 fn main() {
+    println!("cargo:rerun-if-changed=src/grammar.rustemo");
+    println!("cargo:rerun-if-changed=src/lex.l");
+
     let root_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 
     // Compile parser

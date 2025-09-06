@@ -6,7 +6,7 @@ use rustemo::Parser;
 use std::path::Path;
 
 fn integration_test(path: &Path) -> datatest_stable::Result<()> {
-    set_source_file_path(path.to_str().ok_or("Failed to get path")?);
+    set_source_file_path(path.into());
     open_lexer_file()?;
     open_parser_file()?;
     open_symbol_table_file()?;
