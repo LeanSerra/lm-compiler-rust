@@ -12,7 +12,7 @@ fn main() {
         .out_dir_actions_root(root_dir.clone()) // Output directory for generated actions
         .out_dir_root(root_dir.clone()) // Output directory for generated parser
         .lexer_type(LexerType::Custom) // Use our own Lexer
-        .process_grammar(&parser_rules) // Rules to process
+        .process_grammar(&parser_rules)
     {
         eprintln!("Failed to compile rules: {e}");
         std::process::exit(1)
