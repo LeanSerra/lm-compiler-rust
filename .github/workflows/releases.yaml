@@ -28,6 +28,12 @@ jobs:
           - platform: macos-latest
             os: macos
             arch: aarch64
+          - platfrom: windows-latest
+            os: windows
+            arch: x86_64
+          - platform: windows-11-arm
+            os: windows
+            arch: aarch64
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout sources
