@@ -438,7 +438,7 @@ pub fn var_declarations_var_declarations_recursive(
 pub struct VarDeclarationSingle {
     pub token_id: TokenId,
     pub token_colon: TokenColon,
-    pub data_type: Data_Type,
+    pub data_type: DataType,
 }
 #[derive(Debug, Clone)]
 pub struct VarDeclarationRecursive {
@@ -456,10 +456,10 @@ pub fn var_declaration_var_declaration_single(
     _ctx: &Ctx,
     token_id: TokenId,
     token_colon: TokenColon,
-    data_type: Data_Type,
+    data_type: DataType,
 ) -> VarDeclaration {
     write_to_parser_file(
-        &format!("<VarDeclaration> -> {token_id} {token_colon} <Data_Type>"),
+        &format!("<VarDeclaration> -> {token_id} {token_colon} <DataType>"),
     );
     VarDeclaration::VarDeclarationSingle(VarDeclarationSingle {
         token_id,
@@ -581,22 +581,22 @@ pub fn assignment_assignment(
     }
 }
 #[derive(Debug, Clone)]
-pub enum Data_Type {
+pub enum DataType {
     IntType(TokenInt),
     FloatType(TokenFloat),
     StringType(TokenString),
 }
-pub fn data_type_int_type(_ctx: &Ctx, token_int: TokenInt) -> Data_Type {
-    write_to_parser_file(&format!("<Data_Type> -> {token_int}"));
-    Data_Type::IntType(token_int)
+pub fn data_type_int_type(_ctx: &Ctx, token_int: TokenInt) -> DataType {
+    write_to_parser_file(&format!("<DataType> -> {token_int}"));
+    DataType::IntType(token_int)
 }
-pub fn data_type_float_type(_ctx: &Ctx, token_float: TokenFloat) -> Data_Type {
-    write_to_parser_file(&format!("<Data_Type> -> {token_float}"));
-    Data_Type::FloatType(token_float)
+pub fn data_type_float_type(_ctx: &Ctx, token_float: TokenFloat) -> DataType {
+    write_to_parser_file(&format!("<DataType> -> {token_float}"));
+    DataType::FloatType(token_float)
 }
-pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> Data_Type {
-    write_to_parser_file(&format!("<Data_Type> -> {token_string}"));
-    Data_Type::StringType(token_string)
+pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> DataType {
+    write_to_parser_file(&format!("<DataType> -> {token_string}"));
+    DataType::StringType(token_string)
 }
 #[derive(Debug, Clone)]
 pub struct WhileLoop {

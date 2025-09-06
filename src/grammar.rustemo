@@ -18,7 +18,7 @@ FunctionConvDate: TokenConvDate TokenParOpen IntegerToken TokenComma IntegerToke
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
 
-VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
+VarDeclaration: TokenId TokenColon DataType {VarDeclarationSingle}
  | TokenId TokenComma VarDeclaration {VarDeclarationRecursive}
  | FunctionRead {VarDeclarationRead};
 
@@ -38,7 +38,7 @@ Literal: TokenIntLiteral {IntegerLiteral}
  | TokenFloatLiteral {FloatLiteral}
  | TokenStringLiteral {StringLiteral};
 
-Data_Type: TokenInt {IntType}
+DataType: TokenInt {IntType}
  | TokenFloat {FloatType}
  | TokenString {StringType};
 

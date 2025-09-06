@@ -99,9 +99,9 @@ pub enum ProdKind {
     LiteralIntegerLiteral,
     LiteralFloatLiteral,
     LiteralStringLiteral,
-    Data_TypeIntType,
-    Data_TypeFloatType,
-    Data_TypeStringType,
+    DataTypeIntType,
+    DataTypeFloatType,
+    DataTypeStringType,
     WhileLoopWhile,
     IfStatementIfStatement,
     ElseStatementElseStatement,
@@ -171,7 +171,7 @@ impl std::fmt::Debug for ProdKind {
                 "VarDeclarations: VarDeclaration VarDeclarations"
             }
             ProdKind::VarDeclarationVarDeclarationSingle => {
-                "VarDeclaration: TokenId TokenColon Data_Type"
+                "VarDeclaration: TokenId TokenColon DataType"
             }
             ProdKind::VarDeclarationVarDeclarationRecursive => {
                 "VarDeclaration: TokenId TokenComma VarDeclaration"
@@ -193,9 +193,9 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::LiteralIntegerLiteral => "Literal: TokenIntLiteral",
             ProdKind::LiteralFloatLiteral => "Literal: TokenFloatLiteral",
             ProdKind::LiteralStringLiteral => "Literal: TokenStringLiteral",
-            ProdKind::Data_TypeIntType => "Data_Type: TokenInt",
-            ProdKind::Data_TypeFloatType => "Data_Type: TokenFloat",
-            ProdKind::Data_TypeStringType => "Data_Type: TokenString",
+            ProdKind::DataTypeIntType => "DataType: TokenInt",
+            ProdKind::DataTypeFloatType => "DataType: TokenFloat",
+            ProdKind::DataTypeStringType => "DataType: TokenString",
             ProdKind::WhileLoopWhile => {
                 "WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose"
             }
@@ -290,7 +290,7 @@ pub enum NonTermKind {
     Statement,
     Assignment,
     Literal,
-    Data_Type,
+    DataType,
     WhileLoop,
     IfStatement,
     ElseStatement,
@@ -344,9 +344,9 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::LiteralIntegerLiteral => NonTermKind::Literal,
             ProdKind::LiteralFloatLiteral => NonTermKind::Literal,
             ProdKind::LiteralStringLiteral => NonTermKind::Literal,
-            ProdKind::Data_TypeIntType => NonTermKind::Data_Type,
-            ProdKind::Data_TypeFloatType => NonTermKind::Data_Type,
-            ProdKind::Data_TypeStringType => NonTermKind::Data_Type,
+            ProdKind::DataTypeIntType => NonTermKind::DataType,
+            ProdKind::DataTypeFloatType => NonTermKind::DataType,
+            ProdKind::DataTypeStringType => NonTermKind::DataType,
             ProdKind::WhileLoopWhile => NonTermKind::WhileLoop,
             ProdKind::IfStatementIfStatement => NonTermKind::IfStatement,
             ProdKind::ElseStatementElseStatement => NonTermKind::ElseStatement,
@@ -510,7 +510,7 @@ pub enum State {
     TokenIntS92,
     TokenFloatS93,
     TokenStringS94,
-    Data_TypeS95,
+    DataTypeS95,
     VarDeclarationS96,
     TokenIdS97,
     ArithmeticExpressionS98,
@@ -641,7 +641,7 @@ impl std::fmt::Debug for State {
             State::TokenIntS92 => "92:TokenInt",
             State::TokenFloatS93 => "93:TokenFloat",
             State::TokenStringS94 => "94:TokenString",
-            State::Data_TypeS95 => "95:Data_Type",
+            State::DataTypeS95 => "95:DataType",
             State::VarDeclarationS96 => "96:VarDeclaration",
             State::TokenIdS97 => "97:TokenId",
             State::ArithmeticExpressionS98 => "98:ArithmeticExpression",
@@ -727,7 +727,7 @@ pub enum NonTerminal {
     Expressions(grammar_actions::Expressions),
     Statement(grammar_actions::Statement),
     Assignment(grammar_actions::Assignment),
-    Data_Type(grammar_actions::Data_Type),
+    DataType(grammar_actions::DataType),
     WhileLoop(grammar_actions::WhileLoop),
     IfStatement(grammar_actions::IfStatement),
     ElseStatement(grammar_actions::ElseStatement),
@@ -2137,29 +2137,29 @@ fn action_factor_s91(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
 }
 fn action_tokenint_s92(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeIntType, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeIntType, 1usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::Data_TypeIntType, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::DataTypeIntType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeIntType, 1usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::DataTypeIntType, 1usize)]),
         _ => vec![],
     }
 }
 fn action_tokenfloat_s93(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeFloatType, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeFloatType, 1usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::Data_TypeFloatType, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::DataTypeFloatType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeFloatType, 1usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::DataTypeFloatType, 1usize)]),
         _ => vec![],
     }
 }
 fn action_tokenstring_s94(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Reduce(PK::Data_TypeStringType, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::Data_TypeStringType, 1usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::Data_TypeStringType, 1usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::DataTypeStringType, 1usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeStringType, 1usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::DataTypeStringType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_data_type_s95(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_datatype_s95(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => {
             Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationSingle, 3usize)])
@@ -2752,7 +2752,7 @@ fn goto_tokendiv_s66(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokencolon_s67(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Data_Type => State::Data_TypeS95,
+        NonTermKind::DataType => State::DataTypeS95,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -3003,7 +3003,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_tokenint_s92,
         action_tokenfloat_s93,
         action_tokenstring_s94,
-        action_data_type_s95,
+        action_datatype_s95,
         action_vardeclaration_s96,
         action_tokenid_s97,
         action_arithmeticexpression_s98,
@@ -6257,7 +6257,7 @@ for DefaultBuilder {
                     (
                         Symbol::Terminal(Terminal::TokenId(p0)),
                         Symbol::Terminal(Terminal::TokenColon(p1)),
-                        Symbol::NonTerminal(NonTerminal::Data_Type(p2)),
+                        Symbol::NonTerminal(NonTerminal::DataType(p2)),
                     ) => {
                         NonTerminal::VarDeclaration(
                             grammar_actions::var_declaration_var_declaration_single(
@@ -6454,42 +6454,42 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeIntType => {
+            ProdKind::DataTypeIntType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenInt(p0)) => {
-                        NonTerminal::Data_Type(
+                        NonTerminal::DataType(
                             grammar_actions::data_type_int_type(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeFloatType => {
+            ProdKind::DataTypeFloatType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenFloat(p0)) => {
-                        NonTerminal::Data_Type(
+                        NonTerminal::DataType(
                             grammar_actions::data_type_float_type(context, p0),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::Data_TypeStringType => {
+            ProdKind::DataTypeStringType => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 1usize)
                     .into_iter();
                 match i.next().unwrap() {
                     Symbol::Terminal(Terminal::TokenString(p0)) => {
-                        NonTerminal::Data_Type(
+                        NonTerminal::DataType(
                             grammar_actions::data_type_string_type(context, p0),
                         )
                     }
