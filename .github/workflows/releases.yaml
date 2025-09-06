@@ -50,7 +50,7 @@ jobs:
           path: lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
 
   create-release:
-    # if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build-compiler
     runs-on: ubuntu-latest
@@ -72,32 +72,26 @@ jobs:
           echo "PREVIOUS_TAG: $name"
           echo "PREVIOUS_TAG=$name" >> $GITHUB_ENV
 
-      - name: test
-        run: |
-          echo "Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ github.ref_name}}/README.md)"
+      - name: Update CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fromTag: ${{ github.ref_name }}
+          toTag: ${{ env.PREVIOUS_TAG }}
+          writeToFile: false
 
+      - name: Finalize Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ./bin/**/*
+          draft: false
+          prerelease: false
+          tag_name: ${{ github.ref_name }}
+          name: "ethrex: ${{ github.ref_name }}"
+          body: >
+            Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ env.PREVIOUS_TAG}}/README.md)
 
-      # - name: Update CHANGELOG
-      #   id: changelog
-      #   uses: requarks/changelog-action@v1
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     fromTag: ${{ github.ref_name }}
-      #     toTag: ${{ env.PREVIOUS_TAG }}
-      #     writeToFile: false
-
-
-      # - name: Finalize Release
-      #   uses: softprops/action-gh-release@v2
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     files: ./bin/**/*
-      #     draft: false
-      #     prerelease: false
-      #     tag_name: ${{ github.ref_name }}
-      #     name: "ethrex: ${{ github.ref_name }}"
-      #     body: >
-      #       Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ env.PREVIOUS_TAG}}/README.md)
-
-      #       ${{ steps.changelog.outputs.changes }}
+            ${{ steps.changelog.outputs.changes }}
