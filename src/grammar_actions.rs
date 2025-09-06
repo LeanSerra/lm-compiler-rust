@@ -802,6 +802,7 @@ pub fn boolean_expression_chain_boolean_expression_chain_aux(
 pub fn boolean_expression_chain_boolean_expression_chain_empty(
     _ctx: &Ctx,
 ) -> BooleanExpressionChain {
+    write_to_parser_file(&format!("<BooleanExpressionChain> -> EMPTY"));
     None
 }
 #[derive(Debug, Clone)]
@@ -943,6 +944,9 @@ pub fn arithmetic_expression_arithmetic_expression_sum_term(
     token_sum: TokenSum,
     term: Term,
 ) -> ArithmeticExpression {
+    write_to_parser_file(
+        &format!("<ArithmeticExpression> -> <ArithmeticExpression> {token_sum} <Term>"),
+    );
     ArithmeticExpression::ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm {
         arithmetic_expression: Box::new(arithmetic_expression),
         token_sum,
@@ -955,6 +959,9 @@ pub fn arithmetic_expression_arithmetic_expression_sub_term(
     token_sub: TokenSub,
     term: Term,
 ) -> ArithmeticExpression {
+    write_to_parser_file(
+        &format!("<ArithmeticExpression> -> <ArithmeticExpression> {token_sub} <Term>"),
+    );
     ArithmeticExpression::ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm {
         arithmetic_expression: Box::new(arithmetic_expression),
         token_sub,
@@ -965,6 +972,7 @@ pub fn arithmetic_expression_arithmetic_expression_term(
     _ctx: &Ctx,
     term: Term,
 ) -> ArithmeticExpression {
+    /// write_to_parser_file(&format!("<ArithmeticExpression> -> <Term>"));
     ArithmeticExpression::ArithmeticExpressionTerm(term)
 }
 #[derive(Debug, Clone)]
@@ -991,6 +999,7 @@ pub fn term_term_mul_factor(
     token_mul: TokenMul,
     factor: Factor,
 ) -> Term {
+    write_to_parser_file(&format!("<Term> -> <Term> {token_mul} <Factor>"));
     Term::TermMulFactor(TermMulFactor {
         term: Box::new(term),
         token_mul,
@@ -1003,6 +1012,7 @@ pub fn term_term_div_factor(
     token_div: TokenDiv,
     factor: Factor,
 ) -> Term {
+    write_to_parser_file(&format!("<Term> -> <Term> {token_div} <Factor>"));
     Term::TermDivFactor(TermDivFactor {
         term: Box::new(term),
         token_div,
@@ -1010,6 +1020,7 @@ pub fn term_term_div_factor(
     })
 }
 pub fn term_term_factor(_ctx: &Ctx, factor: Factor) -> Term {
+    /// write_to_parser_file(&format!("<Term> -> <Factor>"));
     Term::TermFactor(factor)
 }
 #[derive(Debug, Clone)]
@@ -1025,9 +1036,11 @@ pub enum Factor {
     FactorParen(FactorParen),
 }
 pub fn factor_factor_id(_ctx: &Ctx, token_id: TokenId) -> Factor {
+    write_to_parser_file(&format!("<Factor> -> {token_id}"));
     Factor::FactorId(token_id)
 }
 pub fn factor_factor_number(_ctx: &Ctx, number: Number) -> Factor {
+    write_to_parser_file(&format!("<Factor> -> <Number>"));
     Factor::FactorNumber(number)
 }
 pub fn factor_factor_paren(
@@ -1036,6 +1049,9 @@ pub fn factor_factor_paren(
     arithmetic_expression: ArithmeticExpression,
     token_par_close: TokenParClose,
 ) -> Factor {
+    write_to_parser_file(
+        &format!("<Factor> -> {token_par_open} <ArithmeticExpression> {token_par_close}"),
+    );
     Factor::FactorParen(FactorParen {
         token_par_open,
         arithmetic_expression: Box::new(arithmetic_expression),
