@@ -8,11 +8,15 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CompilerError {
-    #[error("ParsingError: {0:?}")]
-    Parser(rustemo::Error),
-    #[error("ContextError: {0}")]
+    #[error("Parser internal error: {0:?}")]
+    ParserInternal(rustemo::Error),
+    #[error("Parser error: {0}")]
+    Parser(String),
+    #[error("Lexer error: {0}")]
+    Lexer(String),
+    #[error("Context error: {0}")]
     Context(String),
-    #[error("IOError: {0:?}")]
+    #[error("IO error: {0:?}")]
     IO(io::Error),
 }
 

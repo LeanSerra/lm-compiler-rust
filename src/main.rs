@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _program = GrammarParser::new(LexerAdapter::new())
         .parse(&read_source_to_string()?)
-        .map_err(CompilerError::Parser)?;
+        .map_err(CompilerError::ParserInternal)?;
 
     println!("{}", read_parser_file_to_string()?);
 
