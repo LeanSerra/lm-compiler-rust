@@ -47,7 +47,9 @@ jobs:
       - name: Build compiler
         run: |
           cargo build --release
-          mv target/release/lm-compiler lm-compiler-${{ matrix.os }}_${{ matrix.arch }}
+          exe_ext=""
+          if [[ "${{ matrix.os }}" == "windows" ]]; then exe_ext=".exe"; fi
+          mv target/release/lm-compiler$exe_ext lm-compiler-${{ matrix.os }}_${{ matrix.arch }}$exe_ext
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
