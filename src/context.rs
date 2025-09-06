@@ -1,8 +1,7 @@
 use std::{
     cell::RefCell,
     fs::{File, OpenOptions, read_to_string},
-    io,
-    io::Write,
+    io::{self, Read, Seek, Write},
     path::PathBuf,
 };
 use thiserror::Error;
@@ -60,6 +59,7 @@ pub fn open_parser_file() -> Result<(), io::Error> {
                     .create(true)
                     .truncate(true)
                     .write(true)
+                    .read(true)
                     .open(path.with_extension("parser"))?,
             ));
         }
@@ -107,6 +107,21 @@ pub fn read_source_to_string() -> Result<String, CompilerError> {
         } else {
             Err(CompilerError::Context(
                 "Tried to open source code file without setting the path".into(),
+            ))
+        }
+    })
+}
+
+pub fn read_parser_file_to_string() -> Result<String, CompilerError> {
+    PARSER_FILE.with(|f| {
+        let mut buf = String::new();
+        if let Some(mut file) = f.borrow().as_ref() {
+            file.rewind().map_err(CompilerError::IO)?;
+            file.read_to_string(&mut buf).map_err(CompilerError::IO)?;
+            Ok(buf)
+        } else {
+            Err(CompilerError::Context(
+                "Tried to open parser file before creating it".into(),
             ))
         }
     })

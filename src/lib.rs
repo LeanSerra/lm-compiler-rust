@@ -18,7 +18,7 @@ mod grammar_lexer;
 
 pub use context::{
     CompilerError, open_lexer_file, open_parser_file, open_symbol_table_file,
-    read_source_to_string, set_source_file_path,
+    read_parser_file_to_string, read_source_to_string, set_source_file_path,
 };
 pub use grammar::GrammarParser;
 pub use grammar_lexer::LexerAdapter;
