@@ -45,6 +45,7 @@ jobs:
           toolchain: 1.89.0
 
       - name: Build compiler
+        shell: bash
         run: |
           cargo build --release
           exe_ext=""
