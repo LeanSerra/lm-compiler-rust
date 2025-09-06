@@ -4,6 +4,7 @@ use crate::{
     grammar::{State, TokenKind},
 };
 
+use owo_colors::OwoColorize;
 use rustemo::{Context, LRContext, Lexer, Location, Position, Token};
 use std::{fmt::Display, iter};
 
@@ -129,16 +130,26 @@ fn log_error(lexer: &crate::lex::Lexer, err: CompilerError, offset: usize, sourc
     underline.push_str(&" ".repeat(col_in_file - 1));
     underline.push_str(&"^".repeat(span_len));
 
-    eprintln!("error: {err}");
+    eprintln!("{}: {}", "error".red().bold(), err.to_string().bold());
     eprintln!(
         "  --> {}:{}:{}",
-        path.to_str().unwrap_or(""),
-        line_in_file,
-        col_in_file
+        path.to_str().unwrap_or("").bright_blue(),
+        line_in_file.blue(),
+        col_in_file.blue()
     );
-    eprintln!("   |");
-    eprintln!("{:>3}| {}", line_in_file, line_text);
-    eprintln!("   | {underline} {err}");
+    eprintln!("   {}", "|".dimmed());
+    eprintln!(
+        "{:>3}{} {}",
+        line_in_file.to_string().blue(),
+        "|".dimmed(),
+        line_text
+    );
+    eprintln!(
+        "   {} {} {}",
+        "|".dimmed(),
+        underline.bold().red(),
+        err.bold().red()
+    );
     eprintln!()
 }
 

@@ -1,31 +1,31 @@
 main(){
-	init
-	{
-		x, y : int
-		a, b, c, d : float
-		var1234 : string
-	}
-	a := 4+3
-	b := 9
-	a := 5.25
-	b := -5.25
-	c := "test1234"
-	d := 1
+    init
+    {
+        x, y : int
+        a, b, c, d : float
+        var1234 : string
+    }
+    a := 4+3
+    b := 9
+    a := 5.25
+    b := -5.25
+    c := "test1234"
+    d := 1
 
-	while(a > b) {
-		a := 1
-	}
+    while(a > b) {
+        a := 1
+    }
 
-	if(a > b > c > d) {
-		a := 1
-	}
-	else {
-		b := 1
-	}
+    if(a > b > c > d) {
+        a := 1
+    }
+    else {
+        b := 1
+    }
 
-	b := 1
+    b := 1
 
-	if(not b){
-		a := 1
-	}
+    if(not b){
+        a := 1
+    }
 }
