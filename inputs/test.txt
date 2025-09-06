@@ -1,7 +1,7 @@
 main(){
     init
     {
-        x, y : it
+        x, y : int
         a, b, c, d : float
         var1234 : string
     }
