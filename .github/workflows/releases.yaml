@@ -72,18 +72,20 @@ jobs:
           echo "PREVIOUS_TAG: $name"
           echo "PREVIOUS_TAG=$name" >> $GITHUB_ENV
 
-      - name: Update CHANGELOG
-        id: changelog
-        uses: requarks/changelog-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fromTag: ${{ github.ref_name }}
-          toTag: ${{ env.PREVIOUS_TAG }}
-          writeToFile: false
-
       - name: test
         run: |
           echo "Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ github.ref_name}}/README.md)"
+
+
+      # - name: Update CHANGELOG
+      #   id: changelog
+      #   uses: requarks/changelog-action@v1
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     fromTag: ${{ github.ref_name }}
+      #     toTag: ${{ env.PREVIOUS_TAG }}
+      #     writeToFile: false
+
 
       # - name: Finalize Release
       #   uses: softprops/action-gh-release@v2
