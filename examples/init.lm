@@ -1,0 +1,5 @@
+main(){
+    init {
+        a1 : float
+    }
+}

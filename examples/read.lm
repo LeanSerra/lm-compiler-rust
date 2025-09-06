@@ -1,0 +1,6 @@
+main(){
+    init {
+        base: string
+    }
+    read(base)#+ base es una variable +#
+}

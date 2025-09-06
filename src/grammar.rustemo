@@ -1,29 +1,91 @@
 Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose {Program};
 
-Body: TokenInit InitBody Expressions {Body};
+Body: TokenInit InitBody Expressions {BodyInitExpressions}
+ | TokenInit InitBody {BodyInit}
+ | Expressions {BodyExpressions}
+ | EMPTY {BodyEmpty};
 
 InitBody: TokenCBOpen VarDeclarations TokenCBClose {InitBody};
+
+FunctionRead: TokenRead TokenParOpen TokenId TokenParClose {FunctionReadCall};
+
+FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionWriteCall};
+
+FunctionIsZero: TokenIsZero TokenParOpen ArithmeticExpression TokenParClose {FunctionIsZeroCall};
+
+FunctionConvDate: TokenConvDate TokenParOpen IntegerValue TokenComma IntegerValue TokenComma IntegerValue TokenParClose {FunctionConvDateVariableCall};
 
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
 
-VarDeclaration: TokenId TokenColon Data_Type {VarDeclarationSingle}
+VarDeclaration: TokenId TokenColon DataType {VarDeclarationSingle}
  | TokenId TokenComma VarDeclaration {VarDeclarationRecursive};
 
-Expressions: Expression {ExpressionSingle}
- | Expression Expressions {ExpressionRecursive};
+Expressions: Statement {ExpressionSingle}
+ | Statement Expressions {ExpressionRecursive};
 
-Expression: Assignment {ExpressionAssignment};
+Statement: Assignment {StatementAssignment}
+ | IfStatement {StatementIfStatement}
+ | ElseStatement {StatementElseStatement}
+ | WhileLoop {StatementWhile}
+ | FunctionWrite {StatementWrite}
+ | FunctionRead {StatementRead}
+ | FunctionConvDate {StatementConvDate};
 
-Assignment: TokenId TokenAssign Literal {Assignment};
+Assignment: TokenId TokenAssign SimpleExpression {Assignment};
 
-Literal: TokenIntLiteral {IntegerLiteral}
- | TokenFloatLiteral {FloatLiteral}
- | TokenStringLiteral {StringLiteral};
-
-Data_Type: TokenInt {IntType}
+DataType: TokenInt {IntType}
  | TokenFloat {FloatType}
  | TokenString {StringType};
+
+WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {While};
+
+IfStatement: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
+
+ElseStatement: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
+
+BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSimpleExpression}
+ | TokenTrue {BooleanExpressionTrue}
+ | TokenFalse {BooleanExpressionFalse}
+ | SimpleExpression BooleanExpressionChain Conjunction BooleanExpression {BooleanExpressionSimpleExpressionRecursive}
+ | NotStatement {BooleanExpressionNotStatement}
+ | FunctionIsZero {BooleanExpressionIsZero};
+
+ BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
+ | EMPTY {BooleanExpressionChainEmpty};
+
+SimpleExpression: ArithmeticExpression {SimpleExpressionArithmetic}
+ | TokenStringLiteral {SimpleExpressionString};
+
+Conjunction: TokenAnd {ConjunctionAnd}
+ | TokenOr {ConjunctionOr};
+
+ComparisonOp: TokenEqual {ComparisonOpEqual}
+ | TokenNotEqual {ComparisonOpNotEqual}
+ | TokenLess {ComparisonOpLess}
+ | TokenLessEqual {ComparisonOpLessEqual}
+ | TokenGreater {ComparisonOpGreater}
+ | TokenGreaterEqual {ComparisonOpGreaterEqual};
+
+Number: TokenIntLiteral {NumberInt}
+ | TokenFloatLiteral {NumberFloat};
+
+NotStatement: TokenNot BooleanExpression {Not};
+
+ArithmeticExpression: ArithmeticExpression TokenSum Term {ArithmeticExpressionSumTerm}
+| ArithmeticExpression TokenSub Term {ArithmeticExpressionSubTerm}
+| Term {ArithmeticExpressionTerm};
+
+Term: Term TokenMul Factor {TermMulFactor}
+| Term TokenDiv Factor {TermDivFactor}
+| Factor {TermFactor};
+
+Factor: TokenId {FactorId}
+| Number {FactorNumber}
+| TokenParOpen ArithmeticExpression TokenParClose {FactorParen};
+
+IntegerValue: TokenIntLiteral {IntegerValueLiteral} 
+| TokenId {IntegerValueId};
 
 terminals
 
@@ -46,4 +108,22 @@ TokenCBClose:;
 TokenSemicolon:;
 TokenColon:;
 TokenInit:;
+TokenWhile:;
+TokenEqual:;
+TokenNotEqual:;
+TokenLess:;
+TokenLessEqual:;
+TokenGreater:;
+TokenGreaterEqual:;
+TokenTrue:;
+TokenFalse:;
+TokenIf:;
+TokenElse:;
 TokenComma:;
+TokenAnd:;
+TokenOr:;
+TokenNot:;
+TokenRead:;
+TokenWrite:;
+TokenIsZero:;
+TokenConvDate:;

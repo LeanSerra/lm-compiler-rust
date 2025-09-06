@@ -36,10 +36,11 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
         } else {
             let input = input.get(context.position()..input.len()).unwrap();
             let mut lexer = crate::lex::Lexer::new(input);
+            // TODO: handle errors correctly
             token = lexer.yylex().unwrap_or(TokenKind::STOP);
 
             let range = lexer.yytextpos();
-            pos += lexer.yytextpos().start;
+            pos += range.start;
             value = unsafe { input.get_unchecked(range) };
         }
 
@@ -50,7 +51,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
             value,
             location: Location {
                 start: Position::Position(context.position()),
-                end: None,
+                end: Some(Position::Position(pos)),
             },
         }))
     }

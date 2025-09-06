@@ -1,0 +1,22 @@
+main(){
+    init {
+        a, b : int
+    }
+
+    a := 1
+    b := 0
+
+    if (isZero(a)) {
+        write("a es 0")
+    }
+    else{
+        write("a no es 0")
+    }
+
+    if(isZero(b)) {
+        write("b es 0")
+    }
+    else{
+        write("b no es 0")
+    }
+}

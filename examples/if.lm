@@ -1,0 +1,17 @@
+main(){
+    init {
+        a, b : int
+    }
+
+    a := 1
+    b := 2
+
+    if (a > b)
+    {
+        write("aaaaaaaaaaaaaab")
+    }
+    else
+    {
+        write("a es b")
+    }
+}
