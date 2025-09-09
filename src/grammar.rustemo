@@ -68,7 +68,9 @@ ComparisonOp: TokenEqual {ComparisonOpEqual}
  | TokenGreaterEqual {ComparisonOpGreaterEqual};
 
 Number: TokenIntLiteral {NumberInt}
- | TokenFloatLiteral {NumberFloat};
+ | TokenFloatLiteral {NumberFloat}
+ | TokenSub TokenIntLiteral {NumberNegativeInt}
+ | TokenSub TokenFloatLiteral {NumberNegativeFloat};
 
 NotStatement: TokenNot BooleanExpression {Not};
 
