@@ -3,8 +3,7 @@ main(){
         a : int
     }
     
-    #+ Esto es 
-    un comentario +#
+    #+ Esto es un comentario +#
 
     a := 1
 }

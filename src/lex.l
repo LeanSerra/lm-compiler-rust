@@ -5,7 +5,7 @@ use crate::grammar::TokenKind;
 %result_type TokenKind
 
 
-#\+(.|\n)*\+#
+#\+([^\"\\\r\n#]|\\.)*\+#
 "int"                                                           return Ok(TokenKind::TokenInt);
 "float"                                                         return Ok(TokenKind::TokenFloat);
 "string"                                                        return Ok(TokenKind::TokenString);
