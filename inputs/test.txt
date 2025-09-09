@@ -3,6 +3,10 @@ main(){
         a1, b2 : int
         c33, d4, e5 : float
         f6f, g : string
+
+        #+ Ejemplo de una variable mal declarada +#
+        #+ fecha : date +#
+        #+ h : foat +#
     }
     
     a1 := -125
@@ -35,6 +39,9 @@ main(){
     write(g)
     
     read(f6f)
+
+    #+ Ejemplo de error por asignacion incorrecta +#
+    #+ x = 10 +#
 
     convDate(1,2,1900)
     convDate(a1,2,1900)
