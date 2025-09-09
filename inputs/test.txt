@@ -46,6 +46,5 @@ main(){
     #+ Ejemplo de error por entero mayor a 64 bits +#
     #+ x:= 18446744073709551616 +#
 
-    convDate(1,2,1900)
-    convDate(a1,2,1900)
+    convDate(01-02-1900)
 }

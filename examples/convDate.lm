@@ -3,12 +3,5 @@ main(){
         a, b, c : int
     }
 
-    a := 1
-    b := 10
-    c := 1900
-
-    convDate(11,11,1900)
-    convDate(a,b,c)
-    convDate(11,b,1900)
-    convDate(a,11,c)
+    convDate(11-11-1900)
 }

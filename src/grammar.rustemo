@@ -13,7 +13,7 @@ FunctionWrite: TokenWrite TokenParOpen SimpleExpression TokenParClose {FunctionW
 
 FunctionIsZero: TokenIsZero TokenParOpen ArithmeticExpression TokenParClose {FunctionIsZeroCall};
 
-FunctionConvDate: TokenConvDate TokenParOpen IntegerValue TokenComma IntegerValue TokenComma IntegerValue TokenParClose {FunctionConvDateVariableCall};
+FunctionConvDate: TokenConvDate TokenParOpen TokenDate TokenParClose {FunctionConvDateVariableCall};
 
 VarDeclarations: VarDeclaration {VarDeclarationsSingle}
  | VarDeclaration VarDeclarations {VarDeclarationsRecursive};
@@ -129,3 +129,4 @@ TokenRead:;
 TokenWrite:;
 TokenIsZero:;
 TokenConvDate:;
+TokenDate:;
