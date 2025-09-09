@@ -946,7 +946,7 @@ pub fn number_number_negative_int(
     write_to_symbol_table_file(
         &format!(
             "-{}|{}|{}|-{}", token_int_literal, "CONST_INT", token_int_literal,
-            format!("-{}", token_int_literal).len()
+            token_int_literal.len() + 1
         ),
     );
     write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
