@@ -43,6 +43,9 @@ main(){
     #+ Ejemplo de error por asignacion incorrecta +#
     #+ x = 10 +#
 
+    #+ Ejemplo de error por entero mayor a 64 bits +#
+    #+ x:= 18446744073709551616 +#
+
     convDate(1,2,1900)
     convDate(a1,2,1900)
 }
