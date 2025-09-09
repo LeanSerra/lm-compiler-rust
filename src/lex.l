@@ -25,7 +25,8 @@ use crate::grammar::TokenKind;
 ("-"?[0-9]+)                                                    return Ok(TokenKind::TokenIntLiteral);
 ("-"?([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)          return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
-\"([^\"\\\r\n#]|\\.)*\"                                          return Ok(TokenKind::TokenStringLiteral);
+\"([^\"\\\r\n#]|\\.)*\"                                         return Ok(TokenKind::TokenStringLiteral);
+
 ":="                                                            return Ok(TokenKind::TokenAssign);
 "+"                                                             return Ok(TokenKind::TokenSum);
 "*"                                                             return Ok(TokenKind::TokenMul);
