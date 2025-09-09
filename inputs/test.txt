@@ -6,7 +6,7 @@ main(){
         var1234 : string
     }
     a := 4+3
-    b := -5.25
+    b := 5.25
     c := "test1234"
     
     while(a > b) {
