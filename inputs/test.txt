@@ -1,35 +1,41 @@
 main(){
-    init
-    {
-        x, y : int
-        a, b, c, d : float
-        var1234 : string
+    init {
+        a1, b2 : int
+        c33, d4, e5 : float
+        f6f, g : string
     }
-    a := 4+3
-    b := -5.25
-    c := "test1234"
     
-    while(a > b) {
-        a := 1
-    }
+    a1 := -125
+    b2 := a1
 
-    if(a > b > c > d) {
-        a := 2
+    c33 := 5.34
+    d4 := c33-2.1
+    e5 := -5.1 #+ numero "negativo" +#
+
+    f6f := "hola \n como estas"
+    g := "que onda"
+
+    #+ comentario +#
+
+    if(a1 > b2) {
+        a1 := 10
     }
     else {
-        b := 3
+        b2 := 20
     }
 
-    b := 4
-
-    if(not b){
-        a := 5
+    while(c33 == 5.34 and d4 <= 2 < c33 or e5 >= 1) {
+        a1 := a1+1
+        if(not isZero(a1)) {
+            a1 := -125
+        }
     }
 
-    read(var1234)
-    write(var1234)
-    convDate(9,9,1999)
-    if (isZero(33 - 33)) {
-        d := 0
-    }
+    write("hola")
+    write(g)
+    
+    read(f6f)
+
+    convDate(1,2,1900)
+    convDate(a1,2,1900)
 }
