@@ -962,7 +962,7 @@ pub fn number_number_negative_float(
 ) -> Number {
     write_to_symbol_table_file(
         &format!(
-            "-{}|{}|{}|{}", token_float_literal, "CONST_FLOAT", format!("-{}", token_float_literal),
+            "-{}|{}|{}|{}", token_float_literal, "CONST_FLOAT", token_float_literal,
             format!("-{}", token_float_literal).len()
         ),
     );
