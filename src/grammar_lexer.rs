@@ -6,7 +6,7 @@ use crate::{
 
 use owo_colors::OwoColorize;
 use rustemo::{Context, LRContext, Lexer, Location, Position, Token};
-use std::{fmt::Display, iter};
+use std::{fmt::Display, iter, ops::Range};
 
 /// We are parsing a slice of bytes.
 pub type Input = str;
@@ -55,7 +55,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
                 {
                     Ok(tok) => tok,
                     Err(e) => {
-                        log_error(&lexer, e, pos, input);
+                        log_error(lexer.yytextpos(), e, pos, input);
                         std::process::exit(1)
                     }
                 };
@@ -109,11 +109,11 @@ fn validate_and_get_next_token(
     }
 }
 
-fn log_error(lexer: &crate::lex::Lexer, err: CompilerError, offset: usize, source: &str) {
+pub fn log_error(token_pos: Range<usize>, err: CompilerError, offset: usize, source: &str) {
     let path = SOURCE_CODE_PATH.with(|path| path.borrow().clone().unwrap());
-    let pos_in_string = lexer.yytextpos();
+
     let (line_starts, (line_in_file, col_in_file)) =
-        pos_to_line_col(source, pos_in_string.start + offset);
+        pos_to_line_col(source, token_pos.start + offset);
 
     let line_start = line_starts[line_in_file - 1];
     let line_end = source[line_start..]
@@ -123,7 +123,7 @@ fn log_error(lexer: &crate::lex::Lexer, err: CompilerError, offset: usize, sourc
     let line_text = &source[line_start..line_end];
 
     let span_len = std::cmp::min(
-        pos_in_string.end - pos_in_string.start,
+        token_pos.end - token_pos.start,
         line_text.len() - (col_in_file - 1),
     );
     let mut underline = String::new();
