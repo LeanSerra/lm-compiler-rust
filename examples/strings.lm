@@ -1,0 +1,7 @@
+main(){
+    init{
+        a, b : string
+    }
+    a := "hola"
+    b := "chau"
+}
