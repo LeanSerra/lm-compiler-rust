@@ -902,6 +902,18 @@ pub fn comparison_op_comparison_op_greater_equal(
 pub enum Number {
     NumberInt(TokenIntLiteral),
     NumberFloat(TokenFloatLiteral),
+    NumberNegativeInt(NumberNegativeInt),
+    NumberNegativeFloat(NumberNegativeFloat),
+}
+#[derive(Debug, Clone)]
+pub struct NumberNegativeInt {
+    pub token_sub: TokenSub,
+    pub token_int_literal: TokenIntLiteral,
+}
+#[derive(Debug, Clone)]
+pub struct NumberNegativeFloat {
+    pub token_sub: TokenSub,
+    pub token_float_literal: TokenFloatLiteral,
 }
 pub fn number_number_int(_ctx: &Ctx, token_int_literal: TokenIntLiteral) -> Number {
     write_to_symbol_table_file(
@@ -925,6 +937,40 @@ pub fn number_number_float(
     );
     write_to_parser_file(&format!("<Number> -> {token_float_literal}"));
     Number::NumberFloat(token_float_literal)
+}
+pub fn number_number_negative_int(
+    _ctx: &Ctx,
+    token_sub: TokenSub,
+    token_int_literal: TokenIntLiteral,
+) -> Number {
+    write_to_symbol_table_file(
+        &format!(
+            "-{}|{}|{}|-{}", token_int_literal, "CONST_INT", token_int_literal,
+            token_int_literal.len() + 1
+        ),
+    );
+    write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
+    Number::NumberNegativeInt(NumberNegativeInt {
+        token_sub,
+        token_int_literal,
+    })
+}
+pub fn number_number_negative_float(
+    _ctx: &Ctx,
+    token_sub: TokenSub,
+    token_float_literal: TokenFloatLiteral,
+) -> Number {
+    write_to_symbol_table_file(
+        &format!(
+            "-{}|{}|{}|{}", token_float_literal, "CONST_FLOAT", token_float_literal,
+            format!("-{}", token_float_literal).len()
+        ),
+    );
+    write_to_parser_file(&format!("<Number> -> {token_sub} {token_float_literal}"));
+    Number::NumberNegativeFloat(NumberNegativeFloat {
+        token_sub,
+        token_float_literal,
+    })
 }
 #[derive(Debug, Clone)]
 pub struct NotStatement {
