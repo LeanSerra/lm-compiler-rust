@@ -101,7 +101,7 @@ jobs:
           draft: false
           prerelease: false
           tag_name: ${{ github.ref_name }}
-          name: "ethrex: ${{ github.ref_name }}"
+          name: "lm-compiler: ${{ github.ref_name }}"
           body: >
             Before running read the [docs](https://github.com/LeanSerra/lm-compiler-rust/blob/${{ env.PREVIOUS_TAG}}/README.md)
 
