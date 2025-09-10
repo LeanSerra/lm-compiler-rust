@@ -48,7 +48,7 @@ cargo build --release
 
 1. Run in debug mode
 ```Shell
-cargo run
+cargo run -- <INPUT-FILE>
 ```
 
 2. Run in release mode
