@@ -13,10 +13,7 @@ use std::path::PathBuf;
     about = "Simple compiler written in Rust for the Compilers & Languages class at UNLaM"
 )]
 struct Cli {
-    #[arg(
-        help = "Path to the source code file",
-        default_value = "./inputs/test.txt"
-    )]
+    #[arg(help = "Path to the source code file", value_name = "INPUT_FILE")]
     input: PathBuf,
 }
 
