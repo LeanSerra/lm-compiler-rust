@@ -53,10 +53,10 @@ cargo run
 
 2. Run in release mode
 ```Shell
-cargo run --release
+cargo run --release -- <INPUT-FILE>
 ```
 
-The executable can accept an input file as a parmeter and will by default run the file located at './inputs/test.txt'.
+The executable requires an input file as a parmeter.
 
 ## Running the tests
 
@@ -77,10 +77,10 @@ When running the compiler it will output 3 files to the path of the source file
 ## Cli reference
 
 ```
-Usage: lm-compiler [INPUT]
+Usage: lm-compiler <INPUT_FILE>
 
 Arguments:
-  [INPUT]  Path to the source code file [default: ./Inputs/test.txt]
+  <INPUT_FILE>  Path to the source code file
 
 Options:
   -h, --help     Print help
