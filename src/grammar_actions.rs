@@ -235,6 +235,11 @@ pub fn token_conv_date(_ctx: &Ctx, token: Token) -> TokenConvDate {
     write_to_lexer_file(&format!("CONV_DATE: {}", token.value));
     token.value.into()
 }
+pub type TokenDate = String;
+pub fn token_date(_ctx: &Ctx, token: Token) -> TokenDate {
+    write_to_lexer_file(&format!("DATE: {}", token.value));
+    token.value.into()
+}
 #[derive(Debug, Clone)]
 pub struct Program {
     pub token_id: TokenId,
@@ -408,35 +413,23 @@ pub fn function_is_zero_function_is_zero_call(
 pub struct FunctionConvDate {
     pub token_conv_date: TokenConvDate,
     pub token_par_open: TokenParOpen,
-    pub integer_token_3: IntegerValue,
-    pub token_comma_4: TokenComma,
-    pub integer_token_5: IntegerValue,
-    pub token_comma_6: TokenComma,
-    pub integer_token_7: IntegerValue,
+    pub token_date: TokenDate,
     pub token_par_close: TokenParClose,
 }
 pub fn function_conv_date_function_conv_date_variable_call(
     _ctx: &Ctx,
     token_conv_date: TokenConvDate,
     token_par_open: TokenParOpen,
-    integer_token_3: IntegerValue,
-    token_comma_4: TokenComma,
-    integer_token_5: IntegerValue,
-    token_comma_6: TokenComma,
-    integer_token_7: IntegerValue,
+    token_date: TokenDate,
     token_par_close: TokenParClose,
 ) -> FunctionConvDate {
     write_to_parser_file(&format!(
-        "<FunctionConvDate> -> {token_conv_date} {token_par_open} <IntegerValue> {token_comma_4} <IntegerValue> {token_comma_6} <IntegerValue> {token_par_close}"
+        "<FunctionConvDate> -> {token_conv_date} {token_par_open} {token_date} {token_par_close}"
     ));
     FunctionConvDate {
         token_conv_date,
         token_par_open,
-        integer_token_3,
-        token_comma_4,
-        integer_token_5,
-        token_comma_6,
-        integer_token_7,
+        token_date,
         token_par_close,
     }
 }
@@ -768,7 +761,7 @@ pub fn boolean_expression_boolean_expression_simple_expression_recursive(
     boolean_expression: BooleanExpression,
 ) -> BooleanExpression {
     write_to_parser_file(&format!(
-        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> {conjunction:?} <BooleanExpression>"
+        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>"
     ));
     BooleanExpression::BooleanExpressionSimpleExpressionRecursive(
         BooleanExpressionSimpleExpressionRecursive {

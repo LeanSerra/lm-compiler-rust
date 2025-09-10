@@ -22,6 +22,7 @@ use crate::grammar::TokenKind;
 "write"                                                         return Ok(TokenKind::TokenWrite);
 "isZero"                                                        return Ok(TokenKind::TokenIsZero);
 "convDate"                                                      return Ok(TokenKind::TokenConvDate);
+([0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9])                    return Ok(TokenKind::TokenDate);
 ([0-9]+)                                                        return Ok(TokenKind::TokenIntLiteral);
 (([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)              return Ok(TokenKind::TokenFloatLiteral);
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);

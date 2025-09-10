@@ -210,6 +210,7 @@ impl Display for TokenKind {
             Self::TokenWrite => "\"write\"",
             Self::TokenIsZero => "\"isZero\"",
             Self::TokenConvDate => "\"convDate\"",
+            Self::TokenDate => "\"date\"",
         };
         write!(f, "{text}")
     }

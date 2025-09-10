@@ -18,4 +18,7 @@ fn integration_test(path: &Path) -> datatest_stable::Result<()> {
 }
 
 #[cfg(test)]
-datatest_stable::harness!( { test = integration_test, root = "./examples", pattern = r".*\.lm" },);
+datatest_stable::harness!(
+    { test = integration_test, root = "./examples", pattern = r".*\.lm" },
+    { test = integration_test, root = "./inputs", pattern = r"test.txt" }
+);
