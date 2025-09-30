@@ -49,7 +49,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
             token = TokenKind::STOP
         } else {
             let trimmed_input = input.get(context.position()..input.len()).unwrap();
-            let mut lexer = crate::lex::Lexer::new(trimmed_input);
+            let mut lexer = crate::lex::Lexer::new(trimmed_input, pos);
             token =
                 match validate_and_get_next_token(&mut lexer, expected_tokens, expected_tokens_str)
                 {

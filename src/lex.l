@@ -1,7 +1,10 @@
 use crate::grammar::TokenKind;
+use crate::grammar_lexer::log_error;
+use crate::read_source_to_string;
 
 %%
 %class Lexer
+%field usize offset
 %result_type TokenKind
 
 
@@ -23,10 +26,56 @@ use crate::grammar::TokenKind;
 "isZero"                                                        return Ok(TokenKind::TokenIsZero);
 "convDate"                                                      return Ok(TokenKind::TokenConvDate);
 ([0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9])                    return Ok(TokenKind::TokenDate);
-([0-9]+)                                                        return Ok(TokenKind::TokenIntLiteral);
-(([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)              return Ok(TokenKind::TokenFloatLiteral);
+([0-9]+)                                                        {
+                                                                    if let Err(e) = self.yytext().parse::<u64>() {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid integer literal {e}")),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1)
+                                                                    }
+                                                                    return Ok(TokenKind::TokenIntLiteral);
+                                                                }
+(([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)              {
+                                                                    match self.yytext().parse::<f32>() {
+                                                                        Err(e) => {
+                                                                            log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal {e}")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                        }
+                                                                        Ok(value) => {
+                                                                            if !value.is_normal() {
+                                                                                log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                            }
+                                                                        }
+                                                                    };
+                                                                    return Ok(TokenKind::TokenFloatLiteral);
+                                                                }
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
-\"([^\"\\\r\n#]|\\.)*\"                                         return Ok(TokenKind::TokenStringLiteral);
+\"([^\"\\\r\n#]|\\.)*\"                                         {
+                                                                    if self.yytext().len() > 256 {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1);
+                                                                    }
+                                                                    return Ok(TokenKind::TokenStringLiteral);
+                                                                }
 ":="                                                            return Ok(TokenKind::TokenAssign);
 "+"                                                             return Ok(TokenKind::TokenSum);
 "*"                                                             return Ok(TokenKind::TokenMul);

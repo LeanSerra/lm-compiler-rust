@@ -1,4 +1,6 @@
 use crate::grammar::TokenKind;
+use crate::grammar_lexer::log_error;
+use crate::read_source_to_string;
 
 
 use std::collections::HashMap;
@@ -35,6 +37,7 @@ pub struct Lexer<'a> {
 
     zz_at_eof: bool,
 
+    offset: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -48,7 +51,7 @@ impl<'a> Lexer<'a> {
 
     pub const YYEOF: i32 = -1;
 
-    pub fn new(input: &'a str) -> Lexer<'a> {
+    pub fn new(input: &'a str, offset: usize) -> Lexer<'a> {
         let max_len = input.chars().clone().count();
         let mut cmap: Vec<usize> = Vec::with_capacity(256);
         cmap.resize(256, 0);
@@ -164,9 +167,13 @@ impl<'a> Lexer<'a> {
 
             zz_at_eof: false,
 
+            offset,
         }
     }
 
+
+    #[allow(dead_code)]
+    pub fn get_offset(&mut self) -> &mut usize { &mut self.offset }
 
     #[allow(dead_code)]
     pub fn is_eof(&self) -> bool {
@@ -352,7 +359,18 @@ impl<'a> Lexer<'a> {
                     105 => { /* nothing */ }
                     14 => { return Ok(TokenKind::TokenId); }
                     106 => { /* nothing */ }
-                    15 => { return Ok(TokenKind::TokenIntLiteral); }
+                    15 => { {
+                                                                    if let Err(e) = self.yytext().parse::<u64>() {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid integer literal {e}")),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1)
+                                                                    }
+                                                                    return Ok(TokenKind::TokenIntLiteral);
+                                                                } }
                     107 => { /* nothing */ }
                     16 => { return Ok(TokenKind::TokenSub); }
                     108 => { /* nothing */ }
@@ -382,7 +400,18 @@ impl<'a> Lexer<'a> {
                     120 => { /* nothing */ }
                     29 => {  }
                     121 => { /* nothing */ }
-                    30 => { return Ok(TokenKind::TokenStringLiteral); }
+                    30 => { {
+                                                                    if self.yytext().len() > 256 {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1);
+                                                                    }
+                                                                    return Ok(TokenKind::TokenStringLiteral);
+                                                                } }
                     122 => { /* nothing */ }
                     31 => { return Ok(TokenKind::TokenId); }
                     123 => { /* nothing */ }
@@ -414,9 +443,44 @@ impl<'a> Lexer<'a> {
                     136 => { /* nothing */ }
                     45 => { return Ok(TokenKind::TokenId); }
                     137 => { /* nothing */ }
-                    46 => { return Ok(TokenKind::TokenIntLiteral); }
+                    46 => { {
+                                                                    if let Err(e) = self.yytext().parse::<u64>() {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid integer literal {e}")),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1)
+                                                                    }
+                                                                    return Ok(TokenKind::TokenIntLiteral);
+                                                                } }
                     138 => { /* nothing */ }
-                    47 => { return Ok(TokenKind::TokenFloatLiteral); }
+                    47 => { {
+                                                                    match self.yytext().parse::<f32>() {
+                                                                        Err(e) => {
+                                                                            log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal {e}")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                        }
+                                                                        Ok(value) => {
+                                                                            if !value.is_normal() {
+                                                                                log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                            }
+                                                                        }
+                                                                    };
+                                                                    return Ok(TokenKind::TokenFloatLiteral);
+                                                                } }
                     139 => { /* nothing */ }
                     48 => { return Ok(TokenKind::TokenAssign); }
                     140 => { /* nothing */ }
@@ -456,9 +520,44 @@ impl<'a> Lexer<'a> {
                     157 => { /* nothing */ }
                     66 => { return Ok(TokenKind::TokenId); }
                     158 => { /* nothing */ }
-                    67 => { return Ok(TokenKind::TokenFloatLiteral); }
+                    67 => { {
+                                                                    match self.yytext().parse::<f32>() {
+                                                                        Err(e) => {
+                                                                            log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal {e}")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                        }
+                                                                        Ok(value) => {
+                                                                            if !value.is_normal() {
+                                                                                log_error(
+                                                                                self.yytextpos(),
+                                                                                crate::CompilerError::Lexer(format!("Invalid float literal")),
+                                                                                self.offset,
+                                                                                &read_source_to_string().unwrap(),
+                                                                            );
+                                                                            std::process::exit(1)
+                                                                            }
+                                                                        }
+                                                                    };
+                                                                    return Ok(TokenKind::TokenFloatLiteral);
+                                                                } }
                     159 => { /* nothing */ }
-                    68 => { return Ok(TokenKind::TokenIntLiteral); }
+                    68 => { {
+                                                                    if let Err(e) = self.yytext().parse::<u64>() {
+                                                                        log_error(
+                                                                            self.yytextpos(),
+                                                                            crate::CompilerError::Lexer(format!("Invalid integer literal {e}")),
+                                                                            self.offset,
+                                                                            &read_source_to_string().unwrap(),
+                                                                        );
+                                                                        std::process::exit(1)
+                                                                    }
+                                                                    return Ok(TokenKind::TokenIntLiteral);
+                                                                } }
                     160 => { /* nothing */ }
                     69 => { return Ok(TokenKind::TokenInit); }
                     161 => { /* nothing */ }
