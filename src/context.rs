@@ -16,8 +16,8 @@ pub enum CompilerError {
     Lexer(String),
     #[error("Context error: {0}")]
     Context(String),
-    #[error("IO error: {0:?}")]
-    IO(io::Error),
+    #[error("IO error: {0}")]
+    IO(String),
 }
 
 thread_local! {
@@ -107,7 +107,8 @@ pub fn write_to_symbol_table_file(line: &str) -> Result<(), io::Error> {
 pub fn read_source_to_string() -> Result<String, CompilerError> {
     SOURCE_CODE_PATH.with(|f| {
         if let Some(path) = f.borrow().as_ref() {
-            read_to_string(path).map_err(CompilerError::IO)
+            read_to_string(path)
+                .map_err(|e| CompilerError::IO(format!("Failed to read input file: {e}")))
         } else {
             Err(CompilerError::Context(
                 "Tried to open source code file without setting the path".into(),
@@ -120,8 +121,11 @@ pub fn read_parser_file_to_string() -> Result<String, CompilerError> {
     PARSER_FILE.with(|f| {
         let mut buf = String::new();
         if let Some(mut file) = f.borrow().as_ref() {
-            file.rewind().map_err(CompilerError::IO)?;
-            file.read_to_string(&mut buf).map_err(CompilerError::IO)?;
+            file.rewind()
+                .map_err(|e| CompilerError::IO(format!("Failed to rewind parser file: {e:?}")))?;
+            file.read_to_string(&mut buf).map_err(|e| {
+                CompilerError::IO(format!("Failed to read parser file to string: {e:?}"))
+            })?;
             Ok(buf)
         } else {
             Err(CompilerError::Context(
