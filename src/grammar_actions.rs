@@ -241,7 +241,7 @@ pub fn token_date(_ctx: &Ctx, token: Token) -> TokenDate {
     token.value.into()
 }
 #[derive(Debug, Clone)]
-pub struct Program {
+pub struct ProgramWithMain {
     pub token_id: TokenId,
     pub token_par_open: TokenParOpen,
     pub token_par_close: TokenParClose,
@@ -249,7 +249,12 @@ pub struct Program {
     pub body: Body,
     pub token_cbclose: TokenCBClose,
 }
-pub fn program_program(
+#[derive(Debug, Clone)]
+pub enum Program {
+    ProgramWithMain(ProgramWithMain),
+    ProgramOnlyBody(Body),
+}
+pub fn program_program_with_main(
     _ctx: &Ctx,
     token_id: TokenId,
     token_par_open: TokenParOpen,
@@ -261,14 +266,18 @@ pub fn program_program(
     write_to_parser_file(&format!(
         "<Program> -> {token_id} {token_par_open} {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
-    Program {
+    Program::ProgramWithMain(ProgramWithMain {
         token_id,
         token_par_open,
         token_par_close,
         token_cbopen,
         body,
         token_cbclose,
-    }
+    })
+}
+pub fn program_program_only_body(_ctx: &Ctx, body: Body) -> Program {
+    write_to_parser_file(&format!("<Program> -> <Body>"));
+    Program::ProgramOnlyBody(body)
 }
 #[derive(Debug, Clone)]
 pub struct BodyInitExpressions {
