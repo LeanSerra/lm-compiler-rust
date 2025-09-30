@@ -45,4 +45,11 @@ read(f6f)
 #+ Ejemplo de error por entero mayor a 64 bits +#
 #+ x:= 18446744073709551616 +#
 
+#+ Ejemplo de error por string muy larga (mayor a 256 chars) +#
+#+ f := "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum" +#
+
+#+ Ejemplo de error por float invalido +#
+#+ x := 1001247380987123904721309473201974012938740921374091237409127340983217094874.1234 +#
+
+
 convDate(01-02-1900)
