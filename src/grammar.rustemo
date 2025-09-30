@@ -1,4 +1,5 @@
-Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose {Program};
+Program: TokenId TokenParOpen TokenParClose TokenCBOpen Body TokenCBClose {ProgramWithMain}
+ | Body {ProgramOnlyBody};
 
 Body: TokenInit InitBody Expressions {BodyInitExpressions}
  | TokenInit InitBody {BodyInit}
