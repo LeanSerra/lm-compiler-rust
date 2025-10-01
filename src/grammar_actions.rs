@@ -581,12 +581,17 @@ pub fn statement_statement_conv_date(
     Statement::StatementConvDate(function_conv_date)
 }
 #[derive(Debug, Clone)]
-pub struct Assignment {
+pub enum Assignment {
+    AssignmentExpression(AssignmentExpression),
+    AssignmentConvDate(ConvDate),
+}
+#[derive(Debug, Clone)]
+pub struct AssignmentExpression {
     pub token_id: TokenId,
     pub token_assign: TokenAssign,
     pub simple_expression: SimpleExpression,
 }
-pub fn assignment_assignment(
+pub fn assignment_assignment_expression(
     _ctx: &Ctx,
     token_id: TokenId,
     token_assign: TokenAssign,
@@ -595,11 +600,32 @@ pub fn assignment_assignment(
     write_to_parser_file(
         &format!("<Assignment> -> {token_id} {token_assign} <SimpleExpression>"),
     );
-    Assignment {
+    Assignment::AssignmentExpression(AssignmentExpression {
         token_id,
         token_assign,
         simple_expression,
-    }
+    })
+}
+#[derive(Debug, Clone)]
+pub struct ConvDate {
+    pub token_id: TokenId,
+    pub token_assign: TokenAssign,
+    pub function_conv_date: FunctionConvDate,
+}
+pub fn assignment_assignment_conv_date(
+    _ctx: &Ctx,
+    token_id: TokenId,
+    token_assign: TokenAssign,
+    function_conv_date: FunctionConvDate,
+) -> Assignment {
+    write_to_parser_file(
+        &format!("<Assignment> -> {token_id} {token_assign} <FunctionConvDate>"),
+    );
+    Assignment::AssignmentConvDate(ConvDate {
+        token_id,
+        token_assign,
+        function_conv_date,
+    })
 }
 #[derive(Debug, Clone)]
 pub enum DataType {

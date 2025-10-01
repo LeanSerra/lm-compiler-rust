@@ -3,5 +3,5 @@ main(){
         a, b, c : int
     }
 
-    convDate(11-11-1900)
+    a := convDate(11-11-1900)
 }

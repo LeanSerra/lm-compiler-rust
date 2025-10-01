@@ -16,7 +16,7 @@ use rustemo::debug::{log, logn};
 use rustemo::colored::*;
 pub type Input = str;
 const STATE_COUNT: usize = 115usize;
-const MAX_RECOGNIZERS: usize = 22usize;
+const MAX_RECOGNIZERS: usize = 21usize;
 #[allow(dead_code)]
 const TERMINAL_COUNT: usize = 40usize;
 #[allow(clippy::upper_case_acronyms)]
@@ -96,8 +96,8 @@ pub enum ProdKind {
     StatementStatementWhile,
     StatementStatementWrite,
     StatementStatementRead,
-    StatementStatementConvDate,
-    AssignmentAssignment,
+    AssignmentAssignmentExpression,
+    AssignmentAssignmentConvDate,
     DataTypeIntType,
     DataTypeFloatType,
     DataTypeStringType,
@@ -188,9 +188,11 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::StatementStatementWhile => "Statement: WhileLoop",
             ProdKind::StatementStatementWrite => "Statement: FunctionWrite",
             ProdKind::StatementStatementRead => "Statement: FunctionRead",
-            ProdKind::StatementStatementConvDate => "Statement: FunctionConvDate",
-            ProdKind::AssignmentAssignment => {
+            ProdKind::AssignmentAssignmentExpression => {
                 "Assignment: TokenId TokenAssign SimpleExpression"
+            }
+            ProdKind::AssignmentAssignmentConvDate => {
+                "Assignment: TokenId TokenAssign FunctionConvDate"
             }
             ProdKind::DataTypeIntType => "DataType: TokenInt",
             ProdKind::DataTypeFloatType => "DataType: TokenFloat",
@@ -340,8 +342,8 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::StatementStatementWhile => NonTermKind::Statement,
             ProdKind::StatementStatementWrite => NonTermKind::Statement,
             ProdKind::StatementStatementRead => NonTermKind::Statement,
-            ProdKind::StatementStatementConvDate => NonTermKind::Statement,
-            ProdKind::AssignmentAssignment => NonTermKind::Assignment,
+            ProdKind::AssignmentAssignmentExpression => NonTermKind::Assignment,
+            ProdKind::AssignmentAssignmentConvDate => NonTermKind::Assignment,
             ProdKind::DataTypeIntType => NonTermKind::DataType,
             ProdKind::DataTypeFloatType => NonTermKind::DataType,
             ProdKind::DataTypeStringType => NonTermKind::DataType,
@@ -423,105 +425,105 @@ pub enum State {
     TokenElseS5,
     TokenReadS6,
     TokenWriteS7,
-    TokenConvDateS8,
-    ProgramS9,
-    BodyS10,
-    FunctionReadS11,
-    FunctionWriteS12,
-    FunctionConvDateS13,
-    ExpressionsS14,
-    StatementS15,
-    AssignmentS16,
-    WhileLoopS17,
-    IfStatementS18,
-    ElseStatementS19,
-    TokenAssignS20,
-    TokenParOpenS21,
-    TokenCBOpenS22,
-    InitBodyS23,
-    TokenParOpenS24,
+    ProgramS8,
+    BodyS9,
+    FunctionReadS10,
+    FunctionWriteS11,
+    ExpressionsS12,
+    StatementS13,
+    AssignmentS14,
+    WhileLoopS15,
+    IfStatementS16,
+    ElseStatementS17,
+    TokenAssignS18,
+    TokenParOpenS19,
+    TokenCBOpenS20,
+    InitBodyS21,
+    TokenParOpenS22,
+    TokenParOpenS23,
+    TokenCBOpenS24,
     TokenParOpenS25,
-    TokenCBOpenS26,
-    TokenParOpenS27,
-    TokenParOpenS28,
-    TokenParOpenS29,
-    TokenIdS30,
-    ExpressionsS31,
-    TokenIntLiteralS32,
-    TokenFloatLiteralS33,
-    TokenStringLiteralS34,
-    TokenIdS35,
-    TokenSubS36,
-    TokenParOpenS37,
-    SimpleExpressionS38,
-    NumberS39,
-    ArithmeticExpressionS40,
-    TermS41,
-    FactorS42,
-    TokenParCloseS43,
-    TokenIdS44,
-    VarDeclarationsS45,
-    VarDeclarationS46,
-    ExpressionsS47,
-    TokenTrueS48,
-    TokenFalseS49,
-    TokenNotS50,
-    TokenIsZeroS51,
-    FunctionIsZeroS52,
-    BooleanExpressionS53,
-    SimpleExpressionS54,
-    NotStatementS55,
-    BooleanExpressionS56,
-    BodyS57,
-    TokenIdS58,
-    SimpleExpressionS59,
-    TokenDateS60,
-    TokenIntLiteralS61,
-    TokenFloatLiteralS62,
-    ArithmeticExpressionS63,
-    TokenSumS64,
-    TokenSubS65,
-    TokenMulS66,
-    TokenDivS67,
-    TokenCBOpenS68,
-    TokenColonS69,
-    TokenCommaS70,
-    TokenCBCloseS71,
-    VarDeclarationsS72,
-    BooleanExpressionS73,
-    TokenParOpenS74,
-    TokenParCloseS75,
-    TokenEqualS76,
-    TokenNotEqualS77,
-    TokenLessS78,
-    TokenLessEqualS79,
-    TokenGreaterS80,
-    TokenGreaterEqualS81,
-    BooleanExpressionChainS82,
-    ComparisonOpS83,
-    TokenParCloseS84,
-    TokenCBCloseS85,
+    TokenParOpenS26,
+    TokenIdS27,
+    ExpressionsS28,
+    TokenIntLiteralS29,
+    TokenFloatLiteralS30,
+    TokenStringLiteralS31,
+    TokenIdS32,
+    TokenSubS33,
+    TokenParOpenS34,
+    TokenConvDateS35,
+    FunctionConvDateS36,
+    SimpleExpressionS37,
+    NumberS38,
+    ArithmeticExpressionS39,
+    TermS40,
+    FactorS41,
+    TokenParCloseS42,
+    TokenIdS43,
+    VarDeclarationsS44,
+    VarDeclarationS45,
+    ExpressionsS46,
+    TokenTrueS47,
+    TokenFalseS48,
+    TokenNotS49,
+    TokenIsZeroS50,
+    FunctionIsZeroS51,
+    BooleanExpressionS52,
+    SimpleExpressionS53,
+    NotStatementS54,
+    BooleanExpressionS55,
+    BodyS56,
+    TokenIdS57,
+    SimpleExpressionS58,
+    TokenIntLiteralS59,
+    TokenFloatLiteralS60,
+    ArithmeticExpressionS61,
+    TokenParOpenS62,
+    TokenSumS63,
+    TokenSubS64,
+    TokenMulS65,
+    TokenDivS66,
+    TokenCBOpenS67,
+    TokenColonS68,
+    TokenCommaS69,
+    TokenCBCloseS70,
+    VarDeclarationsS71,
+    BooleanExpressionS72,
+    TokenParOpenS73,
+    TokenParCloseS74,
+    TokenEqualS75,
+    TokenNotEqualS76,
+    TokenLessS77,
+    TokenLessEqualS78,
+    TokenGreaterS79,
+    TokenGreaterEqualS80,
+    BooleanExpressionChainS81,
+    ComparisonOpS82,
+    TokenParCloseS83,
+    TokenCBCloseS84,
+    TokenParCloseS85,
     TokenParCloseS86,
     TokenParCloseS87,
-    TokenParCloseS88,
-    TokenParCloseS89,
+    TokenDateS88,
+    TermS89,
     TermS90,
-    TermS91,
+    FactorS91,
     FactorS92,
-    FactorS93,
-    BodyS94,
-    TokenIntS95,
-    TokenFloatS96,
-    TokenStringS97,
-    DataTypeS98,
-    VarDeclarationS99,
-    ArithmeticExpressionS100,
-    TokenCBOpenS101,
-    TokenAndS102,
-    TokenOrS103,
-    ConjunctionS104,
-    SimpleExpressionS105,
-    TokenCBOpenS106,
+    BodyS93,
+    TokenIntS94,
+    TokenFloatS95,
+    TokenStringS96,
+    DataTypeS97,
+    VarDeclarationS98,
+    ArithmeticExpressionS99,
+    TokenCBOpenS100,
+    TokenAndS101,
+    TokenOrS102,
+    ConjunctionS103,
+    SimpleExpressionS104,
+    TokenCBOpenS105,
+    TokenParCloseS106,
     TokenCBCloseS107,
     TokenParCloseS108,
     BodyS109,
@@ -552,105 +554,105 @@ impl std::fmt::Debug for State {
             State::TokenElseS5 => "5:TokenElse",
             State::TokenReadS6 => "6:TokenRead",
             State::TokenWriteS7 => "7:TokenWrite",
-            State::TokenConvDateS8 => "8:TokenConvDate",
-            State::ProgramS9 => "9:Program",
-            State::BodyS10 => "10:Body",
-            State::FunctionReadS11 => "11:FunctionRead",
-            State::FunctionWriteS12 => "12:FunctionWrite",
-            State::FunctionConvDateS13 => "13:FunctionConvDate",
-            State::ExpressionsS14 => "14:Expressions",
-            State::StatementS15 => "15:Statement",
-            State::AssignmentS16 => "16:Assignment",
-            State::WhileLoopS17 => "17:WhileLoop",
-            State::IfStatementS18 => "18:IfStatement",
-            State::ElseStatementS19 => "19:ElseStatement",
-            State::TokenAssignS20 => "20:TokenAssign",
-            State::TokenParOpenS21 => "21:TokenParOpen",
-            State::TokenCBOpenS22 => "22:TokenCBOpen",
-            State::InitBodyS23 => "23:InitBody",
-            State::TokenParOpenS24 => "24:TokenParOpen",
+            State::ProgramS8 => "8:Program",
+            State::BodyS9 => "9:Body",
+            State::FunctionReadS10 => "10:FunctionRead",
+            State::FunctionWriteS11 => "11:FunctionWrite",
+            State::ExpressionsS12 => "12:Expressions",
+            State::StatementS13 => "13:Statement",
+            State::AssignmentS14 => "14:Assignment",
+            State::WhileLoopS15 => "15:WhileLoop",
+            State::IfStatementS16 => "16:IfStatement",
+            State::ElseStatementS17 => "17:ElseStatement",
+            State::TokenAssignS18 => "18:TokenAssign",
+            State::TokenParOpenS19 => "19:TokenParOpen",
+            State::TokenCBOpenS20 => "20:TokenCBOpen",
+            State::InitBodyS21 => "21:InitBody",
+            State::TokenParOpenS22 => "22:TokenParOpen",
+            State::TokenParOpenS23 => "23:TokenParOpen",
+            State::TokenCBOpenS24 => "24:TokenCBOpen",
             State::TokenParOpenS25 => "25:TokenParOpen",
-            State::TokenCBOpenS26 => "26:TokenCBOpen",
-            State::TokenParOpenS27 => "27:TokenParOpen",
-            State::TokenParOpenS28 => "28:TokenParOpen",
-            State::TokenParOpenS29 => "29:TokenParOpen",
-            State::TokenIdS30 => "30:TokenId",
-            State::ExpressionsS31 => "31:Expressions",
-            State::TokenIntLiteralS32 => "32:TokenIntLiteral",
-            State::TokenFloatLiteralS33 => "33:TokenFloatLiteral",
-            State::TokenStringLiteralS34 => "34:TokenStringLiteral",
-            State::TokenIdS35 => "35:TokenId",
-            State::TokenSubS36 => "36:TokenSub",
-            State::TokenParOpenS37 => "37:TokenParOpen",
-            State::SimpleExpressionS38 => "38:SimpleExpression",
-            State::NumberS39 => "39:Number",
-            State::ArithmeticExpressionS40 => "40:ArithmeticExpression",
-            State::TermS41 => "41:Term",
-            State::FactorS42 => "42:Factor",
-            State::TokenParCloseS43 => "43:TokenParClose",
-            State::TokenIdS44 => "44:TokenId",
-            State::VarDeclarationsS45 => "45:VarDeclarations",
-            State::VarDeclarationS46 => "46:VarDeclaration",
-            State::ExpressionsS47 => "47:Expressions",
-            State::TokenTrueS48 => "48:TokenTrue",
-            State::TokenFalseS49 => "49:TokenFalse",
-            State::TokenNotS50 => "50:TokenNot",
-            State::TokenIsZeroS51 => "51:TokenIsZero",
-            State::FunctionIsZeroS52 => "52:FunctionIsZero",
-            State::BooleanExpressionS53 => "53:BooleanExpression",
-            State::SimpleExpressionS54 => "54:SimpleExpression",
-            State::NotStatementS55 => "55:NotStatement",
-            State::BooleanExpressionS56 => "56:BooleanExpression",
-            State::BodyS57 => "57:Body",
-            State::TokenIdS58 => "58:TokenId",
-            State::SimpleExpressionS59 => "59:SimpleExpression",
-            State::TokenDateS60 => "60:TokenDate",
-            State::TokenIntLiteralS61 => "61:TokenIntLiteral",
-            State::TokenFloatLiteralS62 => "62:TokenFloatLiteral",
-            State::ArithmeticExpressionS63 => "63:ArithmeticExpression",
-            State::TokenSumS64 => "64:TokenSum",
-            State::TokenSubS65 => "65:TokenSub",
-            State::TokenMulS66 => "66:TokenMul",
-            State::TokenDivS67 => "67:TokenDiv",
-            State::TokenCBOpenS68 => "68:TokenCBOpen",
-            State::TokenColonS69 => "69:TokenColon",
-            State::TokenCommaS70 => "70:TokenComma",
-            State::TokenCBCloseS71 => "71:TokenCBClose",
-            State::VarDeclarationsS72 => "72:VarDeclarations",
-            State::BooleanExpressionS73 => "73:BooleanExpression",
-            State::TokenParOpenS74 => "74:TokenParOpen",
-            State::TokenParCloseS75 => "75:TokenParClose",
-            State::TokenEqualS76 => "76:TokenEqual",
-            State::TokenNotEqualS77 => "77:TokenNotEqual",
-            State::TokenLessS78 => "78:TokenLess",
-            State::TokenLessEqualS79 => "79:TokenLessEqual",
-            State::TokenGreaterS80 => "80:TokenGreater",
-            State::TokenGreaterEqualS81 => "81:TokenGreaterEqual",
-            State::BooleanExpressionChainS82 => "82:BooleanExpressionChain",
-            State::ComparisonOpS83 => "83:ComparisonOp",
-            State::TokenParCloseS84 => "84:TokenParClose",
-            State::TokenCBCloseS85 => "85:TokenCBClose",
+            State::TokenParOpenS26 => "26:TokenParOpen",
+            State::TokenIdS27 => "27:TokenId",
+            State::ExpressionsS28 => "28:Expressions",
+            State::TokenIntLiteralS29 => "29:TokenIntLiteral",
+            State::TokenFloatLiteralS30 => "30:TokenFloatLiteral",
+            State::TokenStringLiteralS31 => "31:TokenStringLiteral",
+            State::TokenIdS32 => "32:TokenId",
+            State::TokenSubS33 => "33:TokenSub",
+            State::TokenParOpenS34 => "34:TokenParOpen",
+            State::TokenConvDateS35 => "35:TokenConvDate",
+            State::FunctionConvDateS36 => "36:FunctionConvDate",
+            State::SimpleExpressionS37 => "37:SimpleExpression",
+            State::NumberS38 => "38:Number",
+            State::ArithmeticExpressionS39 => "39:ArithmeticExpression",
+            State::TermS40 => "40:Term",
+            State::FactorS41 => "41:Factor",
+            State::TokenParCloseS42 => "42:TokenParClose",
+            State::TokenIdS43 => "43:TokenId",
+            State::VarDeclarationsS44 => "44:VarDeclarations",
+            State::VarDeclarationS45 => "45:VarDeclaration",
+            State::ExpressionsS46 => "46:Expressions",
+            State::TokenTrueS47 => "47:TokenTrue",
+            State::TokenFalseS48 => "48:TokenFalse",
+            State::TokenNotS49 => "49:TokenNot",
+            State::TokenIsZeroS50 => "50:TokenIsZero",
+            State::FunctionIsZeroS51 => "51:FunctionIsZero",
+            State::BooleanExpressionS52 => "52:BooleanExpression",
+            State::SimpleExpressionS53 => "53:SimpleExpression",
+            State::NotStatementS54 => "54:NotStatement",
+            State::BooleanExpressionS55 => "55:BooleanExpression",
+            State::BodyS56 => "56:Body",
+            State::TokenIdS57 => "57:TokenId",
+            State::SimpleExpressionS58 => "58:SimpleExpression",
+            State::TokenIntLiteralS59 => "59:TokenIntLiteral",
+            State::TokenFloatLiteralS60 => "60:TokenFloatLiteral",
+            State::ArithmeticExpressionS61 => "61:ArithmeticExpression",
+            State::TokenParOpenS62 => "62:TokenParOpen",
+            State::TokenSumS63 => "63:TokenSum",
+            State::TokenSubS64 => "64:TokenSub",
+            State::TokenMulS65 => "65:TokenMul",
+            State::TokenDivS66 => "66:TokenDiv",
+            State::TokenCBOpenS67 => "67:TokenCBOpen",
+            State::TokenColonS68 => "68:TokenColon",
+            State::TokenCommaS69 => "69:TokenComma",
+            State::TokenCBCloseS70 => "70:TokenCBClose",
+            State::VarDeclarationsS71 => "71:VarDeclarations",
+            State::BooleanExpressionS72 => "72:BooleanExpression",
+            State::TokenParOpenS73 => "73:TokenParOpen",
+            State::TokenParCloseS74 => "74:TokenParClose",
+            State::TokenEqualS75 => "75:TokenEqual",
+            State::TokenNotEqualS76 => "76:TokenNotEqual",
+            State::TokenLessS77 => "77:TokenLess",
+            State::TokenLessEqualS78 => "78:TokenLessEqual",
+            State::TokenGreaterS79 => "79:TokenGreater",
+            State::TokenGreaterEqualS80 => "80:TokenGreaterEqual",
+            State::BooleanExpressionChainS81 => "81:BooleanExpressionChain",
+            State::ComparisonOpS82 => "82:ComparisonOp",
+            State::TokenParCloseS83 => "83:TokenParClose",
+            State::TokenCBCloseS84 => "84:TokenCBClose",
+            State::TokenParCloseS85 => "85:TokenParClose",
             State::TokenParCloseS86 => "86:TokenParClose",
             State::TokenParCloseS87 => "87:TokenParClose",
-            State::TokenParCloseS88 => "88:TokenParClose",
-            State::TokenParCloseS89 => "89:TokenParClose",
+            State::TokenDateS88 => "88:TokenDate",
+            State::TermS89 => "89:Term",
             State::TermS90 => "90:Term",
-            State::TermS91 => "91:Term",
+            State::FactorS91 => "91:Factor",
             State::FactorS92 => "92:Factor",
-            State::FactorS93 => "93:Factor",
-            State::BodyS94 => "94:Body",
-            State::TokenIntS95 => "95:TokenInt",
-            State::TokenFloatS96 => "96:TokenFloat",
-            State::TokenStringS97 => "97:TokenString",
-            State::DataTypeS98 => "98:DataType",
-            State::VarDeclarationS99 => "99:VarDeclaration",
-            State::ArithmeticExpressionS100 => "100:ArithmeticExpression",
-            State::TokenCBOpenS101 => "101:TokenCBOpen",
-            State::TokenAndS102 => "102:TokenAnd",
-            State::TokenOrS103 => "103:TokenOr",
-            State::ConjunctionS104 => "104:Conjunction",
-            State::SimpleExpressionS105 => "105:SimpleExpression",
-            State::TokenCBOpenS106 => "106:TokenCBOpen",
+            State::BodyS93 => "93:Body",
+            State::TokenIntS94 => "94:TokenInt",
+            State::TokenFloatS95 => "95:TokenFloat",
+            State::TokenStringS96 => "96:TokenString",
+            State::DataTypeS97 => "97:DataType",
+            State::VarDeclarationS98 => "98:VarDeclaration",
+            State::ArithmeticExpressionS99 => "99:ArithmeticExpression",
+            State::TokenCBOpenS100 => "100:TokenCBOpen",
+            State::TokenAndS101 => "101:TokenAnd",
+            State::TokenOrS102 => "102:TokenOr",
+            State::ConjunctionS103 => "103:Conjunction",
+            State::SimpleExpressionS104 => "104:SimpleExpression",
+            State::TokenCBOpenS105 => "105:TokenCBOpen",
+            State::TokenParCloseS106 => "106:TokenParClose",
             State::TokenCBCloseS107 => "107:TokenCBClose",
             State::TokenParCloseS108 => "108:TokenParClose",
             State::BodyS109 => "109:Body",
@@ -755,72 +757,65 @@ fn action_aug_s0(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
 fn action_tokenid_s1(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS20)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS21)]),
+        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS18)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS19)]),
         _ => vec![],
     }
 }
 fn action_tokeninit_s2(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS22)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS20)]),
         _ => vec![],
     }
 }
 fn action_tokenwhile_s3(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS24)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS22)]),
         _ => vec![],
     }
 }
 fn action_tokenif_s4(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS25)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS23)]),
         _ => vec![],
     }
 }
 fn action_tokenelse_s5(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS26)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS24)]),
         _ => vec![],
     }
 }
 fn action_tokenread_s6(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS27)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS25)]),
         _ => vec![],
     }
 }
 fn action_tokenwrite_s7(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS28)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS26)]),
         _ => vec![],
     }
 }
-fn action_tokenconvdate_s8(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS29)]),
-        _ => vec![],
-    }
-}
-fn action_program_s9(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_program_s8(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Accept]),
         _ => vec![],
     }
 }
-fn action_body_s10(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_body_s9(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::ProgramProgramOnlyBody, 1usize)]),
         _ => vec![],
     }
 }
-fn action_functionread_s11(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_functionread_s10(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
@@ -830,11 +825,10 @@ fn action_functionread_s11(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::StatementStatementRead, 1usize)]),
         _ => vec![],
     }
 }
-fn action_functionwrite_s12(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_functionwrite_s11(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
@@ -844,46 +838,30 @@ fn action_functionwrite_s12(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::StatementStatementWrite, 1usize)]),
         _ => vec![],
     }
 }
-fn action_functionconvdate_s13(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::STOP => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenWhile => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenIf => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::StatementStatementConvDate, 1usize)]),
-        _ => vec![],
-    }
-}
-fn action_expressions_s14(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_expressions_s12(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::BodyBodyExpressions, 1usize)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyExpressions, 1usize)]),
         _ => vec![],
     }
 }
-fn action_statement_s15(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_statement_s13(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::ExpressionsExpressionSingle, 1usize)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::ExpressionsExpressionSingle, 1usize)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
         TK::TokenIf => Vec::from(&[Shift(State::TokenIfS4)]),
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
-fn action_assignment_s16(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_assignment_s14(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)]),
@@ -895,13 +873,10 @@ fn action_assignment_s16(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> 
         TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)]),
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::StatementStatementAssignment, 1usize)])
-        }
         _ => vec![],
     }
 }
-fn action_whileloop_s17(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_whileloop_s15(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
@@ -911,11 +886,10 @@ fn action_whileloop_s17(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::StatementStatementWhile, 1usize)]),
         _ => vec![],
     }
 }
-fn action_ifstatement_s18(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_ifstatement_s16(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
@@ -927,13 +901,10 @@ fn action_ifstatement_s18(token_kind: TokenKind) -> Vec<Action<State, ProdKind>>
         TK::TokenElse => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)]),
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::StatementStatementIfStatement, 1usize)])
-        }
         _ => vec![],
     }
 }
-fn action_elsestatement_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_elsestatement_s17(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::StatementStatementElseStatement, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::StatementStatementElseStatement, 1usize)]),
@@ -953,82 +924,79 @@ fn action_elsestatement_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenWrite => {
             Vec::from(&[Reduce(PK::StatementStatementElseStatement, 1usize)])
         }
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::StatementStatementElseStatement, 1usize)])
-        }
         _ => vec![],
     }
 }
-fn action_tokenassign_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenassign_s18(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS35)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s19(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS43)]),
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS42)]),
         _ => vec![],
     }
 }
-fn action_tokencbopen_s22(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbopen_s20(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS44)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS43)]),
         _ => vec![],
     }
 }
-fn action_initbody_s23(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_initbody_s21(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::BodyBodyInit, 2usize)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyInit, 2usize)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
         TK::TokenIf => Vec::from(&[Shift(State::TokenIfS4)]),
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s24(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s22(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
-        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS48)]),
-        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS49)]),
-        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS50)]),
-        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS51)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS47)]),
+        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS48)]),
+        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS49)]),
+        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS50)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s25(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s23(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
-        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS48)]),
-        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS49)]),
-        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS50)]),
-        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS51)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS47)]),
+        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS48)]),
+        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS49)]),
+        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS50)]),
         _ => vec![],
     }
 }
-fn action_tokencbopen_s26(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbopen_s24(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyEmpty, 0usize)]),
         TK::TokenInit => Vec::from(&[Shift(State::TokenInitS2)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
@@ -1036,40 +1004,33 @@ fn action_tokencbopen_s26(token_kind: TokenKind) -> Vec<Action<State, ProdKind>>
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s27(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s25(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS58)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS57)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s28(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s26(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s29(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenid_s27(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenDate => Vec::from(&[Shift(State::TokenDateS60)]),
+        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS18)]),
         _ => vec![],
     }
 }
-fn action_tokenid_s30(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::TokenAssign => Vec::from(&[Shift(State::TokenAssignS20)]),
-        _ => vec![],
-    }
-}
-fn action_expressions_s31(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_expressions_s28(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::ExpressionsExpressionRecursive, 2usize)]),
         TK::TokenCBClose => {
@@ -1078,7 +1039,7 @@ fn action_expressions_s31(token_kind: TokenKind) -> Vec<Action<State, ProdKind>>
         _ => vec![],
     }
 }
-fn action_tokenintliteral_s32(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenintliteral_s29(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
@@ -1101,11 +1062,10 @@ fn action_tokenintliteral_s32(token_kind: TokenKind) -> Vec<Action<State, ProdKi
         TK::TokenOr => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::NumberNumberInt, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenfloatliteral_s33(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfloatliteral_s30(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
@@ -1128,11 +1088,10 @@ fn action_tokenfloatliteral_s33(token_kind: TokenKind) -> Vec<Action<State, Prod
         TK::TokenOr => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::NumberNumberFloat, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenstringliteral_s34(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenstringliteral_s31(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => {
             Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionString, 1usize)])
@@ -1185,13 +1144,10 @@ fn action_tokenstringliteral_s34(token_kind: TokenKind) -> Vec<Action<State, Pro
         TK::TokenWrite => {
             Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionString, 1usize)])
         }
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionString, 1usize)])
-        }
         _ => vec![],
     }
 }
-fn action_tokenid_s35(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenid_s32(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
@@ -1214,42 +1170,67 @@ fn action_tokenid_s35(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenOr => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::FactorFactorId, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokensub_s36(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokensub_s33(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS61)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS62)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS59)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS60)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s37(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s34(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_simpleexpression_s38(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenconvdate_s35(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::STOP => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenId => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenWhile => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenIf => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenElse => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenWrite => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::AssignmentAssignment, 3usize)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS62)]),
         _ => vec![],
     }
 }
-fn action_number_s39(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_functionconvdate_s36(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::STOP => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)])
+        }
+        TK::TokenWhile => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenIf => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenElse => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        TK::TokenWrite => Vec::from(&[Reduce(PK::AssignmentAssignmentConvDate, 3usize)]),
+        _ => vec![],
+    }
+}
+fn action_simpleexpression_s37(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::STOP => Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)]),
+        TK::TokenCBClose => {
+            Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)])
+        }
+        TK::TokenWhile => {
+            Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)])
+        }
+        TK::TokenIf => Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)]),
+        TK::TokenElse => Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)]),
+        TK::TokenWrite => {
+            Vec::from(&[Reduce(PK::AssignmentAssignmentExpression, 3usize)])
+        }
+        _ => vec![],
+    }
+}
+fn action_number_s38(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
@@ -1272,11 +1253,10 @@ fn action_number_s39(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenOr => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::FactorFactorNumber, 1usize)]),
         _ => vec![],
     }
 }
-fn action_arithmeticexpression_s40(
+fn action_arithmeticexpression_s39(
     token_kind: TokenKind,
 ) -> Vec<Action<State, ProdKind>> {
     match token_kind {
@@ -1286,8 +1266,8 @@ fn action_arithmeticexpression_s40(
         TK::TokenId => {
             Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionArithmetic, 1usize)])
         }
-        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS64)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS65)]),
+        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS63)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS64)]),
         TK::TokenParClose => {
             Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionArithmetic, 1usize)])
         }
@@ -1333,13 +1313,10 @@ fn action_arithmeticexpression_s40(
         TK::TokenWrite => {
             Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionArithmetic, 1usize)])
         }
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::SimpleExpressionSimpleExpressionArithmetic, 1usize)])
-        }
         _ => vec![],
     }
 }
-fn action_term_s41(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_term_s40(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => {
             Vec::from(
@@ -1356,13 +1333,13 @@ fn action_term_s41(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionTerm, 1usize)],
             )
         }
-        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS66)]),
+        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS65)]),
         TK::TokenSub => {
             Vec::from(
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionTerm, 1usize)],
             )
         }
-        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS67)]),
+        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS66)]),
         TK::TokenParClose => {
             Vec::from(
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionTerm, 1usize)],
@@ -1438,15 +1415,10 @@ fn action_term_s41(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionTerm, 1usize)],
             )
         }
-        TK::TokenConvDate => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionTerm, 1usize)],
-            )
-        }
         _ => vec![],
     }
 }
-fn action_factor_s42(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_factor_s41(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
@@ -1469,46 +1441,45 @@ fn action_factor_s42(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenOr => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::TermTermFactor, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenparclose_s43(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s42(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS68)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS67)]),
         _ => vec![],
     }
 }
-fn action_tokenid_s44(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenid_s43(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenColon => Vec::from(&[Shift(State::TokenColonS69)]),
-        TK::TokenComma => Vec::from(&[Shift(State::TokenCommaS70)]),
+        TK::TokenColon => Vec::from(&[Shift(State::TokenColonS68)]),
+        TK::TokenComma => Vec::from(&[Shift(State::TokenCommaS69)]),
         _ => vec![],
     }
 }
-fn action_vardeclarations_s45(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclarations_s44(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS71)]),
+        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS70)]),
         _ => vec![],
     }
 }
-fn action_vardeclaration_s46(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclaration_s45(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS44)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS43)]),
         TK::TokenCBClose => {
             Vec::from(&[Reduce(PK::VarDeclarationsVarDeclarationsSingle, 1usize)])
         }
         _ => vec![],
     }
 }
-fn action_expressions_s47(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_expressions_s46(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::BodyBodyInitExpressions, 3usize)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyInitExpressions, 3usize)]),
         _ => vec![],
     }
 }
-fn action_tokentrue_s48(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokentrue_s47(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(&[Reduce(PK::BooleanExpressionBooleanExpressionTrue, 1usize)])
@@ -1516,7 +1487,7 @@ fn action_tokentrue_s48(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_tokenfalse_s49(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfalse_s48(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(&[Reduce(PK::BooleanExpressionBooleanExpressionFalse, 1usize)])
@@ -1524,28 +1495,28 @@ fn action_tokenfalse_s49(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> 
         _ => vec![],
     }
 }
-fn action_tokennot_s50(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokennot_s49(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
-        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS48)]),
-        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS49)]),
-        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS50)]),
-        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS51)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS47)]),
+        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS48)]),
+        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS49)]),
+        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS50)]),
         _ => vec![],
     }
 }
-fn action_tokeniszero_s51(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokeniszero_s50(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS74)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS73)]),
         _ => vec![],
     }
 }
-fn action_functioniszero_s52(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_functioniszero_s51(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(&[Reduce(PK::BooleanExpressionBooleanExpressionIsZero, 1usize)])
@@ -1553,25 +1524,25 @@ fn action_functioniszero_s52(token_kind: TokenKind) -> Vec<Action<State, ProdKin
         _ => vec![],
     }
 }
-fn action_booleanexpression_s53(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_booleanexpression_s52(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS75)]),
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS74)]),
         _ => vec![],
     }
 }
-fn action_simpleexpression_s54(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_simpleexpression_s53(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(
                 &[Reduce(PK::BooleanExpressionChainBooleanExpressionChainEmpty, 0usize)],
             )
         }
-        TK::TokenEqual => Vec::from(&[Shift(State::TokenEqualS76)]),
-        TK::TokenNotEqual => Vec::from(&[Shift(State::TokenNotEqualS77)]),
-        TK::TokenLess => Vec::from(&[Shift(State::TokenLessS78)]),
-        TK::TokenLessEqual => Vec::from(&[Shift(State::TokenLessEqualS79)]),
-        TK::TokenGreater => Vec::from(&[Shift(State::TokenGreaterS80)]),
-        TK::TokenGreaterEqual => Vec::from(&[Shift(State::TokenGreaterEqualS81)]),
+        TK::TokenEqual => Vec::from(&[Shift(State::TokenEqualS75)]),
+        TK::TokenNotEqual => Vec::from(&[Shift(State::TokenNotEqualS76)]),
+        TK::TokenLess => Vec::from(&[Shift(State::TokenLessS77)]),
+        TK::TokenLessEqual => Vec::from(&[Shift(State::TokenLessEqualS78)]),
+        TK::TokenGreater => Vec::from(&[Shift(State::TokenGreaterS79)]),
+        TK::TokenGreaterEqual => Vec::from(&[Shift(State::TokenGreaterEqualS80)]),
         TK::TokenAnd => {
             Vec::from(
                 &[Reduce(PK::BooleanExpressionChainBooleanExpressionChainEmpty, 0usize)],
@@ -1585,7 +1556,7 @@ fn action_simpleexpression_s54(token_kind: TokenKind) -> Vec<Action<State, ProdK
         _ => vec![],
     }
 }
-fn action_notstatement_s55(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_notstatement_s54(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(
@@ -1595,37 +1566,31 @@ fn action_notstatement_s55(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         _ => vec![],
     }
 }
-fn action_booleanexpression_s56(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_booleanexpression_s55(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS84)]),
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS83)]),
         _ => vec![],
     }
 }
-fn action_body_s57(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_body_s56(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS85)]),
+        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS84)]),
         _ => vec![],
     }
 }
-fn action_tokenid_s58(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenid_s57(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS85)]),
+        _ => vec![],
+    }
+}
+fn action_simpleexpression_s58(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS86)]),
         _ => vec![],
     }
 }
-fn action_simpleexpression_s59(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS87)]),
-        _ => vec![],
-    }
-}
-fn action_tokendate_s60(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS88)]),
-        _ => vec![],
-    }
-}
-fn action_tokenintliteral_s61(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenintliteral_s59(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
@@ -1650,11 +1615,10 @@ fn action_tokenintliteral_s61(token_kind: TokenKind) -> Vec<Action<State, ProdKi
         TK::TokenOr => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::NumberNumberNegativeInt, 2usize)]),
         _ => vec![],
     }
 }
-fn action_tokenfloatliteral_s62(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfloatliteral_s60(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
@@ -1679,63 +1643,68 @@ fn action_tokenfloatliteral_s62(token_kind: TokenKind) -> Vec<Action<State, Prod
         TK::TokenOr => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::NumberNumberNegativeFloat, 2usize)]),
         _ => vec![],
     }
 }
-fn action_arithmeticexpression_s63(
+fn action_arithmeticexpression_s61(
     token_kind: TokenKind,
 ) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS64)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS65)]),
-        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS89)]),
+        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS63)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS64)]),
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS87)]),
         _ => vec![],
     }
 }
-fn action_tokensum_s64(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s62(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenDate => Vec::from(&[Shift(State::TokenDateS88)]),
         _ => vec![],
     }
 }
-fn action_tokensub_s65(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokensum_s63(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokenmul_s66(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokensub_s64(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokendiv_s67(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenmul_s65(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokencbopen_s68(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokendiv_s66(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        _ => vec![],
+    }
+}
+fn action_tokencbopen_s67(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyEmpty, 0usize)]),
         TK::TokenInit => Vec::from(&[Shift(State::TokenInitS2)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
@@ -1743,25 +1712,24 @@ fn action_tokencbopen_s68(token_kind: TokenKind) -> Vec<Action<State, ProdKind>>
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
-fn action_tokencolon_s69(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencolon_s68(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenInt => Vec::from(&[Shift(State::TokenIntS95)]),
-        TK::TokenFloat => Vec::from(&[Shift(State::TokenFloatS96)]),
-        TK::TokenString => Vec::from(&[Shift(State::TokenStringS97)]),
+        TK::TokenInt => Vec::from(&[Shift(State::TokenIntS94)]),
+        TK::TokenFloat => Vec::from(&[Shift(State::TokenFloatS95)]),
+        TK::TokenString => Vec::from(&[Shift(State::TokenStringS96)]),
         _ => vec![],
     }
 }
-fn action_tokencomma_s70(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencomma_s69(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS44)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS43)]),
         _ => vec![],
     }
 }
-fn action_tokencbclose_s71(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbclose_s70(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
@@ -1771,11 +1739,10 @@ fn action_tokencbclose_s71(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         TK::TokenElse => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::InitBodyInitBody, 3usize)]),
         _ => vec![],
     }
 }
-fn action_vardeclarations_s72(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclarations_s71(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenCBClose => {
             Vec::from(&[Reduce(PK::VarDeclarationsVarDeclarationsRecursive, 2usize)])
@@ -1783,29 +1750,29 @@ fn action_vardeclarations_s72(token_kind: TokenKind) -> Vec<Action<State, ProdKi
         _ => vec![],
     }
 }
-fn action_booleanexpression_s73(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_booleanexpression_s72(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => Vec::from(&[Reduce(PK::NotStatementNot, 2usize)]),
         _ => vec![],
     }
 }
-fn action_tokenparopen_s74(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparopen_s73(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokenparclose_s75(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s74(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS101)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS100)]),
         _ => vec![],
     }
 }
-fn action_tokenequal_s76(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenequal_s75(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpEqual, 1usize)])
@@ -1824,7 +1791,7 @@ fn action_tokenequal_s76(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> 
         _ => vec![],
     }
 }
-fn action_tokennotequal_s77(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokennotequal_s76(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpNotEqual, 1usize)])
@@ -1845,7 +1812,7 @@ fn action_tokennotequal_s77(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         _ => vec![],
     }
 }
-fn action_tokenless_s78(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenless_s77(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpLess, 1usize)])
@@ -1864,7 +1831,7 @@ fn action_tokenless_s78(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_tokenlessequal_s79(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenlessequal_s78(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpLessEqual, 1usize)])
@@ -1887,7 +1854,7 @@ fn action_tokenlessequal_s79(token_kind: TokenKind) -> Vec<Action<State, ProdKin
         _ => vec![],
     }
 }
-fn action_tokengreater_s80(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokengreater_s79(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpGreater, 1usize)])
@@ -1906,7 +1873,7 @@ fn action_tokengreater_s80(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         _ => vec![],
     }
 }
-fn action_tokengreaterequal_s81(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokengreaterequal_s80(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ComparisonOpComparisonOpGreaterEqual, 1usize)])
@@ -1929,7 +1896,7 @@ fn action_tokengreaterequal_s81(token_kind: TokenKind) -> Vec<Action<State, Prod
         _ => vec![],
     }
 }
-fn action_booleanexpressionchain_s82(
+fn action_booleanexpressionchain_s81(
     token_kind: TokenKind,
 ) -> Vec<Action<State, ProdKind>> {
     match token_kind {
@@ -1938,29 +1905,29 @@ fn action_booleanexpressionchain_s82(
                 &[Reduce(PK::BooleanExpressionBooleanExpressionSimpleExpression, 2usize)],
             )
         }
-        TK::TokenAnd => Vec::from(&[Shift(State::TokenAndS102)]),
-        TK::TokenOr => Vec::from(&[Shift(State::TokenOrS103)]),
+        TK::TokenAnd => Vec::from(&[Shift(State::TokenAndS101)]),
+        TK::TokenOr => Vec::from(&[Shift(State::TokenOrS102)]),
         _ => vec![],
     }
 }
-fn action_comparisonop_s83(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_comparisonop_s82(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
         _ => vec![],
     }
 }
-fn action_tokenparclose_s84(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s83(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS106)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS105)]),
         _ => vec![],
     }
 }
-fn action_tokencbclose_s85(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbclose_s84(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
@@ -1970,11 +1937,10 @@ fn action_tokencbclose_s85(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         TK::TokenElse => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         _ => vec![],
     }
 }
-fn action_tokenparclose_s86(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s85(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)]),
@@ -1986,13 +1952,10 @@ fn action_tokenparclose_s86(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenElse => Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)]),
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::FunctionReadFunctionReadCall, 4usize)])
-        }
         _ => vec![],
     }
 }
-fn action_tokenparclose_s87(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s86(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::FunctionWriteFunctionWriteCall, 4usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::FunctionWriteFunctionWriteCall, 4usize)]),
@@ -2008,63 +1971,10 @@ fn action_tokenparclose_s87(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenWrite => {
             Vec::from(&[Reduce(PK::FunctionWriteFunctionWriteCall, 4usize)])
         }
-        TK::TokenConvDate => {
-            Vec::from(&[Reduce(PK::FunctionWriteFunctionWriteCall, 4usize)])
-        }
         _ => vec![],
     }
 }
-fn action_tokenparclose_s88(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::STOP => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenId => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenCBClose => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenWhile => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenIf => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenElse => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenRead => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenWrite => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        TK::TokenConvDate => {
-            Vec::from(
-                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
-            )
-        }
-        _ => vec![],
-    }
-}
-fn action_tokenparclose_s89(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenparclose_s87(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
@@ -2087,7 +1997,114 @@ fn action_tokenparclose_s89(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenOr => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::FactorFactorParen, 3usize)]),
+        _ => vec![],
+    }
+}
+fn action_tokendate_s88(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS106)]),
+        _ => vec![],
+    }
+}
+fn action_term_s89(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::STOP => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenId => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenSum => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS65)]),
+        TK::TokenSub => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS66)]),
+        TK::TokenParClose => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenCBClose => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenWhile => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenEqual => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenNotEqual => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenLess => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenLessEqual => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenGreater => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenGreaterEqual => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenIf => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenElse => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenAnd => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenOr => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenRead => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
+        TK::TokenWrite => {
+            Vec::from(
+                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
+            )
+        }
         _ => vec![],
     }
 }
@@ -2095,113 +2112,6 @@ fn action_term_s90(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => {
             Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenId => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenSum => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS66)]),
-        TK::TokenSub => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS67)]),
-        TK::TokenParClose => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenCBClose => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenWhile => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenEqual => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenNotEqual => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenLess => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenLessEqual => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenGreater => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenGreaterEqual => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenIf => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenElse => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenAnd => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenOr => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenRead => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenWrite => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        TK::TokenConvDate => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSumTerm, 3usize)],
-            )
-        }
-        _ => vec![],
-    }
-}
-fn action_term_s91(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
-    match token_kind {
-        TK::STOP => {
-            Vec::from(
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
             )
         }
@@ -2215,13 +2125,13 @@ fn action_term_s91(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
             )
         }
-        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS66)]),
+        TK::TokenMul => Vec::from(&[Shift(State::TokenMulS65)]),
         TK::TokenSub => {
             Vec::from(
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
             )
         }
-        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS67)]),
+        TK::TokenDiv => Vec::from(&[Shift(State::TokenDivS66)]),
         TK::TokenParClose => {
             Vec::from(
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
@@ -2297,15 +2207,10 @@ fn action_term_s91(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
                 &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
             )
         }
-        TK::TokenConvDate => {
-            Vec::from(
-                &[Reduce(PK::ArithmeticExpressionArithmeticExpressionSubTerm, 3usize)],
-            )
-        }
         _ => vec![],
     }
 }
-fn action_factor_s92(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_factor_s91(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
@@ -2328,11 +2233,10 @@ fn action_factor_s92(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenOr => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::TermTermMulFactor, 3usize)]),
         _ => vec![],
     }
 }
-fn action_factor_s93(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_factor_s92(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
@@ -2355,38 +2259,37 @@ fn action_factor_s93(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         TK::TokenOr => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::TermTermDivFactor, 3usize)]),
         _ => vec![],
     }
 }
-fn action_body_s94(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_body_s93(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS107)]),
         _ => vec![],
     }
 }
-fn action_tokenint_s95(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenint_s94(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Reduce(PK::DataTypeIntType, 1usize)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeIntType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenfloat_s96(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenfloat_s95(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Reduce(PK::DataTypeFloatType, 1usize)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeFloatType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_tokenstring_s97(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenstring_s96(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Reduce(PK::DataTypeStringType, 1usize)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::DataTypeStringType, 1usize)]),
         _ => vec![],
     }
 }
-fn action_datatype_s98(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_datatype_s97(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => {
             Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationSingle, 3usize)])
@@ -2397,7 +2300,7 @@ fn action_datatype_s98(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_vardeclaration_s99(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_vardeclaration_s98(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => {
             Vec::from(&[Reduce(PK::VarDeclarationVarDeclarationRecursive, 3usize)])
@@ -2408,19 +2311,19 @@ fn action_vardeclaration_s99(token_kind: TokenKind) -> Vec<Action<State, ProdKin
         _ => vec![],
     }
 }
-fn action_arithmeticexpression_s100(
+fn action_arithmeticexpression_s99(
     token_kind: TokenKind,
 ) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS64)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS65)]),
+        TK::TokenSum => Vec::from(&[Shift(State::TokenSumS63)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS64)]),
         TK::TokenParClose => Vec::from(&[Shift(State::TokenParCloseS108)]),
         _ => vec![],
     }
 }
-fn action_tokencbopen_s101(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbopen_s100(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyEmpty, 0usize)]),
         TK::TokenInit => Vec::from(&[Shift(State::TokenInitS2)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
@@ -2428,11 +2331,10 @@ fn action_tokencbopen_s101(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
         _ => vec![],
     }
 }
-fn action_tokenand_s102(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenand_s101(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => {
             Vec::from(&[Reduce(PK::ConjunctionConjunctionAnd, 1usize)])
@@ -2453,7 +2355,7 @@ fn action_tokenand_s102(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_tokenor_s103(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenor_s102(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenIntLiteral => Vec::from(&[Reduce(PK::ConjunctionConjunctionOr, 1usize)]),
         TK::TokenFloatLiteral => {
@@ -2472,34 +2374,34 @@ fn action_tokenor_s103(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
         _ => vec![],
     }
 }
-fn action_conjunction_s104(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_conjunction_s103(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS32)]),
-        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS33)]),
-        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS34)]),
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS35)]),
-        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS36)]),
-        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS37)]),
-        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS48)]),
-        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS49)]),
-        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS50)]),
-        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS51)]),
+        TK::TokenIntLiteral => Vec::from(&[Shift(State::TokenIntLiteralS29)]),
+        TK::TokenFloatLiteral => Vec::from(&[Shift(State::TokenFloatLiteralS30)]),
+        TK::TokenStringLiteral => Vec::from(&[Shift(State::TokenStringLiteralS31)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS32)]),
+        TK::TokenSub => Vec::from(&[Shift(State::TokenSubS33)]),
+        TK::TokenParOpen => Vec::from(&[Shift(State::TokenParOpenS34)]),
+        TK::TokenTrue => Vec::from(&[Shift(State::TokenTrueS47)]),
+        TK::TokenFalse => Vec::from(&[Shift(State::TokenFalseS48)]),
+        TK::TokenNot => Vec::from(&[Shift(State::TokenNotS49)]),
+        TK::TokenIsZero => Vec::from(&[Shift(State::TokenIsZeroS50)]),
         _ => vec![],
     }
 }
-fn action_simpleexpression_s105(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_simpleexpression_s104(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenParClose => {
             Vec::from(
                 &[Reduce(PK::BooleanExpressionChainBooleanExpressionChainEmpty, 0usize)],
             )
         }
-        TK::TokenEqual => Vec::from(&[Shift(State::TokenEqualS76)]),
-        TK::TokenNotEqual => Vec::from(&[Shift(State::TokenNotEqualS77)]),
-        TK::TokenLess => Vec::from(&[Shift(State::TokenLessS78)]),
-        TK::TokenLessEqual => Vec::from(&[Shift(State::TokenLessEqualS79)]),
-        TK::TokenGreater => Vec::from(&[Shift(State::TokenGreaterS80)]),
-        TK::TokenGreaterEqual => Vec::from(&[Shift(State::TokenGreaterEqualS81)]),
+        TK::TokenEqual => Vec::from(&[Shift(State::TokenEqualS75)]),
+        TK::TokenNotEqual => Vec::from(&[Shift(State::TokenNotEqualS76)]),
+        TK::TokenLess => Vec::from(&[Shift(State::TokenLessS77)]),
+        TK::TokenLessEqual => Vec::from(&[Shift(State::TokenLessEqualS78)]),
+        TK::TokenGreater => Vec::from(&[Shift(State::TokenGreaterS79)]),
+        TK::TokenGreaterEqual => Vec::from(&[Shift(State::TokenGreaterEqualS80)]),
         TK::TokenAnd => {
             Vec::from(
                 &[Reduce(PK::BooleanExpressionChainBooleanExpressionChainEmpty, 0usize)],
@@ -2513,9 +2415,9 @@ fn action_simpleexpression_s105(token_kind: TokenKind) -> Vec<Action<State, Prod
         _ => vec![],
     }
 }
-fn action_tokencbopen_s106(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbopen_s105(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenId => Vec::from(&[Shift(State::TokenIdS30)]),
+        TK::TokenId => Vec::from(&[Shift(State::TokenIdS27)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyEmpty, 0usize)]),
         TK::TokenInit => Vec::from(&[Shift(State::TokenInitS2)]),
         TK::TokenWhile => Vec::from(&[Shift(State::TokenWhileS3)]),
@@ -2523,7 +2425,51 @@ fn action_tokencbopen_s106(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         TK::TokenElse => Vec::from(&[Shift(State::TokenElseS5)]),
         TK::TokenRead => Vec::from(&[Shift(State::TokenReadS6)]),
         TK::TokenWrite => Vec::from(&[Shift(State::TokenWriteS7)]),
-        TK::TokenConvDate => Vec::from(&[Shift(State::TokenConvDateS8)]),
+        _ => vec![],
+    }
+}
+fn action_tokenparclose_s106(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::STOP => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenId => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenCBClose => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenWhile => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenIf => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenElse => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenRead => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
+        TK::TokenWrite => {
+            Vec::from(
+                &[Reduce(PK::FunctionConvDateFunctionConvDateVariableCall, 4usize)],
+            )
+        }
         _ => vec![],
     }
 }
@@ -2600,7 +2546,6 @@ fn action_tokencbclose_s113(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenElse => Vec::from(&[Reduce(PK::WhileLoopWhile, 7usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::WhileLoopWhile, 7usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::WhileLoopWhile, 7usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::WhileLoopWhile, 7usize)]),
         _ => vec![],
     }
 }
@@ -2614,23 +2559,21 @@ fn action_tokencbclose_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenElse => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
-        TK::TokenConvDate => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         _ => vec![],
     }
 }
 fn goto_aug_s0(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Program => State::ProgramS9,
-        NonTermKind::Body => State::BodyS10,
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS14,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::Program => State::ProgramS8,
+        NonTermKind::Body => State::BodyS9,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS12,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2641,7 +2584,7 @@ fn goto_aug_s0(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokeninit_s2(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::InitBody => State::InitBodyS23,
+        NonTermKind::InitBody => State::InitBodyS21,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2650,396 +2593,391 @@ fn goto_tokeninit_s2(nonterm_kind: NonTermKind) -> State {
         }
     }
 }
-fn goto_statement_s15(nonterm_kind: NonTermKind) -> State {
+fn goto_statement_s13(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS31,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS28,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::StatementS15
+                State::StatementS13
             )
         }
     }
 }
-fn goto_tokenassign_s20(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenassign_s18(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::SimpleExpression => State::SimpleExpressionS38,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::FunctionConvDate => State::FunctionConvDateS36,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS37,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenAssignS20
+                State::TokenAssignS18
             )
         }
     }
 }
-fn goto_tokencbopen_s22(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencbopen_s20(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::VarDeclarations => State::VarDeclarationsS45,
-        NonTermKind::VarDeclaration => State::VarDeclarationS46,
+        NonTermKind::VarDeclarations => State::VarDeclarationsS44,
+        NonTermKind::VarDeclaration => State::VarDeclarationS45,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS22
+                State::TokenCBOpenS20
             )
         }
     }
 }
-fn goto_initbody_s23(nonterm_kind: NonTermKind) -> State {
+fn goto_initbody_s21(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS47,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS46,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::InitBodyS23
+                State::InitBodyS21
             )
         }
     }
 }
-fn goto_tokenparopen_s24(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenparopen_s22(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionIsZero => State::FunctionIsZeroS52,
-        NonTermKind::BooleanExpression => State::BooleanExpressionS53,
-        NonTermKind::SimpleExpression => State::SimpleExpressionS54,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::NotStatement => State::NotStatementS55,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::FunctionIsZero => State::FunctionIsZeroS51,
+        NonTermKind::BooleanExpression => State::BooleanExpressionS52,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS53,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::NotStatement => State::NotStatementS54,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenParOpenS24
+                State::TokenParOpenS22
             )
         }
     }
 }
-fn goto_tokenparopen_s25(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenparopen_s23(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionIsZero => State::FunctionIsZeroS52,
-        NonTermKind::BooleanExpression => State::BooleanExpressionS56,
-        NonTermKind::SimpleExpression => State::SimpleExpressionS54,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::NotStatement => State::NotStatementS55,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::FunctionIsZero => State::FunctionIsZeroS51,
+        NonTermKind::BooleanExpression => State::BooleanExpressionS55,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS53,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::NotStatement => State::NotStatementS54,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenParOpenS25
+                State::TokenParOpenS23
             )
         }
     }
 }
-fn goto_tokencbopen_s26(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencbopen_s24(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Body => State::BodyS57,
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS14,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::Body => State::BodyS56,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS12,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS26
+                State::TokenCBOpenS24
             )
         }
     }
 }
-fn goto_tokenparopen_s28(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenparopen_s26(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::SimpleExpression => State::SimpleExpressionS59,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS58,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenParOpenS28
+                State::TokenParOpenS26
             )
         }
     }
 }
-fn goto_tokenparopen_s37(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenparopen_s34(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS63,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS61,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenParOpenS37
+                State::TokenParOpenS34
             )
         }
     }
 }
-fn goto_vardeclaration_s46(nonterm_kind: NonTermKind) -> State {
+fn goto_vardeclaration_s45(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::VarDeclarations => State::VarDeclarationsS72,
-        NonTermKind::VarDeclaration => State::VarDeclarationS46,
+        NonTermKind::VarDeclarations => State::VarDeclarationsS71,
+        NonTermKind::VarDeclaration => State::VarDeclarationS45,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::VarDeclarationS46
+                State::VarDeclarationS45
             )
         }
     }
 }
-fn goto_tokennot_s50(nonterm_kind: NonTermKind) -> State {
+fn goto_tokennot_s49(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionIsZero => State::FunctionIsZeroS52,
-        NonTermKind::BooleanExpression => State::BooleanExpressionS73,
-        NonTermKind::SimpleExpression => State::SimpleExpressionS54,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::NotStatement => State::NotStatementS55,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::FunctionIsZero => State::FunctionIsZeroS51,
+        NonTermKind::BooleanExpression => State::BooleanExpressionS72,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS53,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::NotStatement => State::NotStatementS54,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenNotS50
+                State::TokenNotS49
             )
         }
     }
 }
-fn goto_simpleexpression_s54(nonterm_kind: NonTermKind) -> State {
+fn goto_simpleexpression_s53(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::BooleanExpressionChain => State::BooleanExpressionChainS82,
-        NonTermKind::ComparisonOp => State::ComparisonOpS83,
+        NonTermKind::BooleanExpressionChain => State::BooleanExpressionChainS81,
+        NonTermKind::ComparisonOp => State::ComparisonOpS82,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::SimpleExpressionS54
+                State::SimpleExpressionS53
             )
         }
     }
 }
-fn goto_tokensum_s64(nonterm_kind: NonTermKind) -> State {
+fn goto_tokensum_s63(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::Term => State::TermS89,
+        NonTermKind::Factor => State::FactorS41,
+        _ => {
+            panic!(
+                "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
+                State::TokenSumS63
+            )
+        }
+    }
+}
+fn goto_tokensub_s64(nonterm_kind: NonTermKind) -> State {
+    match nonterm_kind {
+        NonTermKind::Number => State::NumberS38,
         NonTermKind::Term => State::TermS90,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenSumS64
+                State::TokenSubS64
             )
         }
     }
 }
-fn goto_tokensub_s65(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenmul_s65(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::Term => State::TermS91,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::Factor => State::FactorS91,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenSubS65
+                State::TokenMulS65
             )
         }
     }
 }
-fn goto_tokenmul_s66(nonterm_kind: NonTermKind) -> State {
+fn goto_tokendiv_s66(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
+        NonTermKind::Number => State::NumberS38,
         NonTermKind::Factor => State::FactorS92,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenMulS66
+                State::TokenDivS66
             )
         }
     }
 }
-fn goto_tokendiv_s67(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencbopen_s67(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::Factor => State::FactorS93,
+        NonTermKind::Body => State::BodyS93,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS12,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenDivS67
+                State::TokenCBOpenS67
             )
         }
     }
 }
-fn goto_tokencbopen_s68(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencolon_s68(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Body => State::BodyS94,
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS14,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::DataType => State::DataTypeS97,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS68
+                State::TokenColonS68
             )
         }
     }
 }
-fn goto_tokencolon_s69(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencomma_s69(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::DataType => State::DataTypeS98,
+        NonTermKind::VarDeclaration => State::VarDeclarationS98,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenColonS69
+                State::TokenCommaS69
             )
         }
     }
 }
-fn goto_tokencomma_s70(nonterm_kind: NonTermKind) -> State {
+fn goto_tokenparopen_s73(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::VarDeclaration => State::VarDeclarationS99,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS99,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCommaS70
+                State::TokenParOpenS73
             )
         }
     }
 }
-fn goto_tokenparopen_s74(nonterm_kind: NonTermKind) -> State {
+fn goto_booleanexpressionchain_s81(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS100,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::Conjunction => State::ConjunctionS103,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenParOpenS74
+                State::BooleanExpressionChainS81
             )
         }
     }
 }
-fn goto_booleanexpressionchain_s82(nonterm_kind: NonTermKind) -> State {
+fn goto_comparisonop_s82(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Conjunction => State::ConjunctionS104,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS104,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::BooleanExpressionChainS82
+                State::ComparisonOpS82
             )
         }
     }
 }
-fn goto_comparisonop_s83(nonterm_kind: NonTermKind) -> State {
-    match nonterm_kind {
-        NonTermKind::SimpleExpression => State::SimpleExpressionS105,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
-        _ => {
-            panic!(
-                "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::ComparisonOpS83
-            )
-        }
-    }
-}
-fn goto_tokencbopen_s101(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencbopen_s100(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
         NonTermKind::Body => State::BodyS109,
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS14,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS12,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS101
+                State::TokenCBOpenS100
             )
         }
     }
 }
-fn goto_conjunction_s104(nonterm_kind: NonTermKind) -> State {
+fn goto_conjunction_s103(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::FunctionIsZero => State::FunctionIsZeroS52,
+        NonTermKind::FunctionIsZero => State::FunctionIsZeroS51,
         NonTermKind::BooleanExpression => State::BooleanExpressionS110,
-        NonTermKind::SimpleExpression => State::SimpleExpressionS54,
-        NonTermKind::Number => State::NumberS39,
-        NonTermKind::NotStatement => State::NotStatementS55,
-        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS40,
-        NonTermKind::Term => State::TermS41,
-        NonTermKind::Factor => State::FactorS42,
+        NonTermKind::SimpleExpression => State::SimpleExpressionS53,
+        NonTermKind::Number => State::NumberS38,
+        NonTermKind::NotStatement => State::NotStatementS54,
+        NonTermKind::ArithmeticExpression => State::ArithmeticExpressionS39,
+        NonTermKind::Term => State::TermS40,
+        NonTermKind::Factor => State::FactorS41,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::ConjunctionS104
+                State::ConjunctionS103
             )
         }
     }
 }
-fn goto_simpleexpression_s105(nonterm_kind: NonTermKind) -> State {
+fn goto_simpleexpression_s104(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
         NonTermKind::BooleanExpressionChain => State::BooleanExpressionChainS111,
-        NonTermKind::ComparisonOp => State::ComparisonOpS83,
+        NonTermKind::ComparisonOp => State::ComparisonOpS82,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::SimpleExpressionS105
+                State::SimpleExpressionS104
             )
         }
     }
 }
-fn goto_tokencbopen_s106(nonterm_kind: NonTermKind) -> State {
+fn goto_tokencbopen_s105(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
         NonTermKind::Body => State::BodyS112,
-        NonTermKind::FunctionRead => State::FunctionReadS11,
-        NonTermKind::FunctionWrite => State::FunctionWriteS12,
-        NonTermKind::FunctionConvDate => State::FunctionConvDateS13,
-        NonTermKind::Expressions => State::ExpressionsS14,
-        NonTermKind::Statement => State::StatementS15,
-        NonTermKind::Assignment => State::AssignmentS16,
-        NonTermKind::WhileLoop => State::WhileLoopS17,
-        NonTermKind::IfStatement => State::IfStatementS18,
-        NonTermKind::ElseStatement => State::ElseStatementS19,
+        NonTermKind::FunctionRead => State::FunctionReadS10,
+        NonTermKind::FunctionWrite => State::FunctionWriteS11,
+        NonTermKind::Expressions => State::ExpressionsS12,
+        NonTermKind::Statement => State::StatementS13,
+        NonTermKind::Assignment => State::AssignmentS14,
+        NonTermKind::WhileLoop => State::WhileLoopS15,
+        NonTermKind::IfStatement => State::IfStatementS16,
+        NonTermKind::ElseStatement => State::ElseStatementS17,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS106
+                State::TokenCBOpenS105
             )
         }
     }
@@ -3057,105 +2995,105 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         action_tokenelse_s5,
         action_tokenread_s6,
         action_tokenwrite_s7,
-        action_tokenconvdate_s8,
-        action_program_s9,
-        action_body_s10,
-        action_functionread_s11,
-        action_functionwrite_s12,
-        action_functionconvdate_s13,
-        action_expressions_s14,
-        action_statement_s15,
-        action_assignment_s16,
-        action_whileloop_s17,
-        action_ifstatement_s18,
-        action_elsestatement_s19,
-        action_tokenassign_s20,
-        action_tokenparopen_s21,
-        action_tokencbopen_s22,
-        action_initbody_s23,
-        action_tokenparopen_s24,
+        action_program_s8,
+        action_body_s9,
+        action_functionread_s10,
+        action_functionwrite_s11,
+        action_expressions_s12,
+        action_statement_s13,
+        action_assignment_s14,
+        action_whileloop_s15,
+        action_ifstatement_s16,
+        action_elsestatement_s17,
+        action_tokenassign_s18,
+        action_tokenparopen_s19,
+        action_tokencbopen_s20,
+        action_initbody_s21,
+        action_tokenparopen_s22,
+        action_tokenparopen_s23,
+        action_tokencbopen_s24,
         action_tokenparopen_s25,
-        action_tokencbopen_s26,
-        action_tokenparopen_s27,
-        action_tokenparopen_s28,
-        action_tokenparopen_s29,
-        action_tokenid_s30,
-        action_expressions_s31,
-        action_tokenintliteral_s32,
-        action_tokenfloatliteral_s33,
-        action_tokenstringliteral_s34,
-        action_tokenid_s35,
-        action_tokensub_s36,
-        action_tokenparopen_s37,
-        action_simpleexpression_s38,
-        action_number_s39,
-        action_arithmeticexpression_s40,
-        action_term_s41,
-        action_factor_s42,
-        action_tokenparclose_s43,
-        action_tokenid_s44,
-        action_vardeclarations_s45,
-        action_vardeclaration_s46,
-        action_expressions_s47,
-        action_tokentrue_s48,
-        action_tokenfalse_s49,
-        action_tokennot_s50,
-        action_tokeniszero_s51,
-        action_functioniszero_s52,
-        action_booleanexpression_s53,
-        action_simpleexpression_s54,
-        action_notstatement_s55,
-        action_booleanexpression_s56,
-        action_body_s57,
-        action_tokenid_s58,
-        action_simpleexpression_s59,
-        action_tokendate_s60,
-        action_tokenintliteral_s61,
-        action_tokenfloatliteral_s62,
-        action_arithmeticexpression_s63,
-        action_tokensum_s64,
-        action_tokensub_s65,
-        action_tokenmul_s66,
-        action_tokendiv_s67,
-        action_tokencbopen_s68,
-        action_tokencolon_s69,
-        action_tokencomma_s70,
-        action_tokencbclose_s71,
-        action_vardeclarations_s72,
-        action_booleanexpression_s73,
-        action_tokenparopen_s74,
-        action_tokenparclose_s75,
-        action_tokenequal_s76,
-        action_tokennotequal_s77,
-        action_tokenless_s78,
-        action_tokenlessequal_s79,
-        action_tokengreater_s80,
-        action_tokengreaterequal_s81,
-        action_booleanexpressionchain_s82,
-        action_comparisonop_s83,
-        action_tokenparclose_s84,
-        action_tokencbclose_s85,
+        action_tokenparopen_s26,
+        action_tokenid_s27,
+        action_expressions_s28,
+        action_tokenintliteral_s29,
+        action_tokenfloatliteral_s30,
+        action_tokenstringliteral_s31,
+        action_tokenid_s32,
+        action_tokensub_s33,
+        action_tokenparopen_s34,
+        action_tokenconvdate_s35,
+        action_functionconvdate_s36,
+        action_simpleexpression_s37,
+        action_number_s38,
+        action_arithmeticexpression_s39,
+        action_term_s40,
+        action_factor_s41,
+        action_tokenparclose_s42,
+        action_tokenid_s43,
+        action_vardeclarations_s44,
+        action_vardeclaration_s45,
+        action_expressions_s46,
+        action_tokentrue_s47,
+        action_tokenfalse_s48,
+        action_tokennot_s49,
+        action_tokeniszero_s50,
+        action_functioniszero_s51,
+        action_booleanexpression_s52,
+        action_simpleexpression_s53,
+        action_notstatement_s54,
+        action_booleanexpression_s55,
+        action_body_s56,
+        action_tokenid_s57,
+        action_simpleexpression_s58,
+        action_tokenintliteral_s59,
+        action_tokenfloatliteral_s60,
+        action_arithmeticexpression_s61,
+        action_tokenparopen_s62,
+        action_tokensum_s63,
+        action_tokensub_s64,
+        action_tokenmul_s65,
+        action_tokendiv_s66,
+        action_tokencbopen_s67,
+        action_tokencolon_s68,
+        action_tokencomma_s69,
+        action_tokencbclose_s70,
+        action_vardeclarations_s71,
+        action_booleanexpression_s72,
+        action_tokenparopen_s73,
+        action_tokenparclose_s74,
+        action_tokenequal_s75,
+        action_tokennotequal_s76,
+        action_tokenless_s77,
+        action_tokenlessequal_s78,
+        action_tokengreater_s79,
+        action_tokengreaterequal_s80,
+        action_booleanexpressionchain_s81,
+        action_comparisonop_s82,
+        action_tokenparclose_s83,
+        action_tokencbclose_s84,
+        action_tokenparclose_s85,
         action_tokenparclose_s86,
         action_tokenparclose_s87,
-        action_tokenparclose_s88,
-        action_tokenparclose_s89,
+        action_tokendate_s88,
+        action_term_s89,
         action_term_s90,
-        action_term_s91,
+        action_factor_s91,
         action_factor_s92,
-        action_factor_s93,
-        action_body_s94,
-        action_tokenint_s95,
-        action_tokenfloat_s96,
-        action_tokenstring_s97,
-        action_datatype_s98,
-        action_vardeclaration_s99,
-        action_arithmeticexpression_s100,
-        action_tokencbopen_s101,
-        action_tokenand_s102,
-        action_tokenor_s103,
-        action_conjunction_s104,
-        action_simpleexpression_s105,
-        action_tokencbopen_s106,
+        action_body_s93,
+        action_tokenint_s94,
+        action_tokenfloat_s95,
+        action_tokenstring_s96,
+        action_datatype_s97,
+        action_vardeclaration_s98,
+        action_arithmeticexpression_s99,
+        action_tokencbopen_s100,
+        action_tokenand_s101,
+        action_tokenor_s102,
+        action_conjunction_s103,
+        action_simpleexpression_s104,
+        action_tokencbopen_s105,
+        action_tokenparclose_s106,
         action_tokencbclose_s107,
         action_tokenparclose_s108,
         action_body_s109,
@@ -3179,31 +3117,31 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_statement_s13,
         goto_invalid,
         goto_invalid,
-        goto_statement_s15,
         goto_invalid,
         goto_invalid,
+        goto_tokenassign_s18,
         goto_invalid,
+        goto_tokencbopen_s20,
+        goto_initbody_s21,
+        goto_tokenparopen_s22,
+        goto_tokenparopen_s23,
+        goto_tokencbopen_s24,
         goto_invalid,
-        goto_tokenassign_s20,
+        goto_tokenparopen_s26,
         goto_invalid,
-        goto_tokencbopen_s22,
-        goto_initbody_s23,
-        goto_tokenparopen_s24,
-        goto_tokenparopen_s25,
-        goto_tokencbopen_s26,
         goto_invalid,
-        goto_tokenparopen_s28,
         goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_tokenparopen_s34,
         goto_invalid,
         goto_invalid,
         goto_invalid,
-        goto_tokenparopen_s37,
         goto_invalid,
         goto_invalid,
         goto_invalid,
@@ -3211,16 +3149,16 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_vardeclaration_s45,
         goto_invalid,
-        goto_vardeclaration_s46,
         goto_invalid,
         goto_invalid,
+        goto_tokennot_s49,
         goto_invalid,
-        goto_tokennot_s50,
         goto_invalid,
         goto_invalid,
+        goto_simpleexpression_s53,
         goto_invalid,
-        goto_simpleexpression_s54,
         goto_invalid,
         goto_invalid,
         goto_invalid,
@@ -3229,27 +3167,27 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_tokensum_s63,
+        goto_tokensub_s64,
+        goto_tokenmul_s65,
+        goto_tokendiv_s66,
+        goto_tokencbopen_s67,
+        goto_tokencolon_s68,
+        goto_tokencomma_s69,
         goto_invalid,
-        goto_tokensum_s64,
-        goto_tokensub_s65,
-        goto_tokenmul_s66,
-        goto_tokendiv_s67,
-        goto_tokencbopen_s68,
-        goto_tokencolon_s69,
-        goto_tokencomma_s70,
         goto_invalid,
         goto_invalid,
+        goto_tokenparopen_s73,
         goto_invalid,
-        goto_tokenparopen_s74,
         goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_booleanexpressionchain_s81,
+        goto_comparisonop_s82,
         goto_invalid,
-        goto_booleanexpressionchain_s82,
-        goto_comparisonop_s83,
         goto_invalid,
         goto_invalid,
         goto_invalid,
@@ -3266,13 +3204,13 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         goto_invalid,
         goto_invalid,
         goto_invalid,
+        goto_tokencbopen_s100,
         goto_invalid,
-        goto_tokencbopen_s101,
         goto_invalid,
+        goto_conjunction_s103,
+        goto_simpleexpression_s104,
+        goto_tokencbopen_s105,
         goto_invalid,
-        goto_conjunction_s104,
-        goto_simpleexpression_s105,
-        goto_tokencbopen_s106,
         goto_invalid,
         goto_invalid,
         goto_invalid,
@@ -3292,7 +3230,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3329,6 +3266,74 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
+        ],
+        [
+            Some((TK::TokenCBOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
         ],
         [
@@ -3353,7 +3358,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParOpen, false)),
@@ -3377,107 +3381,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenCBOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenParOpen, false)),
-            None,
             None,
             None,
             None,
@@ -3521,7 +3427,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::STOP, false)),
@@ -3545,7 +3450,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::STOP, true)),
@@ -3556,31 +3460,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3604,7 +3483,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3622,7 +3500,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         [
             Some((TK::STOP, true)),
             Some((TK::TokenCBClose, false)),
-            None,
             None,
             None,
             None,
@@ -3652,7 +3529,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3676,7 +3552,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3700,7 +3575,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3724,7 +3598,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3748,7 +3621,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3770,8 +3642,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenId, false)),
             Some((TK::TokenSub, false)),
             Some((TK::TokenParOpen, false)),
-            None,
-            None,
+            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3809,11 +3680,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenId, false)),
-            None,
             None,
             None,
             None,
@@ -3844,7 +3713,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3881,7 +3749,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenIntLiteral, false)),
@@ -3894,7 +3761,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenFalse, false)),
             Some((TK::TokenNot, false)),
             Some((TK::TokenIsZero, false)),
-            None,
             None,
             None,
             None,
@@ -3916,7 +3782,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -3933,7 +3798,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         ],
         [
             Some((TK::TokenId, false)),
-            None,
             None,
             None,
             None,
@@ -3977,31 +3841,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
-        ],
-        [
-            Some((TK::TokenDate, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
         ],
         [
             Some((TK::TokenAssign, false)),
@@ -4025,7 +3864,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::STOP, true)),
@@ -4045,79 +3883,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSum, false)),
-            Some((TK::TokenMul, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenDiv, false)),
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenEqual, false)),
-            Some((TK::TokenNotEqual, false)),
-            Some((TK::TokenLess, false)),
-            Some((TK::TokenLessEqual, false)),
-            Some((TK::TokenGreater, false)),
-            Some((TK::TokenGreaterEqual, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSum, false)),
-            Some((TK::TokenMul, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenDiv, false)),
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenEqual, false)),
-            Some((TK::TokenNotEqual, false)),
-            Some((TK::TokenLess, false)),
-            Some((TK::TokenLessEqual, false)),
-            Some((TK::TokenGreater, false)),
-            Some((TK::TokenGreaterEqual, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenEqual, false)),
-            Some((TK::TokenNotEqual, false)),
-            Some((TK::TokenLess, false)),
-            Some((TK::TokenLessEqual, false)),
-            Some((TK::TokenGreater, false)),
-            Some((TK::TokenGreaterEqual, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -4145,12 +3910,79 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSum, false)),
+            Some((TK::TokenMul, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenDiv, false)),
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenEqual, false)),
+            Some((TK::TokenNotEqual, false)),
+            Some((TK::TokenLess, false)),
+            Some((TK::TokenLessEqual, false)),
+            Some((TK::TokenGreater, false)),
+            Some((TK::TokenGreaterEqual, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenEqual, false)),
+            Some((TK::TokenNotEqual, false)),
+            Some((TK::TokenLess, false)),
+            Some((TK::TokenLessEqual, false)),
+            Some((TK::TokenGreater, false)),
+            Some((TK::TokenGreaterEqual, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSum, false)),
+            Some((TK::TokenMul, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenDiv, false)),
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenEqual, false)),
+            Some((TK::TokenNotEqual, false)),
+            Some((TK::TokenLess, false)),
+            Some((TK::TokenLessEqual, false)),
+            Some((TK::TokenGreater, false)),
+            Some((TK::TokenGreaterEqual, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
         ],
         [
             Some((TK::TokenIntLiteral, false)),
             Some((TK::TokenFloatLiteral, false)),
-            None,
             None,
             None,
             None,
@@ -4193,6 +4025,28 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
+        ],
+        [
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
         ],
         [
@@ -4204,7 +4058,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -4216,6 +4069,75 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSum, false)),
+            Some((TK::TokenMul, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenDiv, false)),
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenEqual, false)),
+            Some((TK::TokenNotEqual, false)),
+            Some((TK::TokenLess, false)),
+            Some((TK::TokenLessEqual, false)),
+            Some((TK::TokenGreater, false)),
+            Some((TK::TokenGreaterEqual, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSum, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenEqual, false)),
+            Some((TK::TokenNotEqual, false)),
+            Some((TK::TokenLess, false)),
+            Some((TK::TokenLessEqual, false)),
+            Some((TK::TokenGreater, false)),
+            Some((TK::TokenGreaterEqual, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
             None,
             None,
         ],
@@ -4241,31 +4163,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSum, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenEqual, false)),
-            Some((TK::TokenNotEqual, false)),
-            Some((TK::TokenLess, false)),
-            Some((TK::TokenLessEqual, false)),
-            Some((TK::TokenGreater, false)),
-            Some((TK::TokenGreaterEqual, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-            None,
-            None,
         ],
         [
             Some((TK::STOP, true)),
@@ -4289,35 +4186,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSum, false)),
-            Some((TK::TokenMul, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenDiv, false)),
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenEqual, false)),
-            Some((TK::TokenNotEqual, false)),
-            Some((TK::TokenLess, false)),
-            Some((TK::TokenLessEqual, false)),
-            Some((TK::TokenGreater, false)),
-            Some((TK::TokenGreaterEqual, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::TokenCBOpen, false)),
-            None,
             None,
             None,
             None,
@@ -4361,11 +4232,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenCBClose, false)),
-            None,
             None,
             None,
             None,
@@ -4409,7 +4278,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::STOP, true)),
@@ -4433,7 +4301,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
@@ -4457,11 +4324,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -4505,7 +4370,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParOpen, false)),
@@ -4529,7 +4393,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
@@ -4553,11 +4416,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -4601,7 +4462,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
@@ -4625,11 +4485,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -4673,7 +4531,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
@@ -4697,35 +4554,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -4769,7 +4600,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::STOP, true)),
@@ -4793,7 +4623,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::TokenSum, false)),
@@ -4817,38 +4646,12 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
+            Some((TK::TokenDate, false)),
             None,
             None,
             None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
             None,
             None,
             None,
@@ -4889,6 +4692,28 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
         ],
         [
@@ -4898,6 +4723,28 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenSub, false)),
             Some((TK::TokenParOpen, false)),
             None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
             None,
             None,
             None,
@@ -4924,7 +4771,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -4961,11 +4807,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenId, false)),
-            None,
             None,
             None,
             None,
@@ -4996,7 +4840,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -5033,7 +4876,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
@@ -5057,228 +4899,10 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenIntLiteral, false)),
             Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenCBOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenSub, false)),
-            Some((TK::TokenParOpen, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenParClose, false)),
-            Some((TK::TokenAnd, false)),
-            Some((TK::TokenOr, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenIntLiteral, false)),
-            Some((TK::TokenFloatLiteral, false)),
-            Some((TK::TokenStringLiteral, false)),
             Some((TK::TokenId, false)),
             Some((TK::TokenSub, false)),
             Some((TK::TokenParOpen, false)),
@@ -5321,42 +4945,16 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
-            Some((TK::STOP, true)),
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
             Some((TK::TokenId, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
             None,
             None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -5372,15 +4970,175 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
         ],
         [
-            Some((TK::STOP, true)),
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
             Some((TK::TokenId, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenParClose, false)),
+            Some((TK::TokenAnd, false)),
+            Some((TK::TokenOr, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenIntLiteral, false)),
+            Some((TK::TokenFloatLiteral, false)),
+            Some((TK::TokenStringLiteral, false)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenSub, false)),
+            Some((TK::TokenParOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenCBOpen, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -5404,7 +5162,52 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
             None,
             None,
             None,
@@ -5441,7 +5244,29 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+        ],
+        [
+            Some((TK::TokenParClose, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ],
         [
             Some((TK::STOP, true)),
@@ -5465,7 +5290,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::STOP, true)),
@@ -5489,7 +5313,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::STOP, true)),
@@ -5513,7 +5336,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
             Some((TK::STOP, true)),
@@ -5537,34 +5359,8 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenOr, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
         ],
         [
-            Some((TK::TokenCBClose, false)),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::TokenId, false)),
             Some((TK::TokenCBClose, false)),
             None,
             None,
@@ -5609,6 +5405,28 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
+        ],
+        [
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
         ],
         [
@@ -5633,7 +5451,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenId, false)),
@@ -5657,12 +5474,10 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenId, false)),
             Some((TK::TokenCBClose, false)),
-            None,
             None,
             None,
             None,
@@ -5687,7 +5502,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenSum, false)),
             Some((TK::TokenSub, false)),
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -5716,7 +5530,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -5753,7 +5566,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenIntLiteral, false)),
@@ -5777,7 +5589,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenIntLiteral, false)),
@@ -5790,7 +5601,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenFalse, false)),
             Some((TK::TokenNot, false)),
             Some((TK::TokenIsZero, false)),
-            None,
             None,
             None,
             None,
@@ -5825,7 +5635,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenId, false)),
@@ -5836,7 +5645,29 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
             None,
             None,
             None,
@@ -5873,11 +5704,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -5921,11 +5750,9 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenParClose, false)),
-            None,
             None,
             None,
             None,
@@ -5969,7 +5796,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
         ],
         [
             Some((TK::TokenCBClose, false)),
@@ -5980,31 +5806,6 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             None,
             None,
             None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some((TK::STOP, true)),
-            Some((TK::TokenId, false)),
-            Some((TK::TokenCBClose, false)),
-            Some((TK::TokenWhile, false)),
-            Some((TK::TokenIf, false)),
-            Some((TK::TokenElse, false)),
-            Some((TK::TokenRead, false)),
-            Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
             None,
             None,
             None,
@@ -6028,7 +5829,29 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
-            Some((TK::TokenConvDate, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::STOP, true)),
+            Some((TK::TokenId, false)),
+            Some((TK::TokenCBClose, false)),
+            Some((TK::TokenWhile, false)),
+            Some((TK::TokenIf, false)),
+            Some((TK::TokenElse, false)),
+            Some((TK::TokenRead, false)),
+            Some((TK::TokenWrite, false)),
             None,
             None,
             None,
@@ -6747,21 +6570,7 @@ for DefaultBuilder {
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::StatementStatementConvDate => {
-                let mut i = self
-                    .res_stack
-                    .split_off(self.res_stack.len() - 1usize)
-                    .into_iter();
-                match i.next().unwrap() {
-                    Symbol::NonTerminal(NonTerminal::FunctionConvDate(p0)) => {
-                        NonTerminal::Statement(
-                            grammar_actions::statement_statement_conv_date(context, p0),
-                        )
-                    }
-                    _ => panic!("Invalid symbol parse stack data."),
-                }
-            }
-            ProdKind::AssignmentAssignment => {
+            ProdKind::AssignmentAssignmentExpression => {
                 let mut i = self
                     .res_stack
                     .split_off(self.res_stack.len() - 3usize)
@@ -6773,7 +6582,35 @@ for DefaultBuilder {
                         Symbol::NonTerminal(NonTerminal::SimpleExpression(p2)),
                     ) => {
                         NonTerminal::Assignment(
-                            grammar_actions::assignment_assignment(context, p0, p1, p2),
+                            grammar_actions::assignment_assignment_expression(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                            ),
+                        )
+                    }
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::AssignmentAssignmentConvDate => {
+                let mut i = self
+                    .res_stack
+                    .split_off(self.res_stack.len() - 3usize)
+                    .into_iter();
+                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                    (
+                        Symbol::Terminal(Terminal::TokenId(p0)),
+                        Symbol::Terminal(Terminal::TokenAssign(p1)),
+                        Symbol::NonTerminal(NonTerminal::FunctionConvDate(p2)),
+                    ) => {
+                        NonTerminal::Assignment(
+                            grammar_actions::assignment_assignment_conv_date(
+                                context,
+                                p0,
+                                p1,
+                                p2,
+                            ),
                         )
                     }
                     _ => panic!("Invalid symbol parse stack data."),
