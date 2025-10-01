@@ -55,7 +55,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
                 {
                     Ok(tok) => tok,
                     Err(e) => {
-                        log_error(lexer.yytextpos(), e, pos, input);
+                        log_error(lexer.yytextpos(), e, pos, input, true);
                         std::process::exit(1)
                     }
                 };
@@ -109,7 +109,13 @@ fn validate_and_get_next_token(
     }
 }
 
-pub fn log_error(token_pos: Range<usize>, err: CompilerError, offset: usize, source: &str) {
+pub fn log_error(
+    token_pos: Range<usize>,
+    err: CompilerError,
+    offset: usize,
+    source: &str,
+    trace: bool,
+) {
     let path = SOURCE_CODE_PATH.with(|path| path.borrow().clone().unwrap());
 
     let (line_starts, (line_in_file, col_in_file)) =
@@ -129,7 +135,6 @@ pub fn log_error(token_pos: Range<usize>, err: CompilerError, offset: usize, sou
     let mut underline = String::new();
     underline.push_str(&" ".repeat(col_in_file - 1));
     underline.push_str(&"^".repeat(span_len));
-
     eprintln!("{}: {}", "error".red().bold(), err.to_string().bold());
     eprintln!(
         "  --> {}:{}:{}",
@@ -137,19 +142,23 @@ pub fn log_error(token_pos: Range<usize>, err: CompilerError, offset: usize, sou
         line_in_file.blue(),
         col_in_file.blue()
     );
-    eprintln!("   {}", "|".dimmed());
-    eprintln!(
-        "{:>3}{} {}",
-        line_in_file.to_string().blue(),
-        "|".dimmed(),
-        line_text
-    );
-    eprintln!(
-        "   {} {} {}",
-        "|".dimmed(),
-        underline.bold().red(),
-        err.bold().red()
-    );
+    if trace {
+        eprintln!("   {}", "|".dimmed());
+        eprintln!(
+            "{:>3}{} {}",
+            line_in_file.to_string().blue(),
+            "|".dimmed(),
+            line_text
+        );
+        eprintln!(
+            "   {} {} {}",
+            "|".dimmed(),
+            underline.bold().red(),
+            err.bold().red()
+        );
+    } else {
+        eprintln!("   {}", err.bold().red());
+    }
     eprintln!()
 }
 

@@ -1,10 +1,11 @@
 use super::grammar::{Context, TokenKind};
 use super::grammar_lexer::Input;
 use crate::context::{
-    write_to_lexer_file, write_to_parser_file, write_to_symbol_table_file,
+    SOURCE_CODE_PATH, SymbolTableElement, log_error_and_exit, push_to_symbol_table,
+    symbol_exists, write_to_lexer_file, write_to_parser_file,
 };
 use crate::grammar_lexer::log_error;
-use crate::read_source_to_string;
+use crate::{CompilerError, read_source_to_string};
 /// This file is maintained by rustemo but can be modified manually.
 /// All manual changes will be preserved except non-doc comments.
 use rustemo::{Context as RustemoContext, Input as RustemoInput, Token as RustemoToken};
@@ -27,21 +28,26 @@ pub fn token_string(_ctx: &Ctx, token: Token) -> TokenString {
     write_to_lexer_file(&format!("STRING: {}", token.value));
     token.value.into()
 }
-pub type TokenIntLiteral = u64;
+pub type TokenIntLiteral = i64;
 pub fn token_int_literal(ctx: &Ctx, token: Token) -> TokenIntLiteral {
     write_to_lexer_file(&format!("INT_LITERAL: {}", token.value));
     unsafe { token.value.parse().unwrap_unchecked() }
 }
 #[derive(Debug, Clone)]
 pub struct TokenFloatLiteral {
-    original: String,
-    parsed: f32,
+    pub original: String,
+    pub parsed: f32,
 }
 pub fn token_float_literal(ctx: &Ctx, token: Token) -> TokenFloatLiteral {
     write_to_lexer_file(&format!("FLOAT_LITERAL: {}", token.value));
     TokenFloatLiteral {
         original: token.value.to_string(),
         parsed: unsafe { token.value.parse::<f32>().unwrap_unchecked() },
+    }
+}
+impl PartialEq for TokenFloatLiteral {
+    fn eq(&self, other: &Self) -> bool {
+        self.original == other.original
     }
 }
 pub type TokenStringLiteral = String;
@@ -436,7 +442,7 @@ pub fn var_declarations_var_declarations_single(
     _ctx: &Ctx,
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
-    var_declaration.write_to_symbol_table();
+    var_declaration.push_to_symbol_table();
     ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration>"));
     VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
@@ -445,7 +451,7 @@ pub fn var_declarations_var_declarations_recursive(
     var_declaration: VarDeclaration,
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
-    var_declaration.write_to_symbol_table();
+    var_declaration.push_to_symbol_table();
     ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration> <VarDeclarations>"));
     VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
@@ -836,12 +842,7 @@ pub fn simple_expression_simple_expression_string(
     _ctx: &Ctx,
     token_string_literal: TokenStringLiteral,
 ) -> SimpleExpression {
-    write_to_symbol_table_file(
-        &format!(
-            "{}|{}|{}|{}", token_string_literal, "CONST_STRING", token_string_literal,
-            token_string_literal.len()
-        ),
-    );
+    push_to_symbol_table(token_string_literal.clone().into());
     write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
@@ -913,26 +914,9 @@ pub fn comparison_op_comparison_op_greater_equal(
 pub enum Number {
     NumberInt(TokenIntLiteral),
     NumberFloat(TokenFloatLiteral),
-    NumberNegativeInt(NumberNegativeInt),
-    NumberNegativeFloat(NumberNegativeFloat),
-}
-#[derive(Debug, Clone)]
-pub struct NumberNegativeInt {
-    pub token_sub: TokenSub,
-    pub token_int_literal: TokenIntLiteral,
-}
-#[derive(Debug, Clone)]
-pub struct NumberNegativeFloat {
-    pub token_sub: TokenSub,
-    pub token_float_literal: TokenFloatLiteral,
 }
 pub fn number_number_int(_ctx: &Ctx, token_int_literal: TokenIntLiteral) -> Number {
-    write_to_symbol_table_file(
-        &format!(
-            "{}|{}|{}|{}", token_int_literal, "CONST_INT", token_int_literal,
-            token_int_literal.to_string().len()
-        ),
-    );
+    push_to_symbol_table(token_int_literal.into());
     write_to_parser_file(&format!("<Number> -> {token_int_literal}"));
     Number::NumberInt(token_int_literal)
 }
@@ -940,12 +924,7 @@ pub fn number_number_float(
     _ctx: &Ctx,
     token_float_literal: TokenFloatLiteral,
 ) -> Number {
-    write_to_symbol_table_file(
-        &format!(
-            "{}|{}|{}|{}", token_float_literal.original, "CONST_FLOAT",
-            token_float_literal.original, token_float_literal.original.len()
-        ),
-    );
+    push_to_symbol_table(token_float_literal.clone().into());
     write_to_parser_file(&format!("<Number> -> {}", token_float_literal.original));
     Number::NumberFloat(token_float_literal)
 }
@@ -954,36 +933,26 @@ pub fn number_number_negative_int(
     token_sub: TokenSub,
     token_int_literal: TokenIntLiteral,
 ) -> Number {
-    write_to_symbol_table_file(
-        &format!(
-            "-{}|{}|-{}|{}", token_int_literal, "CONST_INT", token_int_literal,
-            token_int_literal.to_string().len() + 1
-        ),
-    );
+    let value: i64 = unsafe {
+        format!("{token_sub}{token_int_literal}").parse().unwrap_unchecked()
+    };
+    push_to_symbol_table(value.into());
     write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
-    Number::NumberNegativeInt(NumberNegativeInt {
-        token_sub,
-        token_int_literal,
-    })
+    Number::NumberInt(value)
 }
 pub fn number_number_negative_float(
     _ctx: &Ctx,
     token_sub: TokenSub,
-    token_float_literal: TokenFloatLiteral,
+    mut token_float_literal: TokenFloatLiteral,
 ) -> Number {
-    write_to_symbol_table_file(
-        &format!(
-            "-{}|{}|-{}|{}", token_float_literal.original, "CONST_FLOAT",
-            token_float_literal.original, token_float_literal.original.len() + 1
-        ),
-    );
+    token_float_literal
+        .original = format!("{token_sub}{}", token_float_literal.original);
+    token_float_literal.parsed *= -1_f32;
+    push_to_symbol_table(token_float_literal.clone().into());
     write_to_parser_file(
         &format!("<Number> -> {token_sub} {}", token_float_literal.original),
     );
-    Number::NumberNegativeFloat(NumberNegativeFloat {
-        token_sub,
-        token_float_literal,
-    })
+    Number::NumberFloat(token_float_literal)
 }
 #[derive(Debug, Clone)]
 pub struct NotStatement {
@@ -1148,12 +1117,7 @@ pub fn integer_value_integer_value_literal(
     _ctx: &Ctx,
     token_int_literal: TokenIntLiteral,
 ) -> IntegerValue {
-    write_to_symbol_table_file(
-        &format!(
-            "{}|{}|{}|{}", token_int_literal, "CONST_INT", token_int_literal,
-            token_int_literal.to_string().len()
-        ),
-    );
+    push_to_symbol_table(token_int_literal.into());
     write_to_parser_file(&format!("<IntegerValue> -> {token_int_literal}"));
     IntegerValue::IntegerValueLiteral(token_int_literal)
 }
@@ -1162,25 +1126,49 @@ pub fn integer_value_integer_value_id(_ctx: &Ctx, token_id: TokenId) -> IntegerV
     IntegerValue::IntegerValueId(token_id)
 }
 impl VarDeclaration {
-    pub fn write_to_symbol_table(&self) -> DataType {
+    pub fn push_to_symbol_table(&self) -> DataType {
         match self {
             Self::VarDeclarationSingle(single) => {
-                write_to_symbol_table_file(
-                    &format!(
-                        "{}|{}|{}|{}", single.token_id, single.data_type, "-", single
-                        .token_id.len()
-                    ),
+                let symbol = SymbolTableElement::VarDeclaration(
+                    single.token_id.clone(),
+                    single.data_type.clone(),
+                    single.token_id.len(),
                 );
+                /// If the symbol already exists this is a redeclaration
+                if symbol_exists(&symbol) {
+                    log_error_and_exit(
+                        0..0,
+                        CompilerError::Parser(
+                            format!("Redeclaration of variable {}", single.token_id),
+                        ),
+                        0,
+                        false,
+                    );
+                } else {
+                    push_to_symbol_table(symbol);
+                }
                 single.data_type.clone()
             }
             Self::VarDeclarationRecursive(recursive) => {
-                let data_type = recursive.var_declaration.write_to_symbol_table();
-                write_to_symbol_table_file(
-                    &format!(
-                        "{}|{}|{}|{}", recursive.token_id, data_type, "-", recursive
-                        .token_id.len()
-                    ),
+                let data_type = recursive.var_declaration.push_to_symbol_table();
+                let symbol = SymbolTableElement::VarDeclaration(
+                    recursive.token_id.clone(),
+                    data_type.clone(),
+                    recursive.token_id.len(),
                 );
+                /// If the symbol already exists this is a redeclaration
+                if symbol_exists(&symbol) {
+                    log_error_and_exit(
+                        0..0,
+                        CompilerError::Parser(
+                            format!("Redeclaration of variable {}", recursive.token_id),
+                        ),
+                        0,
+                        false,
+                    )
+                } else {
+                    push_to_symbol_table(symbol);
+                }
                 data_type
             }
         }

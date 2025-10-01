@@ -1,6 +1,6 @@
 use crate::grammar::TokenKind;
-use crate::grammar_lexer::log_error;
-use crate::read_source_to_string;
+use crate::CompilerError;
+use crate::log_error_and_exit;
 
 %%
 %class Lexer
@@ -27,37 +27,34 @@ use crate::read_source_to_string;
 "convDate"                                                      return Ok(TokenKind::TokenConvDate);
 ([0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9])                    return Ok(TokenKind::TokenDate);
 ([0-9]+)                                                        {
-                                                                    if let Err(e) = self.yytext().parse::<u64>() {
-                                                                        log_error(
+                                                                    if let Err(e) = self.yytext().parse::<i64>() {
+                                                                        log_error_and_exit(
                                                                             self.yytextpos(),
-                                                                            crate::CompilerError::Lexer(format!("Invalid integer literal {e}")),
+                                                                            CompilerError::Lexer(format!("Invalid integer literal {e}")),
                                                                             self.offset,
-                                                                            &read_source_to_string().unwrap(),
-                                                                        );
-                                                                        std::process::exit(1)
+                                                                            true
+                                                                        )
                                                                     }
                                                                     return Ok(TokenKind::TokenIntLiteral);
                                                                 }
 (([0-9]+("."[0-9]*)?|"."[0-9]+)([eE][-+]?[0-9]+)?)              {
                                                                     match self.yytext().parse::<f32>() {
                                                                         Err(e) => {
-                                                                            log_error(
+                                                                            log_error_and_exit(
                                                                                 self.yytextpos(),
-                                                                                crate::CompilerError::Lexer(format!("Invalid float literal {e}")),
+                                                                                CompilerError::Lexer(format!("Invalid float literal {e}")),
                                                                                 self.offset,
-                                                                                &read_source_to_string().unwrap(),
+                                                                                true,
                                                                             );
-                                                                            std::process::exit(1)
                                                                         }
                                                                         Ok(value) => {
                                                                             if !value.is_normal() {
-                                                                                log_error(
-                                                                                self.yytextpos(),
-                                                                                crate::CompilerError::Lexer(format!("Invalid float literal")),
-                                                                                self.offset,
-                                                                                &read_source_to_string().unwrap(),
-                                                                            );
-                                                                            std::process::exit(1)
+                                                                                log_error_and_exit(
+                                                                                    self.yytextpos(),
+                                                                                    CompilerError::Lexer(format!("Invalid float literal")),
+                                                                                    self.offset,
+                                                                                    true,
+                                                                                )
                                                                             }
                                                                         }
                                                                     };
@@ -66,13 +63,12 @@ use crate::read_source_to_string;
 [a-zA-Z]([a-zA-Z]|[0-9])*                                       return Ok(TokenKind::TokenId);
 \"([^\"\\\r\n#]|\\.)*\"                                         {
                                                                     if self.yytext().len() > 256 {
-                                                                        log_error(
+                                                                        log_error_and_exit(
                                                                             self.yytextpos(),
-                                                                            crate::CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
+                                                                            CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
                                                                             self.offset,
-                                                                            &read_source_to_string().unwrap(),
-                                                                        );
-                                                                        std::process::exit(1);
+                                                                            true,
+                                                                        )
                                                                     }
                                                                     return Ok(TokenKind::TokenStringLiteral);
                                                                 }

@@ -1,7 +1,7 @@
 use clap::Parser as ClapParser;
 use lm_compiler::{
-    CompilerError, GrammarParser, LexerAdapter, open_lexer_file, open_parser_file,
-    open_symbol_table_file, read_parser_file_to_string, read_source_to_string,
+    CompilerError, GrammarParser, LexerAdapter, dump_symbol_table_to_file, open_lexer_file,
+    open_parser_file, open_symbol_table_file, read_parser_file_to_string, read_source_to_string,
     set_source_file_path,
 };
 use rustemo::Parser;
@@ -28,6 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse(&read_source_to_string()?)
         .map_err(CompilerError::ParserInternal)?;
 
+    dump_symbol_table_to_file()?;
     println!("{}", read_parser_file_to_string()?);
 
     Ok(())

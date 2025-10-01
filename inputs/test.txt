@@ -6,9 +6,13 @@ init {
     #+ Ejemplo de una variable mal declarada +#
     #+ fecha : date +#
     #+ h : foat +#
+
+    #+ Ejemplo de error por redeclaracion de variable +#
+    #+ a1: int +#
 }
 
 a1 := -125
+b2 := -125
 b2 := a1
 
 c33 := 5.34
