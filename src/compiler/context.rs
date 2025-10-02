@@ -54,12 +54,14 @@ pub fn open_lexer_file() -> Result<(), io::Error> {
     })
 }
 
-pub fn write_to_lexer_file(line: &str) -> Result<(), io::Error> {
+pub fn write_to_lexer_file(line: &str) {
     LEXER_FILE.with(|f| {
-        if let Some(mut file) = f.borrow_mut().as_ref() {
-            writeln!(file, "{line}")?;
+        if let Some(mut file) = f.borrow_mut().as_ref()
+            && let Err(e) = writeln!(file, "{line}")
+        {
+            eprintln!("Error while writing to lexer file: {e}");
+            std::process::exit(1)
         }
-        Ok(())
     })
 }
 
@@ -79,12 +81,14 @@ pub fn open_parser_file() -> Result<(), io::Error> {
     })
 }
 
-pub fn write_to_parser_file(line: &str) -> Result<(), io::Error> {
+pub fn write_to_parser_file(line: &str) {
     PARSER_FILE.with(|f| {
-        if let Some(mut file) = f.borrow_mut().as_ref() {
-            writeln!(file, "{line}")?;
+        if let Some(mut file) = f.borrow_mut().as_ref()
+            && let Err(e) = writeln!(file, "{line}")
+        {
+            eprintln!("Error while writing to parser file: {e}");
+            std::process::exit(1)
         }
-        Ok(())
     })
 }
 
@@ -103,14 +107,16 @@ pub fn open_symbol_table_file() -> Result<(), io::Error> {
     })
 }
 
-pub fn dump_symbol_table_to_file() -> Result<(), io::Error> {
+pub fn dump_symbol_table_to_file() {
     SYMBOL_TABLE_FILE.with(|f| {
         if let Some(mut file) = f.borrow_mut().as_ref() {
             for symbol in SYMBOL_TABLE.take() {
-                writeln!(file, "{symbol}")?;
+                if let Err(e) = writeln!(file, "{symbol}") {
+                    eprintln!("Error while dumping symbol table {e}");
+                    std::process::exit(1)
+                }
             }
         }
-        Ok(())
     })
 }
 
@@ -120,26 +126,26 @@ pub fn log_error_and_exit(
     offset: usize,
     trace: bool,
 ) -> ! {
-    dump_symbol_table_to_file().expect("Failed to write symbol table");
-    log_error(
-        pos,
-        error,
-        offset,
-        &read_source_to_string().expect("Failed to print error location"),
-        trace,
-    );
+    dump_symbol_table_to_file();
+    log_error(pos, error, offset, &read_source_to_string(), trace);
     std::process::exit(1)
 }
 
-pub fn read_source_to_string() -> Result<String, CompilerError> {
+pub fn read_source_to_string() -> String {
     SOURCE_CODE_PATH.with(|f| {
         if let Some(path) = f.borrow().as_ref() {
-            read_to_string(path)
+            match read_to_string(path)
                 .map_err(|e| CompilerError::IO(format!("Failed to read input file: {e}")))
+            {
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    std::process::exit(1)
+                }
+                Ok(source) => source,
+            }
         } else {
-            Err(CompilerError::Context(
-                "Tried to open source code file without setting the path".into(),
-            ))
+            eprintln!("Error: Tried to open source code file without setting the path");
+            std::process::exit(1)
         }
     })
 }
@@ -225,6 +231,7 @@ impl From<TokenStringLiteral> for SymbolTableElement {
         Self::StringLiteral(value)
     }
 }
+
 pub fn push_to_symbol_table(item: SymbolTableElement) {
     SYMBOL_TABLE.with(|table| {
         // Avoid pushing duplicate symbols to the symbol table

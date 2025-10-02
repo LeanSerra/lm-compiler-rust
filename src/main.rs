@@ -28,10 +28,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     open_symbol_table_file()?;
 
     let _program = GrammarParser::new(LexerAdapter::new())
-        .parse(&read_source_to_string()?)
+        .parse(&read_source_to_string())
         .map_err(CompilerError::ParserInternal)?;
 
-    dump_symbol_table_to_file()?;
+    dump_symbol_table_to_file();
     println!("{}", read_parser_file_to_string()?);
 
     Ok(())
