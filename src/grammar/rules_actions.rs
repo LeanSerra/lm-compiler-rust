@@ -273,7 +273,7 @@ pub fn program_program_with_main(
 
 /// Parses the rule `<Program> -> <Body>`
 pub fn program_program_only_body(_ctx: &Ctx, body: Body) -> Program {
-    write_to_parser_file(&format!("<Program> -> <Body>"));
+    write_to_parser_file("<Program> -> <Body>");
     Program::ProgramOnlyBody(body)
 }
 
@@ -303,7 +303,7 @@ pub fn body_body_init(_ctx: &Ctx, token_init: TokenInit, init_body: InitBody) ->
 
 /// Parses the rule `<Body> -> <Expressions>`
 pub fn body_body_expressions(_ctx: &Ctx, expressions: Expressions) -> Body {
-    ///write_to_parser_file(&format!("<Body> -> <Expressions>"));
+    write_to_parser_file("<Body> -> <Expressions>");
     Some(BodyNoO::BodyExpressions(expressions))
 }
 
@@ -412,7 +412,7 @@ pub fn var_declarations_var_declarations_single(
     var_declaration: VarDeclaration,
 ) -> VarDeclarations {
     var_declaration.push_to_symbol_table();
-    ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration>"));
+    write_to_parser_file("<VarDeclarations> -> <VarDeclaration>");
     VarDeclarations::VarDeclarationsSingle(var_declaration)
 }
 
@@ -423,7 +423,7 @@ pub fn var_declarations_var_declarations_recursive(
     var_declarations: VarDeclarations,
 ) -> VarDeclarations {
     var_declaration.push_to_symbol_table();
-    ///write_to_parser_file(&format!("<VarDeclarations> -> <VarDeclaration> <VarDeclarations>"));
+    write_to_parser_file("<VarDeclarations> -> <VarDeclaration> <VarDeclarations>");
     VarDeclarations::VarDeclarationsRecursive(VarDeclarationsRecursive {
         var_declaration,
         var_declarations: Box::new(var_declarations),
@@ -466,7 +466,7 @@ pub fn var_declaration_var_declaration_recursive(
 
 /// Parses the rule `<Expressions> -> <Statement>`
 pub fn expressions_expression_single(_ctx: &Ctx, statement: Statement) -> Expressions {
-    ///write_to_parser_file(&format!("<Expressions> -> <Statement>"));
+    write_to_parser_file("<Expressions> -> <Statement>");
     Expressions::ExpressionSingle(statement)
 }
 
@@ -476,7 +476,7 @@ pub fn expressions_expression_recursive(
     statement: Statement,
     expressions: Expressions,
 ) -> Expressions {
-    ///write_to_parser_file(&format!("<Expressions> -> <Statement> <Expressions>"));
+    write_to_parser_file("<Expressions> -> <Statement> <Expressions>");
     Expressions::ExpressionRecursive(ExpressionRecursive {
         statement,
         expressions: Box::new(expressions),
@@ -485,37 +485,37 @@ pub fn expressions_expression_recursive(
 
 /// Parses the rule `<Statement> -> <Assignment>`
 pub fn statement_statement_assignment(_ctx: &Ctx, assignment: Assignment) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <Assignment>"));
+    write_to_parser_file("<Statement> -> <Assignment>");
     Statement::StatementAssignment(assignment)
 }
 
 /// Parses the rule `<Statement> -> <IfStatement>`
 pub fn statement_statement_if_statement(_ctx: &Ctx, if_statement: IfStatement) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <IfStatement>"));
+    write_to_parser_file("<Statement> -> <IfStatement>");
     Statement::StatementIfStatement(if_statement)
 }
 
 /// Parses the rule `<Statement> -> <ElseStatement>`
 pub fn statement_statement_else_statement(_ctx: &Ctx, else_statement: ElseStatement) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <ElseStatement>"));
+    write_to_parser_file("<Statement> -> <ElseStatement>");
     Statement::StatementElseStatement(else_statement)
 }
 
 /// Parses the rule `<Statement> -> <WhileLoop>`
 pub fn statement_statement_while(_ctx: &Ctx, while_loop: WhileLoop) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <WhileLoop>"));
+    write_to_parser_file("<Statement> -> <WhileLoop>");
     Statement::StatementWhile(while_loop)
 }
 
 /// Parses the rule `<Statement> -> <FunctionWrite>`
 pub fn statement_statement_write(_ctx: &Ctx, function_write: FunctionWrite) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <FunctionWrite>"));
+    write_to_parser_file("<Statement> -> <FunctionWrite>");
     Statement::StatementWrite(function_write)
 }
 
 /// Parses the rule `<Statement> -> <FunctionRead>`
 pub fn statement_statement_read(_ctx: &Ctx, function_read: FunctionRead) -> Statement {
-    ///write_to_parser_file(&format!("<Statement> -> <FunctionRead>"));
+    write_to_parser_file("<Statement> -> <FunctionRead>");
     Statement::StatementRead(function_read)
 }
 
@@ -572,6 +572,7 @@ pub fn data_type_string_type(_ctx: &Ctx, token_string: TokenString) -> DataType 
 }
 
 /// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+#[expect(clippy::too_many_arguments)]
 pub fn while_loop_while(
     _ctx: &Ctx,
     token_while: TokenWhile,
@@ -597,6 +598,7 @@ pub fn while_loop_while(
 }
 
 /// Parses the rule `<IfStatement>: TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+#[expect(clippy::too_many_arguments)]
 pub fn if_statement_if_statement(
     _ctx: &Ctx,
     token_if: TokenIf,
@@ -646,9 +648,7 @@ pub fn boolean_expression_boolean_expression_simple_expression(
     simple_expression: SimpleExpression,
     boolean_expression_chain: BooleanExpressionChain,
 ) -> BooleanExpression {
-    ///write_to_parser_file(
-    ///    &format!("<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>"),
-    ///);
+    write_to_parser_file("<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>");
     BooleanExpression::BooleanExpressionSimpleExpression(BooleanExpressionSimpleExpression {
         simple_expression,
         boolean_expression_chain,
@@ -681,9 +681,9 @@ pub fn boolean_expression_boolean_expression_simple_expression_recursive(
     conjunction: Conjunction,
     boolean_expression: BooleanExpression,
 ) -> BooleanExpression {
-    write_to_parser_file(&format!(
-        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>"
-    ));
+    write_to_parser_file(
+        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>",
+    );
     BooleanExpression::BooleanExpressionSimpleExpressionRecursive(
         BooleanExpressionSimpleExpressionRecursive {
             simple_expression,
@@ -699,7 +699,7 @@ pub fn boolean_expression_boolean_expression_not_statement(
     _ctx: &Ctx,
     not_statement: NotStatement,
 ) -> BooleanExpression {
-    ///write_to_parser_file(&format!("<BooleanExpression> -> <NotStatement>"));
+    write_to_parser_file("<BooleanExpression> -> <NotStatement>");
     BooleanExpression::BooleanExpressionNotStatement(not_statement)
 }
 
@@ -708,7 +708,7 @@ pub fn boolean_expression_boolean_expression_is_zero(
     _ctx: &Ctx,
     function_is_zero: FunctionIsZero,
 ) -> BooleanExpression {
-    ///write_to_parser_file(&format!("<BooleanExpression> -> <FunctionIsZero>"));
+    write_to_parser_file("<BooleanExpression> -> <FunctionIsZero>");
     BooleanExpression::BooleanExpressionIsZero(function_is_zero)
 }
 
@@ -719,11 +719,9 @@ pub fn boolean_expression_chain_boolean_expression_chain_aux(
     simple_expression: SimpleExpression,
     boolean_expression_chain: BooleanExpressionChain,
 ) -> BooleanExpressionChain {
-    ///write_to_parser_file(
-    ///    &format!(
-    ///        "<BooleanExpressionChain> -> <ComparisonOp> <SimpleExpression> <BooleanExpressionChain>"
-    ///    ),
-    ///);
+    write_to_parser_file(
+        "<BooleanExpressionChain> -> <ComparisonOp> <SimpleExpression> <BooleanExpressionChain>",
+    );
     Some(BooleanExpressionChainNoO {
         comparison_op,
         simple_expression,
@@ -744,7 +742,7 @@ pub fn simple_expression_simple_expression_arithmetic(
     _ctx: &Ctx,
     arithmetic_expression: ArithmeticExpression,
 ) -> SimpleExpression {
-    ///write_to_parser_file(&format!("<SimpleExpression> -> <E>"));
+    write_to_parser_file("<SimpleExpression> -> <ArithmeticExpression>");
     SimpleExpression::SimpleExpressionArithmeticExpression(arithmetic_expression)
 }
 
@@ -918,7 +916,7 @@ pub fn arithmetic_expression_arithmetic_expression_term(
     _ctx: &Ctx,
     term: Term,
 ) -> ArithmeticExpression {
-    /// write_to_parser_file(&format!("<ArithmeticExpression> -> <Term>"));
+    write_to_parser_file("<ArithmeticExpression> -> <Term>");
     ArithmeticExpression::ArithmeticExpressionTerm(term)
 }
 
@@ -944,7 +942,7 @@ pub fn term_term_div_factor(_ctx: &Ctx, term: Term, token_div: TokenDiv, factor:
 
 /// Parses the rule `<Term> -> <Factor>`
 pub fn term_term_factor(_ctx: &Ctx, factor: Factor) -> Term {
-    /// write_to_parser_file(&format!("<Term> -> <Factor>"));
+    write_to_parser_file("<Term> -> <Factor>");
     Term::TermFactor(factor)
 }
 
