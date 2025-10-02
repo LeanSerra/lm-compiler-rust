@@ -1,12 +1,9 @@
-use crate::{
-    CompilerError,
-    context::SOURCE_CODE_PATH,
-    grammar::{State, TokenKind},
-};
+use super::rules::{State, TokenKind};
+use crate::compiler::context::{CompilerError, SOURCE_CODE_PATH};
 
 use owo_colors::OwoColorize;
 use rustemo::{Context, LRContext, Lexer, Location, Position, Token};
-use std::{fmt::Display, iter, ops::Range};
+use std::{iter, ops::Range};
 
 /// We are parsing a slice of bytes.
 pub type Input = str;
@@ -49,7 +46,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
             token = TokenKind::STOP
         } else {
             let trimmed_input = input.get(context.position()..input.len()).unwrap();
-            let mut lexer = crate::lex::Lexer::new(trimmed_input, pos);
+            let mut lexer = crate::lexer::lex::Lexer::new(trimmed_input, pos);
             token =
                 match validate_and_get_next_token(&mut lexer, expected_tokens, expected_tokens_str)
                 {
@@ -78,7 +75,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
 }
 
 fn validate_and_get_next_token(
-    lexer: &mut crate::lex::Lexer,
+    lexer: &mut crate::lexer::lex::Lexer,
     expected_tokens: Vec<TokenKind>,
     expected_tokens_str: String,
 ) -> Result<TokenKind, CompilerError> {
@@ -93,7 +90,7 @@ fn validate_and_get_next_token(
             }
         }
         Err(e) => {
-            if let crate::lex::Error::Unmatch = e {
+            if let crate::lexer::lex::Error::Unmatch = e {
                 Err(CompilerError::Lexer(format!(
                     "unrecognized token {}",
                     lexer.yytext()
@@ -175,52 +172,4 @@ fn pos_to_line_col(source: &str, pos: usize) -> (Vec<usize>, (usize, usize)) {
     let col = pos - line_starts[line - 1] + 1;
 
     (line_starts, (line, col))
-}
-
-impl Display for TokenKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let text = match self {
-            Self::STOP => "EOF",
-            Self::TokenInt => "\"int\"",
-            Self::TokenFloat => "\"float\"",
-            Self::TokenString => "\"string\"",
-            Self::TokenIntLiteral => "\"integer literal\"",
-            Self::TokenFloatLiteral => "\"float literal\"",
-            Self::TokenStringLiteral => "\"string literal\"",
-            Self::TokenId => "\"identifier\"",
-            Self::TokenAssign => "\":=\"",
-            Self::TokenSum => "\"+\"",
-            Self::TokenMul => "\"*\"",
-            Self::TokenSub => "\"-\"",
-            Self::TokenDiv => "\"/\"",
-            Self::TokenParOpen => "\"(\"",
-            Self::TokenParClose => "\")\"",
-            Self::TokenCBOpen => "\"{\"",
-            Self::TokenCBClose => "\"}\"",
-            Self::TokenSemicolon => "\";\"",
-            Self::TokenColon => "\":\"",
-            Self::TokenInit => "\"init\"",
-            Self::TokenWhile => "\"while\"",
-            Self::TokenEqual => "\"==\"",
-            Self::TokenNotEqual => "\"!=\"",
-            Self::TokenLess => "\"<\"",
-            Self::TokenLessEqual => "\"<=\"",
-            Self::TokenGreater => "\">\"",
-            Self::TokenGreaterEqual => "\">=\"",
-            Self::TokenTrue => "\"true\"",
-            Self::TokenFalse => "\"false\"",
-            Self::TokenIf => "\"if\"",
-            Self::TokenElse => "\"else\"",
-            Self::TokenComma => "\",\"",
-            Self::TokenAnd => "\"and\"",
-            Self::TokenOr => "\"or\"",
-            Self::TokenNot => "\"not\"",
-            Self::TokenRead => "\"read\"",
-            Self::TokenWrite => "\"write\"",
-            Self::TokenIsZero => "\"isZero\"",
-            Self::TokenConvDate => "\"convDate\"",
-            Self::TokenDate => "\"date\"",
-        };
-        write!(f, "{text}")
-    }
 }

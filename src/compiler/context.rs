@@ -8,9 +8,9 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::{
-    grammar_actions::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
-    grammar_lexer::log_error,
+use crate::grammar::{
+    rules_lexer::log_error,
+    types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
 };
 
 #[derive(Debug, Error)]

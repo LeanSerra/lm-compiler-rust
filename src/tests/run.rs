@@ -1,6 +1,9 @@
 use lm_compiler::{
-    GrammarParser, LexerAdapter, dump_symbol_table_to_file, open_lexer_file, open_parser_file,
-    open_symbol_table_file, read_source_to_string, set_source_file_path,
+    compiler::context::{
+        dump_symbol_table_to_file, open_lexer_file, open_parser_file, open_symbol_table_file,
+        read_source_to_string, set_source_file_path,
+    },
+    grammar::{GrammarParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;
 use std::path::Path;
