@@ -52,7 +52,7 @@ BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSim
  | NotStatement {BooleanExpressionNotStatement}
  | FunctionIsZero {BooleanExpressionIsZero};
 
- BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
+BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
  | EMPTY {BooleanExpressionChainEmpty};
 
 SimpleExpression: ArithmeticExpression {SimpleExpressionArithmetic}
@@ -87,9 +87,6 @@ Factor: TokenId {FactorId}
 | Number {FactorNumber}
 | TokenParOpen ArithmeticExpression TokenParClose {FactorParen};
 
-IntegerValue: TokenIntLiteral {IntegerValueLiteral} 
-| TokenId {IntegerValueId};
-
 terminals
 
 TokenInt:;
@@ -108,7 +105,6 @@ TokenParOpen:;
 TokenParClose:;
 TokenCBOpen:;
 TokenCBClose:;
-TokenSemicolon:;
 TokenColon:;
 TokenInit:;
 TokenWhile:;

@@ -3,6 +3,9 @@ name = "lm-compiler"
 version = "1.1.0"
 edition = "2024"
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 clap = { version = "4.5.47", features = ["derive"] }
 owo-colors = "4.2.2"

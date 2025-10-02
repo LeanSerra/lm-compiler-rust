@@ -1,6 +1,5 @@
 use crate::grammar::TokenKind;
-use crate::CompilerError;
-use crate::log_error_and_exit;
+use crate::compiler::context::{CompilerError, log_error_and_exit};
 
 %%
 %class Lexer
@@ -81,7 +80,6 @@ use crate::log_error_and_exit;
 ")"                                                             return Ok(TokenKind::TokenParClose);
 "{"                                                             return Ok(TokenKind::TokenCBOpen);
 "}"                                                             return Ok(TokenKind::TokenCBClose);
-";"                                                             return Ok(TokenKind::TokenSemicolon);
 ","                                                             return Ok(TokenKind::TokenComma);
 ":"                                                             return Ok(TokenKind::TokenColon);
 "=="                                                            return Ok(TokenKind::TokenEqual);

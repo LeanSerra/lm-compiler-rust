@@ -1,6 +1,9 @@
 use lm_compiler::{
-    GrammarParser, LexerAdapter, dump_symbol_table_to_file, open_lexer_file, open_parser_file,
-    open_symbol_table_file, read_source_to_string, set_source_file_path,
+    compiler::context::{
+        dump_symbol_table_to_file, open_lexer_file, open_parser_file, open_symbol_table_file,
+        read_source_to_string, set_source_file_path,
+    },
+    grammar::{GrammarParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;
 use std::path::Path;
@@ -12,9 +15,9 @@ fn integration_test(path: &Path) -> datatest_stable::Result<()> {
     open_symbol_table_file()?;
 
     GrammarParser::new(LexerAdapter::new())
-        .parse(&read_source_to_string().map_err(|err| err.to_string())?)
+        .parse(&read_source_to_string())
         .map_err(|err| err.to_string().into())
-        .and_then(|_program| dump_symbol_table_to_file().map_err(|e| e.to_string().into()))
+        .map(|_program| dump_symbol_table_to_file())
 }
 
 #[cfg(test)]
