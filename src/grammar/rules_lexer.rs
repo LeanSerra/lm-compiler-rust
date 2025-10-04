@@ -1,11 +1,8 @@
 use super::rules::{State, TokenKind};
-use crate::compiler::context::{CompilerError, SOURCE_CODE_PATH};
-
-use owo_colors::OwoColorize;
+use crate::compiler::error::{CompilerError, log_error_and_exit};
 use rustemo::{Context, LRContext, Lexer, Location, Position, Token};
-use std::{iter, ops::Range};
+use std::iter;
 
-/// We are parsing a slice of bytes.
 pub type Input = str;
 pub type Ctx<'i> = LRContext<'i, Input, State, TokenKind>;
 
@@ -51,10 +48,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
                 match validate_and_get_next_token(&mut lexer, expected_tokens, expected_tokens_str)
                 {
                     Ok(tok) => tok,
-                    Err(e) => {
-                        log_error(lexer.yytextpos(), e, pos, input, true);
-                        std::process::exit(1)
-                    }
+                    Err(e) => log_error_and_exit(lexer.yytextpos(), e, pos, true),
                 };
             let range = lexer.yytextpos();
             pos += range.start;
@@ -104,72 +98,4 @@ fn validate_and_get_next_token(
             }
         }
     }
-}
-
-pub fn log_error(
-    token_pos: Range<usize>,
-    err: CompilerError,
-    offset: usize,
-    source: &str,
-    trace: bool,
-) {
-    let path = SOURCE_CODE_PATH.with(|path| path.borrow().clone().unwrap());
-
-    let (line_starts, (line_in_file, col_in_file)) =
-        pos_to_line_col(source, token_pos.start + offset);
-
-    let line_start = line_starts[line_in_file - 1];
-    let line_end = source[line_start..]
-        .find('\n')
-        .map(|e| line_start + e)
-        .unwrap_or(source.len());
-    let line_text = &source[line_start..line_end];
-
-    let span_len = std::cmp::min(
-        token_pos.end - token_pos.start,
-        line_text.len() - (col_in_file - 1),
-    );
-    let mut underline = String::new();
-    underline.push_str(&" ".repeat(col_in_file - 1));
-    underline.push_str(&"^".repeat(span_len));
-    eprintln!("{}: {}", "error".red().bold(), err.to_string().bold());
-    eprintln!(
-        "  --> {}:{}:{}",
-        path.to_str().unwrap_or("").bright_blue(),
-        line_in_file.blue(),
-        col_in_file.blue()
-    );
-    if trace {
-        eprintln!("   {}", "|".dimmed());
-        eprintln!(
-            "{:>3}{} {}",
-            line_in_file.to_string().blue(),
-            "|".dimmed(),
-            line_text
-        );
-        eprintln!(
-            "   {} {} {}",
-            "|".dimmed(),
-            underline.bold().red(),
-            err.bold().red()
-        );
-    } else {
-        eprintln!("   {}", err.bold().red());
-    }
-    eprintln!()
-}
-
-fn pos_to_line_col(source: &str, pos: usize) -> (Vec<usize>, (usize, usize)) {
-    let mut line_starts = vec![0];
-    for (i, ch) in source.char_indices() {
-        if ch == '\n' {
-            line_starts.push(i + 1);
-        }
-    }
-
-    let line = line_starts.partition_point(|&start| start <= pos);
-
-    let col = pos - line_starts[line - 1] + 1;
-
-    (line_starts, (line, col))
 }

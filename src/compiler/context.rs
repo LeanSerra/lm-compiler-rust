@@ -1,31 +1,14 @@
+use crate::{
+    compiler::error::CompilerError,
+    grammar::types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
+};
 use std::{
     cell::RefCell,
     fmt::Display,
     fs::{File, OpenOptions, read_to_string},
     io::{self, Read, Seek, Write},
-    ops::Range,
     path::PathBuf,
 };
-use thiserror::Error;
-
-use crate::grammar::{
-    rules_lexer::log_error,
-    types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
-};
-
-#[derive(Debug, Error)]
-pub enum CompilerError {
-    #[error("Parser internal error: {0:?}")]
-    ParserInternal(rustemo::Error),
-    #[error("Parser error: {0}")]
-    Parser(String),
-    #[error("Lexer error: {0}")]
-    Lexer(String),
-    #[error("Context error: {0}")]
-    Context(String),
-    #[error("IO error: {0}")]
-    IO(String),
-}
 
 thread_local! {
     pub static SOURCE_CODE_PATH: RefCell<Option<PathBuf>> = const { RefCell::new(None) };
@@ -118,17 +101,6 @@ pub fn dump_symbol_table_to_file() {
             }
         }
     })
-}
-
-pub fn log_error_and_exit(
-    pos: Range<usize>,
-    error: CompilerError,
-    offset: usize,
-    trace: bool,
-) -> ! {
-    dump_symbol_table_to_file();
-    log_error(pos, error, offset, &read_source_to_string(), trace);
-    std::process::exit(1)
 }
 
 pub fn read_source_to_string() -> String {

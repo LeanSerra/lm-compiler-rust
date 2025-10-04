@@ -1,5 +1,5 @@
 use crate::grammar::TokenKind;
-use crate::compiler::context::{CompilerError, log_error_and_exit};
+use crate::compiler::error::{CompilerError, log_error_and_exit};
 
 
 use std::collections::HashMap;

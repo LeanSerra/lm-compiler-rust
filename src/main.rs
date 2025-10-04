@@ -1,10 +1,10 @@
 use clap::Parser as ClapParser;
 use lm_compiler::{
     compiler::context::{
-        CompilerError, dump_symbol_table_to_file, open_lexer_file, open_parser_file,
-        open_symbol_table_file, read_parser_file_to_string, read_source_to_string,
-        set_source_file_path,
+        dump_symbol_table_to_file, open_lexer_file, open_parser_file, open_symbol_table_file,
+        read_parser_file_to_string, read_source_to_string, set_source_file_path,
     },
+    compiler::error::CompilerError,
     grammar::{GrammarParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;

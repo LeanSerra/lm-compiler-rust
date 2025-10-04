@@ -12,7 +12,7 @@ fn main() {
 
     // Compile parser
     if let Err(e) = Settings::new()
-        .force(false) // Don't force regeneration of files grammar.rs and grammar_actions.rs
+        .force(false) // Don't force regeneration of files rules.rs and rules_actions.rs
         .lexer_type(LexerType::Custom) // Use our own Lexer
         .process_grammar(&root_dir.join(GRAMMAR_FILE_PATH))
     {
