@@ -236,7 +236,7 @@ pub struct FunctionWrite {
 
 /// Struct representation of the rule
 ///
-/// `<FunctionIsZero>: TokenIsZero TokenParOpen <ArithmeticExpression> TokenParClose`
+/// `<FunctionIsZero> -> TokenIsZero TokenParOpen <ArithmeticExpression> TokenParClose`
 #[derive(Debug, Clone)]
 pub struct FunctionIsZero {
     pub token_is_zero: TokenIsZero,
@@ -247,7 +247,7 @@ pub struct FunctionIsZero {
 
 /// Struct representation of the rule
 ///
-/// `<FunctionConvDate>: TokenConvDate TokenParOpen TokenDate TokenParClose`
+/// `<FunctionConvDate> -> TokenConvDate TokenParOpen TokenDate TokenParClose`
 #[derive(Debug, Clone)]
 pub struct FunctionConvDate {
     pub token_conv_date: TokenConvDate,
@@ -460,7 +460,7 @@ pub struct WhileLoop {
 
 /// Struct representation of the rule
 ///
-/// `<IfStatement>: TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// `<IfStatement> -> TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[derive(Debug, Clone)]
 pub struct IfStatement {
     pub token_if: TokenIf,
@@ -474,7 +474,7 @@ pub struct IfStatement {
 
 /// Struct representation of the rule
 ///
-/// `<ElseStatement>: TokenElse TokenCBOpen <Body> TokenCBClose`
+/// `<ElseStatement> -> TokenElse TokenCBOpen <Body> TokenCBClose`
 #[derive(Debug, Clone)]
 pub struct ElseStatement {
     pub token_else: TokenElse,
