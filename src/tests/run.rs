@@ -3,16 +3,11 @@ use rustemo::Parser;
 use std::path::Path;
 
 fn integration_test(path: &Path) -> datatest_stable::Result<()> {
-    let compiler = Compiler::new();
-    compiler
-        .inner
-        .borrow_mut()
-        .init_compiler_context(path.into())
-        .unwrap();
-    let _program = RulesParser::new(compiler.clone(), compiler.clone())
-        .parse(&compiler.source())
-        .unwrap();
-    Ok(())
+    let compiler = Compiler::new(path.into())?;
+    Ok(RulesParser::new(compiler.clone(), compiler.clone())
+        .parse_file(path)
+        .map_err(|e| e.to_string())
+        .map(|_| ())?)
 }
 
 #[cfg(test)]

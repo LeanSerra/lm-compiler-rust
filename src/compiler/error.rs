@@ -39,7 +39,7 @@ fn log_error(
     trace: bool,
 ) {
     let path = context.path();
-    let source = &context.source();
+    let source = context.source();
 
     let (line_starts, (line_in_file, col_in_file)) =
         pos_to_line_col(source, token_pos.start + offset);

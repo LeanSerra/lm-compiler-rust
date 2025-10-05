@@ -18,15 +18,10 @@ struct Cli {
 
 fn main() -> Result<(), CompilerError> {
     let cli = Cli::parse();
-    let compiler = Compiler::new();
-    compiler
-        .inner
-        .borrow_mut()
-        .init_compiler_context(cli.input)
-        .unwrap();
+    let compiler = Compiler::new(cli.input.clone())?;
 
     let rules = RulesParser::new(compiler.clone(), compiler.clone())
-        .parse(&compiler.source())
+        .parse_file(cli.input)
         .map_err(CompilerError::ParserInternal)?;
 
     println!("{rules}");
