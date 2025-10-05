@@ -29,7 +29,7 @@ pub fn token_string(_ctx: &Ctx, token: Token) -> TokenString {
 /// The parsing can't fail because we succesfully parse it in the lexer
 pub fn token_int_literal(_ctx: &Ctx, token: Token) -> TokenIntLiteral {
     write_to_lexer_file(&format!("INT_LITERAL: {}", token.value));
-    unsafe { token.value.parse().unwrap_unchecked() }
+    token.value.parse().unwrap()
 }
 
 /// Parses a float literal into i64
@@ -41,7 +41,7 @@ pub fn token_float_literal(_ctx: &Ctx, token: Token) -> TokenFloatLiteral {
     write_to_lexer_file(&format!("FLOAT_LITERAL: {}", token.value));
     TokenFloatLiteral {
         original: token.value.to_string(),
-        parsed: unsafe { token.value.parse::<f32>().unwrap_unchecked() },
+        parsed: token.value.parse::<f32>().unwrap(),
     }
 }
 
@@ -836,11 +836,7 @@ pub fn number_number_negative_int(
     token_sub: TokenSub,
     token_int_literal: TokenIntLiteral,
 ) -> Number {
-    let value: i64 = unsafe {
-        format!("{token_sub}{token_int_literal}")
-            .parse()
-            .unwrap_unchecked()
-    };
+    let value: i64 = format!("{token_sub}{token_int_literal}").parse().unwrap();
     push_to_symbol_table(value.into());
     write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
     Number::NumberInt(value)

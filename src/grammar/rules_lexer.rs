@@ -52,7 +52,7 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
                 };
             let range = lexer.yytextpos();
             pos += range.start;
-            value = unsafe { trimmed_input.get_unchecked(range) };
+            value = trimmed_input.get(range).unwrap();
         }
 
         context.set_position(pos);
