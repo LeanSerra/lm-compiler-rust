@@ -3,7 +3,7 @@ use lm_compiler::{
         context::{COMPILER_CONTEXT, CompilerContext},
         error::CompilerError,
     },
-    grammar::{GrammarParser, rules_lexer::LexerAdapter},
+    grammar::{RulesParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;
 use std::path::Path;
@@ -18,7 +18,7 @@ fn integration_test(path: &Path) -> datatest_stable::Result<()> {
         Ok(context.source().clone())
     })?;
 
-    Ok(GrammarParser::new(LexerAdapter::new())
+    Ok(RulesParser::new(LexerAdapter::new())
         .parse(&source)
         .map_err(|err| err.to_string())
         .map(|_| ())?)

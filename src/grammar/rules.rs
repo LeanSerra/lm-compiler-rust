@@ -18,7 +18,7 @@ pub type Input = str;
 const STATE_COUNT: usize = 115usize;
 const MAX_RECOGNIZERS: usize = 21usize;
 #[allow(dead_code)]
-const TERMINAL_COUNT: usize = 40usize;
+const TERMINAL_COUNT: usize = 39usize;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TokenKind {
@@ -40,7 +40,6 @@ pub enum TokenKind {
     TokenParClose,
     TokenCBOpen,
     TokenCBClose,
-    TokenSemicolon,
     TokenColon,
     TokenInit,
     TokenWhile,
@@ -136,8 +135,6 @@ pub enum ProdKind {
     FactorFactorId,
     FactorFactorNumber,
     FactorFactorParen,
-    IntegerValueIntegerValueLiteral,
-    IntegerValueIntegerValueId,
 }
 use ProdKind as PK;
 impl std::fmt::Debug for ProdKind {
@@ -254,8 +251,6 @@ impl std::fmt::Debug for ProdKind {
             ProdKind::FactorFactorParen => {
                 "Factor: TokenParOpen ArithmeticExpression TokenParClose"
             }
-            ProdKind::IntegerValueIntegerValueLiteral => "IntegerValue: TokenIntLiteral",
-            ProdKind::IntegerValueIntegerValueId => "IntegerValue: TokenId",
         };
         write!(f, "{name}")
     }
@@ -292,7 +287,6 @@ pub enum NonTermKind {
     ArithmeticExpression,
     Term,
     Factor,
-    IntegerValue,
 }
 impl From<ProdKind> for NonTermKind {
     fn from(prod: ProdKind) -> Self {
@@ -376,8 +370,6 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::FactorFactorId => NonTermKind::Factor,
             ProdKind::FactorFactorNumber => NonTermKind::Factor,
             ProdKind::FactorFactorParen => NonTermKind::Factor,
-            ProdKind::IntegerValueIntegerValueLiteral => NonTermKind::IntegerValue,
-            ProdKind::IntegerValueIntegerValueId => NonTermKind::IntegerValue,
         }
     }
 }
@@ -710,7 +702,7 @@ pub enum NonTerminal {
     Factor(rules_actions::Factor),
 }
 type ActionFn = fn(token: TokenKind) -> Vec<Action<State, ProdKind>>;
-pub struct GrammarParserDefinition {
+pub struct RulesParserDefinition {
     actions: [ActionFn; STATE_COUNT],
     gotos: [fn(nonterm: NonTermKind) -> State; STATE_COUNT],
     token_kinds: [[Option<(TokenKind, bool)>; MAX_RECOGNIZERS]; STATE_COUNT],
@@ -2752,7 +2744,7 @@ fn goto_tokencbopen_s105(nonterm_kind: NonTermKind) -> State {
 fn goto_invalid(_nonterm_kind: NonTermKind) -> State {
     panic!("Invalid GOTO entry!");
 }
-pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefinition {
+pub(crate) static PARSER_DEFINITION: RulesParserDefinition = RulesParserDefinition {
     actions: [
         action_aug_s0,
         action_tokenid_s1,
@@ -5635,7 +5627,7 @@ pub(crate) static PARSER_DEFINITION: GrammarParserDefinition = GrammarParserDefi
         ],
     ],
 };
-impl ParserDefinition<State, ProdKind, TokenKind, NonTermKind> for GrammarParserDefinition {
+impl ParserDefinition<State, ProdKind, TokenKind, NonTermKind> for RulesParserDefinition {
     fn actions(&self, state: State, token: TokenKind) -> Vec<Action<State, ProdKind>> {
         PARSER_DEFINITION.actions[state as usize](token)
     }
@@ -5656,7 +5648,7 @@ impl ParserDefinition<State, ProdKind, TokenKind, NonTermKind> for GrammarParser
     }
 }
 pub(crate) type Context<'i, I> = LRContext<'i, I, State, TokenKind>;
-pub struct GrammarParser<
+pub struct RulesParser<
     'i,
     I: InputT + ?Sized,
     L: Lexer<'i, Context<'i, I>, State, TokenKind, Input = I>,
@@ -5669,14 +5661,14 @@ pub struct GrammarParser<
         ProdKind,
         TokenKind,
         NonTermKind,
-        GrammarParserDefinition,
+        RulesParserDefinition,
         L,
         B,
         I,
     >,
 );
 #[allow(dead_code)]
-impl<'i, L> GrammarParser<'i, Input, L, DefaultBuilder>
+impl<'i, L> RulesParser<'i, Input, L, DefaultBuilder>
 where
     L: Lexer<'i, Context<'i, Input>, State, TokenKind, Input = Input>,
 {
@@ -5692,7 +5684,7 @@ where
     }
 }
 #[allow(dead_code)]
-impl<'i, I, L, B> Parser<'i, I, Context<'i, I>, State, TokenKind> for GrammarParser<'i, I, L, B>
+impl<'i, I, L, B> Parser<'i, I, Context<'i, I>, State, TokenKind> for RulesParser<'i, I, L, B>
 where
     I: InputT + ?Sized + Debug,
     L: Lexer<'i, Context<'i, I>, State, TokenKind, Input = I>,
@@ -5821,7 +5813,6 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                 Terminal::TokenConvDate(rules_actions::token_conv_date(context, token))
             }
             TokenKind::TokenDate => Terminal::TokenDate(rules_actions::token_date(context, token)),
-            _ => panic!("Shift of unreachable terminal!"),
         };
         self.res_stack.push(Symbol::Terminal(val));
     }
@@ -6780,7 +6771,6 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            _ => panic!("Reduce of unreachable nonterminal!"),
         };
         self.res_stack.push(Symbol::NonTerminal(prod));
     }

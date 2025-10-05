@@ -4,7 +4,7 @@ use lm_compiler::{
         context::{COMPILER_CONTEXT, dump_symbol_table_to_file, read_parser_file_to_string},
         error::CompilerError,
     },
-    grammar::{GrammarParser, rules_lexer::LexerAdapter},
+    grammar::{RulesParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;
 use std::path::PathBuf;
@@ -27,7 +27,7 @@ fn main() -> Result<(), CompilerError> {
         Ok(context.source().clone())
     })?;
 
-    let _program = GrammarParser::new(LexerAdapter::new())
+    let _program = RulesParser::new(LexerAdapter::new())
         .parse(&source)
         .map_err(CompilerError::ParserInternal)?;
 

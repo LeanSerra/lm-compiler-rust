@@ -6,4 +6,4 @@ mod rules_actions;
 pub mod rules_lexer;
 pub mod types;
 
-pub use rules::{GrammarParser, TokenKind};
+pub use rules::{RulesParser, TokenKind};

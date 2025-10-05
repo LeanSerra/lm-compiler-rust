@@ -690,7 +690,6 @@ impl Display for TokenKind {
             Self::TokenParClose => "\")\"",
             Self::TokenCBOpen => "\"{\"",
             Self::TokenCBClose => "\"}\"",
-            Self::TokenSemicolon => "\";\"",
             Self::TokenColon => "\":\"",
             Self::TokenInit => "\"init\"",
             Self::TokenWhile => "\"while\"",
