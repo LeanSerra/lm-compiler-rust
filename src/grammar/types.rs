@@ -1,7 +1,8 @@
 use super::rules::{Context, TokenKind};
 use super::rules_lexer::Input;
+use crate::compiler::context::SymbolTableElement;
 use crate::compiler::{
-    context::{SymbolTableElement, push_to_symbol_table, symbol_exists},
+    context::{push_to_symbol_table, symbol_exists},
     error::{CompilerError, log_error_and_exit},
 };
 use rustemo::Token as RustemoToken;

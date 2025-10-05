@@ -1,10 +1,9 @@
 use clap::Parser as ClapParser;
 use lm_compiler::{
-    compiler::context::{
-        dump_symbol_table_to_file, open_lexer_file, open_parser_file, open_symbol_table_file,
-        read_parser_file_to_string, read_source_to_string, set_source_file_path,
+    compiler::{
+        context::{COMPILER_CONTEXT, dump_symbol_table_to_file, read_parser_file_to_string},
+        error::CompilerError,
     },
-    compiler::error::CompilerError,
     grammar::{GrammarParser, rules_lexer::LexerAdapter},
 };
 use rustemo::Parser;
@@ -20,18 +19,19 @@ struct Cli {
     input: PathBuf,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), CompilerError> {
     let cli = Cli::parse();
-    set_source_file_path(cli.input);
-    open_lexer_file()?;
-    open_parser_file()?;
-    open_symbol_table_file()?;
+    let source = COMPILER_CONTEXT.with(|ctx| -> Result<String, CompilerError> {
+        let mut context = ctx.borrow_mut();
+        context.init_compiler_context(cli.input)?;
+        Ok(context.source().clone())
+    })?;
 
     let _program = GrammarParser::new(LexerAdapter::new())
-        .parse(&read_source_to_string())
+        .parse(&source)
         .map_err(CompilerError::ParserInternal)?;
 
-    dump_symbol_table_to_file();
+    dump_symbol_table_to_file()?;
     println!("{}", read_parser_file_to_string()?);
 
     Ok(())

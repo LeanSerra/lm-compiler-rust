@@ -3,141 +3,208 @@ use crate::{
     grammar::types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
 };
 use std::{
-    cell::RefCell,
+    cell::{OnceCell, RefCell},
     fmt::Display,
     fs::{File, OpenOptions, read_to_string},
-    io::{self, Read, Seek, Write},
+    io::{Read, Seek, Write},
     path::PathBuf,
 };
 
 thread_local! {
-    pub static SOURCE_CODE_PATH: RefCell<Option<PathBuf>> = const { RefCell::new(None) };
-    pub static LEXER_FILE: RefCell<Option<File>> = const { RefCell::new(None) };
-    pub static PARSER_FILE: RefCell<Option<File>> = const { RefCell::new(None) };
-    pub static SYMBOL_TABLE_FILE: RefCell<Option<File>> = const { RefCell::new(None) };
-    pub static SYMBOL_TABLE: RefCell<Vec<SymbolTableElement>> = const { RefCell::new(Vec::new())}
+    pub static COMPILER_CONTEXT: RefCell<CompilerContext> = const { RefCell::new(CompilerContext::new()) };
 }
 
-pub fn set_source_file_path(path: PathBuf) {
-    SOURCE_CODE_PATH.set(Some(path));
+#[derive(Default)]
+pub struct CompilerContext {
+    source_code_path: Option<PathBuf>,
+    source_code: OnceCell<String>,
+    symbol_table: Vec<SymbolTableElement>,
+    parser_file: Option<File>,
+    lexer_file: Option<File>,
+    symbol_table_file: Option<File>,
+}
+impl CompilerContext {
+    pub const fn new() -> Self {
+        Self {
+            source_code_path: None,
+            source_code: OnceCell::new(),
+            symbol_table: Vec::new(),
+            parser_file: None,
+            lexer_file: None,
+            symbol_table_file: None,
+        }
+    }
 }
 
-pub fn open_lexer_file() -> Result<(), io::Error> {
-    SOURCE_CODE_PATH.with(|f| -> Result<(), io::Error> {
-        if let Some(path) = f.borrow().as_ref() {
-            LEXER_FILE.set(Some(
-                OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .open(path.with_extension("lexer"))?,
+impl CompilerContext {
+    pub fn init_compiler_context(&mut self, path: PathBuf) -> Result<(), CompilerError> {
+        self.source_code_path = Some(path);
+        self.source_code.set(self.read_source_to_string()?).unwrap();
+        self.open_parser_file()?;
+        self.open_lexer_file()?;
+        self.open_symbol_table_file()?;
+
+        Ok(())
+    }
+
+    fn read_source_to_string(&self) -> Result<String, CompilerError> {
+        read_to_string(self.source_code_path.as_ref().unwrap())
+            .map_err(|e| CompilerError::IO(format!("Failed to read input file: {e}")))
+    }
+
+    fn open_lexer_file(&mut self) -> Result<(), CompilerError> {
+        self.lexer_file = Some(
+            OpenOptions::new()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(
+                    self.source_code_path
+                        .as_ref()
+                        .unwrap()
+                        .with_extension("lexer"),
+                )
+                .map_err(|e| CompilerError::IO(e.to_string()))?,
+        );
+        Ok(())
+    }
+
+    fn open_parser_file(&mut self) -> Result<(), CompilerError> {
+        self.parser_file = Some(
+            OpenOptions::new()
+                .create(true)
+                .truncate(true)
+                .read(true)
+                .write(true)
+                .open(
+                    self.source_code_path
+                        .as_ref()
+                        .unwrap()
+                        .with_extension("parser"),
+                )
+                .map_err(|e| CompilerError::IO(e.to_string()))?,
+        );
+        Ok(())
+    }
+
+    fn open_symbol_table_file(&mut self) -> Result<(), CompilerError> {
+        self.symbol_table_file = Some(
+            OpenOptions::new()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(
+                    self.source_code_path
+                        .as_ref()
+                        .unwrap()
+                        .with_extension("symbol_table"),
+                )
+                .map_err(|e| CompilerError::IO(e.to_string()))?,
+        );
+        Ok(())
+    }
+
+    pub fn path(&self) -> String {
+        self.source_code_path
+            .as_ref()
+            .unwrap()
+            .to_string_lossy()
+            .into()
+    }
+
+    pub fn source(&self) -> &String {
+        self.source_code
+            .get_or_init(|| self.read_source_to_string().unwrap())
+    }
+
+    pub fn dump_symbol_table_to_file(&mut self) -> Result<(), CompilerError> {
+        let Some(symbol_table_file) = self.symbol_table_file.as_mut() else {
+            return Err(CompilerError::Context(
+                "Tried to dump symbol table to file before opening it".into(),
             ));
+        };
+        for symbol in self.symbol_table.iter() {
+            writeln!(symbol_table_file, "{symbol}")
+                .map_err(|e| CompilerError::IO(e.to_string()))?;
         }
         Ok(())
-    })
-}
+    }
 
-pub fn write_to_lexer_file(line: &str) {
-    LEXER_FILE.with(|f| {
-        if let Some(mut file) = f.borrow_mut().as_ref()
-            && let Err(e) = writeln!(file, "{line}")
-        {
-            eprintln!("Error while writing to lexer file: {e}");
+    pub fn write_to_lexer_file(&mut self, line: &str) {
+        let Some(lexer_file) = self.lexer_file.as_mut() else {
+            eprintln!("Error: tried to write to lexer file before opening it");
             std::process::exit(1)
-        }
-    })
-}
-
-pub fn open_parser_file() -> Result<(), io::Error> {
-    SOURCE_CODE_PATH.with(|f| -> Result<(), io::Error> {
-        if let Some(path) = f.borrow().as_ref() {
-            PARSER_FILE.set(Some(
-                OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .read(true)
-                    .open(path.with_extension("parser"))?,
-            ));
-        }
-        Ok(())
-    })
-}
-
-pub fn write_to_parser_file(line: &str) {
-    PARSER_FILE.with(|f| {
-        if let Some(mut file) = f.borrow_mut().as_ref()
-            && let Err(e) = writeln!(file, "{line}")
-        {
-            eprintln!("Error while writing to parser file: {e}");
+        };
+        if let Err(e) = writeln!(lexer_file, "{line}") {
+            eprintln!("IO error: {e}");
             std::process::exit(1)
-        }
-    })
-}
+        };
+    }
 
-pub fn open_symbol_table_file() -> Result<(), io::Error> {
-    SOURCE_CODE_PATH.with(|f| -> Result<(), io::Error> {
-        if let Some(path) = f.borrow().as_ref() {
-            SYMBOL_TABLE_FILE.set(Some(
-                OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .open(path.with_extension("symbol_table"))?,
-            ));
-        }
-        Ok(())
-    })
-}
-
-pub fn dump_symbol_table_to_file() {
-    SYMBOL_TABLE_FILE.with(|f| {
-        if let Some(mut file) = f.borrow_mut().as_ref() {
-            for symbol in SYMBOL_TABLE.take() {
-                if let Err(e) = writeln!(file, "{symbol}") {
-                    eprintln!("Error while dumping symbol table {e}");
-                    std::process::exit(1)
-                }
-            }
-        }
-    })
-}
-
-pub fn read_source_to_string() -> String {
-    SOURCE_CODE_PATH.with(|f| {
-        if let Some(path) = f.borrow().as_ref() {
-            match read_to_string(path)
-                .map_err(|e| CompilerError::IO(format!("Failed to read input file: {e}")))
-            {
-                Err(e) => {
-                    eprintln!("Error: {e}");
-                    std::process::exit(1)
-                }
-                Ok(source) => source,
-            }
-        } else {
-            eprintln!("Error: Tried to open source code file without setting the path");
+    pub fn write_to_parser_file(&mut self, line: &str) {
+        let Some(parser_file) = self.parser_file.as_mut() else {
+            eprintln!("Error: tried to write to lexer file before opening it");
             std::process::exit(1)
+        };
+        if let Err(e) = writeln!(parser_file, "{line}") {
+            eprintln!("IO error: {e}");
+            std::process::exit(1)
+        };
+    }
+
+    pub fn read_parser_file_to_string(&mut self) -> Result<String, CompilerError> {
+        let mut buf = String::new();
+        let file = self
+            .parser_file
+            .as_mut()
+            .ok_or(CompilerError::IO("Parser file is not set".into()))?;
+        file.rewind()
+            .map_err(|e| CompilerError::IO(format!("Failed to rewind parser file: {e:?}")))?;
+        file.read_to_string(&mut buf).map_err(|e| {
+            CompilerError::IO(format!("Failed to read parser file to string: {e:?}"))
+        })?;
+        Ok(buf)
+    }
+
+    pub fn push_to_symbol_table(&mut self, symbol: SymbolTableElement) {
+        if !self.symbol_exits(&symbol) {
+            self.symbol_table.push(symbol);
         }
-    })
+    }
+
+    pub fn symbol_exits(&self, symbol: &SymbolTableElement) -> bool {
+        self.symbol_table.contains(symbol)
+    }
+}
+
+pub fn dump_symbol_table_to_file() -> Result<(), CompilerError> {
+    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().dump_symbol_table_to_file())
+}
+
+pub fn write_to_lexer_file(txt: &str) {
+    COMPILER_CONTEXT.with(|ctx| {
+        ctx.borrow_mut().write_to_lexer_file(txt);
+    });
+}
+
+pub fn write_to_parser_file(txt: &str) {
+    COMPILER_CONTEXT.with(|ctx| {
+        ctx.borrow_mut().write_to_parser_file(txt);
+    });
+}
+
+pub fn push_to_symbol_table(symbol: SymbolTableElement) {
+    COMPILER_CONTEXT.with(|ctx| {
+        ctx.borrow_mut().push_to_symbol_table(symbol);
+    });
+}
+
+pub fn symbol_exists(symbol: &SymbolTableElement) -> bool {
+    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().symbol_exits(symbol))
 }
 
 pub fn read_parser_file_to_string() -> Result<String, CompilerError> {
-    PARSER_FILE.with(|f| {
-        let mut buf = String::new();
-        if let Some(mut file) = f.borrow().as_ref() {
-            file.rewind()
-                .map_err(|e| CompilerError::IO(format!("Failed to rewind parser file: {e:?}")))?;
-            file.read_to_string(&mut buf).map_err(|e| {
-                CompilerError::IO(format!("Failed to read parser file to string: {e:?}"))
-            })?;
-            Ok(buf)
-        } else {
-            Err(CompilerError::Context(
-                "Tried to open parser file before creating it".into(),
-            ))
-        }
-    })
+    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().read_parser_file_to_string())
 }
 
 #[derive(Clone, Debug)]
@@ -202,17 +269,4 @@ impl From<TokenStringLiteral> for SymbolTableElement {
     fn from(value: TokenStringLiteral) -> Self {
         Self::StringLiteral(value)
     }
-}
-
-pub fn push_to_symbol_table(item: SymbolTableElement) {
-    SYMBOL_TABLE.with(|table| {
-        // Avoid pushing duplicate symbols to the symbol table
-        if !symbol_exists(&item) {
-            table.borrow_mut().push(item);
-        }
-    })
-}
-
-pub fn symbol_exists(item: &SymbolTableElement) -> bool {
-    SYMBOL_TABLE.with(|table| table.borrow().contains(item))
 }

@@ -2,9 +2,7 @@ use owo_colors::OwoColorize;
 use std::ops::Range;
 use thiserror::Error;
 
-use crate::compiler::context::{
-    SOURCE_CODE_PATH, dump_symbol_table_to_file, read_source_to_string,
-};
+use crate::compiler::context::{COMPILER_CONTEXT, CompilerContext};
 
 #[derive(Debug, Error)]
 pub enum CompilerError {
@@ -26,8 +24,13 @@ pub fn log_error_and_exit(
     offset: usize,
     trace: bool,
 ) -> ! {
-    dump_symbol_table_to_file();
-    log_error(pos, error, offset, &read_source_to_string(), trace);
+    COMPILER_CONTEXT.with(|ctx| {
+        let mut context = ctx.borrow_mut();
+        if let Err(e) = context.dump_symbol_table_to_file() {
+            eprintln!("Failed to write symbol table: {e}")
+        }
+        log_error(pos, error, offset, &mut context, trace);
+    });
     std::process::exit(1)
 }
 
@@ -35,10 +38,11 @@ fn log_error(
     token_pos: Range<usize>,
     err: CompilerError,
     offset: usize,
-    source: &str,
+    context: &mut CompilerContext,
     trace: bool,
 ) {
-    let path = SOURCE_CODE_PATH.with(|path| path.borrow().clone().unwrap());
+    let path = context.path();
+    let source = &context.source();
 
     let (line_starts, (line_in_file, col_in_file)) =
         pos_to_line_col(source, token_pos.start + offset);
@@ -60,7 +64,7 @@ fn log_error(
     eprintln!("{}: {}", "error".red().bold(), err.to_string().bold());
     eprintln!(
         "  --> {}:{}:{}",
-        path.to_str().unwrap_or("").bright_blue(),
+        path.bright_blue(),
         line_in_file.blue(),
         col_in_file.blue()
     );

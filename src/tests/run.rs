@@ -1,7 +1,7 @@
 use lm_compiler::{
-    compiler::context::{
-        dump_symbol_table_to_file, open_lexer_file, open_parser_file, open_symbol_table_file,
-        read_source_to_string, set_source_file_path,
+    compiler::{
+        context::{COMPILER_CONTEXT, CompilerContext},
+        error::CompilerError,
     },
     grammar::{GrammarParser, rules_lexer::LexerAdapter},
 };
@@ -9,15 +9,19 @@ use rustemo::Parser;
 use std::path::Path;
 
 fn integration_test(path: &Path) -> datatest_stable::Result<()> {
-    set_source_file_path(path.into());
-    open_lexer_file()?;
-    open_parser_file()?;
-    open_symbol_table_file()?;
+    // This is done because the COMPILER_CONTEXT needs to be reset between test runs.
+    COMPILER_CONTEXT.replace(CompilerContext::new());
 
-    GrammarParser::new(LexerAdapter::new())
-        .parse(&read_source_to_string())
-        .map_err(|err| err.to_string().into())
-        .map(|_program| dump_symbol_table_to_file())
+    let source = COMPILER_CONTEXT.with(|ctx| -> Result<String, CompilerError> {
+        let mut context = ctx.borrow_mut();
+        context.init_compiler_context(path.into())?;
+        Ok(context.source().clone())
+    })?;
+
+    Ok(GrammarParser::new(LexerAdapter::new())
+        .parse(&source)
+        .map_err(|err| err.to_string())
+        .map(|_| ())?)
 }
 
 #[cfg(test)]
