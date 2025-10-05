@@ -1,8 +1,7 @@
+use crate::compiler::context::CompilerContext;
 use owo_colors::OwoColorize;
 use std::ops::Range;
 use thiserror::Error;
-
-use crate::compiler::context::{COMPILER_CONTEXT, CompilerContext};
 
 #[derive(Debug, Error)]
 pub enum CompilerError {
@@ -23,14 +22,12 @@ pub fn log_error_and_exit(
     error: CompilerError,
     offset: usize,
     trace: bool,
+    context: &mut CompilerContext,
 ) -> ! {
-    COMPILER_CONTEXT.with(|ctx| {
-        let mut context = ctx.borrow_mut();
-        if let Err(e) = context.dump_symbol_table_to_file() {
-            eprintln!("Failed to write symbol table: {e}")
-        }
-        log_error(pos, error, offset, &mut context, trace);
-    });
+    if let Err(e) = context.dump_symbol_table_to_file() {
+        eprintln!("Failed to write symbol table: {e}")
+    }
+    log_error(pos, error, offset, context, trace);
     std::process::exit(1)
 }
 
@@ -38,7 +35,7 @@ fn log_error(
     token_pos: Range<usize>,
     err: CompilerError,
     offset: usize,
-    context: &mut CompilerContext,
+    context: &CompilerContext,
     trace: bool,
 ) {
     let path = context.path();

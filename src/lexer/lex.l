@@ -1,9 +1,13 @@
 use crate::grammar::TokenKind;
 use crate::compiler::error::{CompilerError, log_error_and_exit};
+use crate::compiler::context::CompilerContext;
+
+type CompilerCtx<'a> = &'a mut CompilerContext;
 
 %%
 %class Lexer
 %field usize offset
+%field CompilerCtx<'a> ctx
 %result_type TokenKind
 
 
@@ -31,7 +35,8 @@ use crate::compiler::error::{CompilerError, log_error_and_exit};
                                                                             self.yytextpos(),
                                                                             CompilerError::Lexer(format!("Invalid integer literal {e}")),
                                                                             self.offset,
-                                                                            true
+                                                                            true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenIntLiteral);
@@ -44,6 +49,7 @@ use crate::compiler::error::{CompilerError, log_error_and_exit};
                                                                                 CompilerError::Lexer(format!("Invalid float literal {e}")),
                                                                                 self.offset,
                                                                                 true,
+                                                                                self.ctx
                                                                             );
                                                                         }
                                                                         Ok(value) => {
@@ -53,6 +59,7 @@ use crate::compiler::error::{CompilerError, log_error_and_exit};
                                                                                     CompilerError::Lexer(format!("Invalid float literal")),
                                                                                     self.offset,
                                                                                     true,
+                                                                                    self.ctx
                                                                                 )
                                                                             }
                                                                         }
@@ -67,6 +74,7 @@ use crate::compiler::error::{CompilerError, log_error_and_exit};
                                                                             CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
                                                                             self.offset,
                                                                             true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenStringLiteral);

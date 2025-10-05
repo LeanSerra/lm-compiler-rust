@@ -1,6 +1,9 @@
 use crate::{
     compiler::error::CompilerError,
-    grammar::types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
+    grammar::{
+        rules_builder::Symbol,
+        types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
+    },
 };
 use std::{
     cell::{OnceCell, RefCell},
@@ -8,14 +11,29 @@ use std::{
     fs::{File, OpenOptions, read_to_string},
     io::{Read, Seek, Write},
     path::PathBuf,
+    rc::Rc,
 };
 
-thread_local! {
-    pub static COMPILER_CONTEXT: RefCell<CompilerContext> = const { RefCell::new(CompilerContext::new()) };
+#[derive(Clone, Default)]
+pub struct Compiler {
+    pub inner: Rc<RefCell<CompilerContext>>,
+}
+
+impl Compiler {
+    pub fn new() -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(CompilerContext::new())),
+        }
+    }
+
+    pub fn source(&self) -> String {
+        self.inner.borrow().source().clone()
+    }
 }
 
 #[derive(Default)]
 pub struct CompilerContext {
+    pub res_stack: Vec<Symbol>,
     source_code_path: Option<PathBuf>,
     source_code: OnceCell<String>,
     symbol_table: Vec<SymbolTableElement>,
@@ -26,6 +44,7 @@ pub struct CompilerContext {
 impl CompilerContext {
     pub const fn new() -> Self {
         Self {
+            res_stack: Vec::new(),
             source_code_path: None,
             source_code: OnceCell::new(),
             symbol_table: Vec::new(),
@@ -167,44 +186,14 @@ impl CompilerContext {
     }
 
     pub fn push_to_symbol_table(&mut self, symbol: SymbolTableElement) {
-        if !self.symbol_exits(&symbol) {
+        if !self.symbol_exists(&symbol) {
             self.symbol_table.push(symbol);
         }
     }
 
-    pub fn symbol_exits(&self, symbol: &SymbolTableElement) -> bool {
+    pub fn symbol_exists(&self, symbol: &SymbolTableElement) -> bool {
         self.symbol_table.contains(symbol)
     }
-}
-
-pub fn dump_symbol_table_to_file() -> Result<(), CompilerError> {
-    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().dump_symbol_table_to_file())
-}
-
-pub fn write_to_lexer_file(txt: &str) {
-    COMPILER_CONTEXT.with(|ctx| {
-        ctx.borrow_mut().write_to_lexer_file(txt);
-    });
-}
-
-pub fn write_to_parser_file(txt: &str) {
-    COMPILER_CONTEXT.with(|ctx| {
-        ctx.borrow_mut().write_to_parser_file(txt);
-    });
-}
-
-pub fn push_to_symbol_table(symbol: SymbolTableElement) {
-    COMPILER_CONTEXT.with(|ctx| {
-        ctx.borrow_mut().push_to_symbol_table(symbol);
-    });
-}
-
-pub fn symbol_exists(symbol: &SymbolTableElement) -> bool {
-    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().symbol_exits(symbol))
-}
-
-pub fn read_parser_file_to_string() -> Result<String, CompilerError> {
-    COMPILER_CONTEXT.with(|ctx| ctx.borrow_mut().read_parser_file_to_string())
 }
 
 #[derive(Clone, Debug)]

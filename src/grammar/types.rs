@@ -1,10 +1,7 @@
 use super::rules::{Context, TokenKind};
 use super::rules_lexer::Input;
-use crate::compiler::context::SymbolTableElement;
-use crate::compiler::{
-    context::{push_to_symbol_table, symbol_exists},
-    error::{CompilerError, log_error_and_exit},
-};
+use crate::compiler::context::{CompilerContext, SymbolTableElement};
+use crate::compiler::error::{CompilerError, log_error_and_exit};
 use rustemo::Token as RustemoToken;
 use std::fmt::Display;
 
@@ -308,7 +305,7 @@ impl VarDeclaration {
     /// Recursively traverse `VarDeclaration` until we find the non recurive declaration with the DataType
     /// During traversal, each variable is added to the symbol table
     /// If a symbol already exists then we error out with a variable redeclaration error
-    pub fn push_to_symbol_table(&self) -> DataType {
+    pub fn push_to_symbol_table(&self, compiler_context: &mut CompilerContext) -> DataType {
         match self {
             Self::VarDeclarationSingle(single) => {
                 let symbol = SymbolTableElement::VarDeclaration(
@@ -317,7 +314,7 @@ impl VarDeclaration {
                     single.token_id.len(),
                 );
                 // If the symbol already exists this is a redeclaration
-                if symbol_exists(&symbol) {
+                if compiler_context.symbol_exists(&symbol) {
                     log_error_and_exit(
                         0..0,
                         CompilerError::Parser(format!(
@@ -326,21 +323,24 @@ impl VarDeclaration {
                         )),
                         0,
                         false,
+                        compiler_context,
                     );
                 } else {
-                    push_to_symbol_table(symbol);
+                    compiler_context.push_to_symbol_table(symbol);
                 }
                 single.data_type.clone()
             }
             Self::VarDeclarationRecursive(recursive) => {
-                let data_type = recursive.var_declaration.push_to_symbol_table();
+                let data_type = recursive
+                    .var_declaration
+                    .push_to_symbol_table(compiler_context);
                 let symbol = SymbolTableElement::VarDeclaration(
                     recursive.token_id.clone(),
                     data_type.clone(),
                     recursive.token_id.len(),
                 );
                 // If the symbol already exists this is a redeclaration
-                if symbol_exists(&symbol) {
+                if compiler_context.symbol_exists(&symbol) {
                     log_error_and_exit(
                         0..0,
                         CompilerError::Parser(format!(
@@ -349,9 +349,10 @@ impl VarDeclaration {
                         )),
                         0,
                         false,
+                        compiler_context,
                     )
                 } else {
-                    push_to_symbol_table(symbol);
+                    compiler_context.push_to_symbol_table(symbol);
                 }
                 data_type
             }

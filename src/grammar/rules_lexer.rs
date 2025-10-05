@@ -1,21 +1,15 @@
 use super::rules::{State, TokenKind};
-use crate::compiler::error::{CompilerError, log_error_and_exit};
+use crate::compiler::{
+    context::Compiler,
+    error::{CompilerError, log_error_and_exit},
+};
 use rustemo::{Context, LRContext, Lexer, Location, Position, Token};
 use std::iter;
 
 pub type Input = str;
 pub type Ctx<'i> = LRContext<'i, Input, State, TokenKind>;
 
-#[derive(Default)]
-pub struct LexerAdapter();
-
-impl LexerAdapter {
-    pub fn new() -> LexerAdapter {
-        Self()
-    }
-}
-
-impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
+impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for Compiler {
     type Input = Input;
 
     fn next_tokens(
@@ -43,12 +37,16 @@ impl<'i> Lexer<'i, Ctx<'i>, State, TokenKind> for LexerAdapter {
             token = TokenKind::STOP
         } else {
             let trimmed_input = input.get(context.position()..input.len()).unwrap();
-            let mut lexer = crate::lexer::lex::Lexer::new(trimmed_input, pos);
+            let mut compiler_context = self.inner.borrow_mut();
+            let mut lexer =
+                crate::lexer::lex::Lexer::new(trimmed_input, pos, &mut compiler_context);
             token =
                 match validate_and_get_next_token(&mut lexer, expected_tokens, expected_tokens_str)
                 {
                     Ok(tok) => tok,
-                    Err(e) => log_error_and_exit(lexer.yytextpos(), e, pos, true),
+                    Err(e) => {
+                        log_error_and_exit(lexer.yytextpos(), e, pos, true, &mut compiler_context)
+                    }
                 };
             let range = lexer.yytextpos();
             pos += range.start;

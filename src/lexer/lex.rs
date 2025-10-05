@@ -1,5 +1,8 @@
 use crate::grammar::TokenKind;
 use crate::compiler::error::{CompilerError, log_error_and_exit};
+use crate::compiler::context::CompilerContext;
+
+type CompilerCtx<'a> = &'a mut CompilerContext;
 
 
 use std::collections::HashMap;
@@ -37,6 +40,7 @@ pub struct Lexer<'a> {
     zz_at_eof: bool,
 
     offset: usize,
+    ctx: CompilerCtx<'a>,
 }
 
 impl<'a> Lexer<'a> {
@@ -50,7 +54,7 @@ impl<'a> Lexer<'a> {
 
     pub const YYEOF: i32 = -1;
 
-    pub fn new(input: &'a str, offset: usize) -> Lexer<'a> {
+    pub fn new(input: &'a str, offset: usize, ctx: CompilerCtx<'a>) -> Lexer<'a> {
         let max_len = input.chars().clone().count();
         let mut cmap: Vec<usize> = Vec::with_capacity(256);
         cmap.resize(256, 0);
@@ -166,12 +170,16 @@ impl<'a> Lexer<'a> {
             zz_at_eof: false,
 
             offset,
+            ctx,
         }
     }
 
 
     #[allow(dead_code)]
     pub fn get_offset(&mut self) -> &mut usize { &mut self.offset }
+
+    #[allow(dead_code)]
+    pub fn get_ctx(&mut self) -> &mut CompilerCtx<'a> { &mut self.ctx }
 
     #[allow(dead_code)]
     pub fn is_eof(&self) -> bool {
@@ -363,7 +371,8 @@ impl<'a> Lexer<'a> {
                                                                             self.yytextpos(),
                                                                             CompilerError::Lexer(format!("Invalid integer literal {e}")),
                                                                             self.offset,
-                                                                            true
+                                                                            true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenIntLiteral);
@@ -402,6 +411,7 @@ impl<'a> Lexer<'a> {
                                                                             CompilerError::Lexer(format!("Invalid string length {}", self.yytext().len())),
                                                                             self.offset,
                                                                             true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenStringLiteral);
@@ -443,7 +453,8 @@ impl<'a> Lexer<'a> {
                                                                             self.yytextpos(),
                                                                             CompilerError::Lexer(format!("Invalid integer literal {e}")),
                                                                             self.offset,
-                                                                            true
+                                                                            true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenIntLiteral);
@@ -457,6 +468,7 @@ impl<'a> Lexer<'a> {
                                                                                 CompilerError::Lexer(format!("Invalid float literal {e}")),
                                                                                 self.offset,
                                                                                 true,
+                                                                                self.ctx
                                                                             );
                                                                         }
                                                                         Ok(value) => {
@@ -466,6 +478,7 @@ impl<'a> Lexer<'a> {
                                                                                     CompilerError::Lexer(format!("Invalid float literal")),
                                                                                     self.offset,
                                                                                     true,
+                                                                                    self.ctx
                                                                                 )
                                                                             }
                                                                         }
@@ -519,6 +532,7 @@ impl<'a> Lexer<'a> {
                                                                                 CompilerError::Lexer(format!("Invalid float literal {e}")),
                                                                                 self.offset,
                                                                                 true,
+                                                                                self.ctx
                                                                             );
                                                                         }
                                                                         Ok(value) => {
@@ -528,6 +542,7 @@ impl<'a> Lexer<'a> {
                                                                                     CompilerError::Lexer(format!("Invalid float literal")),
                                                                                     self.offset,
                                                                                     true,
+                                                                                    self.ctx
                                                                                 )
                                                                             }
                                                                         }
@@ -541,7 +556,8 @@ impl<'a> Lexer<'a> {
                                                                             self.yytextpos(),
                                                                             CompilerError::Lexer(format!("Invalid integer literal {e}")),
                                                                             self.offset,
-                                                                            true
+                                                                            true,
+                                                                            self.ctx
                                                                         )
                                                                     }
                                                                     return Ok(TokenKind::TokenIntLiteral);

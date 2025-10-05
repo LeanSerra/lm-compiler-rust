@@ -1,4 +1,4 @@
-use rustemo_compiler::{LexerType, Settings};
+use rustemo_compiler::{BuilderType, LexerType, Settings};
 use std::path::PathBuf;
 
 const GRAMMAR_FILE_PATH: &str = "src/grammar/rules.rustemo";
@@ -12,8 +12,9 @@ fn main() {
 
     // Compile parser
     if let Err(e) = Settings::new()
-        .force(false) // Don't force regeneration of files rules.rs and rules_actions.rs
-        .lexer_type(LexerType::Custom) // Use our own Lexer
+        .out_dir_root(root_dir.clone())
+        .lexer_type(LexerType::Custom)
+        .builder_type(BuilderType::Custom)
         .process_grammar(&root_dir.join(GRAMMAR_FILE_PATH))
     {
         eprintln!("Failed to compile rules: {e}");
