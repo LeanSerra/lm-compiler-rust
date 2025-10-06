@@ -1,6 +1,4 @@
 use crate::compiler::context::CompilerContext;
-/// This file is maintained by rustemo but can be modified manually.
-/// All manual changes will be preserved except non-doc comments.
 pub use crate::grammar::types::*;
 use rustemo::Input;
 
