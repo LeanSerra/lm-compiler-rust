@@ -1,6 +1,6 @@
 use clap::Parser as ClapParser;
 use lm_compiler::{
-    compiler::{context::Compiler, error::CompilerError},
+    compiler::{ast::AstPtr, context::Compiler, error::CompilerError},
     grammar::RulesParser,
 };
 use rustemo::Parser;
@@ -25,6 +25,12 @@ fn main() -> Result<(), CompilerError> {
         .map_err(CompilerError::ParserInternal)?;
 
     println!("{rules}");
+
+    compiler
+        .inner
+        .borrow()
+        .ast
+        .traverse_from(AstPtr::Assignment);
 
     Ok(())
 }
