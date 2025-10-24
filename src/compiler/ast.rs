@@ -1,6 +1,5 @@
 use std::{array, cell::Cell, mem, rc::Rc};
 
-#[derive(Clone)]
 pub struct Ast {
     tree: [Rc<Node>; mem::variant_count::<AstPtr>()],
     stack_t: Vec<Rc<Node>>,
