@@ -21,7 +21,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: 1.91.0
           components: clippy, rustfmt
 
       - name: Run cargo check
@@ -41,8 +40,6 @@ jobs:
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
-        with:
-          toolchain: 1.91.0
 
       - name: Run cargo test
         run: cargo test

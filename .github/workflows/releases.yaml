@@ -41,8 +41,6 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
-        with:
-          toolchain: 1.92.0
 
       - name: Build compiler
         shell: bash
