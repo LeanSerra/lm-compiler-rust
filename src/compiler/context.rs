@@ -1,5 +1,8 @@
 use crate::{
-    compiler::{ast::Ast, error::CompilerError},
+    compiler::{
+        ast::{Ast, AstPtr},
+        error::CompilerError,
+    },
     grammar::{
         rules_builder::Symbol,
         types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
@@ -35,6 +38,7 @@ pub struct CompilerContext {
     parser_file: File,
     lexer_file: File,
     symbol_table_file: File,
+    graph_file: File,
     pub ast: Ast,
 }
 
@@ -44,6 +48,7 @@ impl CompilerContext {
         let parser_file = CompilerContext::open_parser_file(&path)?;
         let lexer_file = CompilerContext::open_lexer_file(&path)?;
         let symbol_table_file = CompilerContext::open_symbol_table_file(&path)?;
+        let graph_file = CompilerContext::open_graph_file(&path)?;
 
         Ok(Self {
             res_stack: Vec::new(),
@@ -53,6 +58,7 @@ impl CompilerContext {
             parser_file,
             lexer_file,
             symbol_table_file,
+            graph_file,
             ast: Ast::new(),
         })
     }
@@ -87,6 +93,15 @@ impl CompilerContext {
             .truncate(true)
             .write(true)
             .open(path.with_extension("symbol_table"))
+            .map_err(|e| CompilerError::IO(e.to_string()))
+    }
+
+    fn open_graph_file(path: &Path) -> Result<File, CompilerError> {
+        OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(path.with_extension("dot"))
             .map_err(|e| CompilerError::IO(e.to_string()))
     }
 
@@ -139,6 +154,16 @@ impl CompilerContext {
 
     pub fn symbol_exists(&self, symbol: &SymbolTableElement) -> bool {
         self.symbol_table.contains(symbol)
+    }
+
+    pub fn create_ast_graph(&mut self, from: AstPtr) -> Result<(), CompilerError> {
+        self.ast
+            .graph_ast(
+                from,
+                &self.source_code_path.to_string_lossy(),
+                &mut self.graph_file,
+            )
+            .map_err(|e| CompilerError::IO(e.to_string()))
     }
 }
 

@@ -28,9 +28,8 @@ fn main() -> Result<(), CompilerError> {
 
     compiler
         .inner
-        .borrow()
-        .ast
-        .traverse_from(AstPtr::Assignment);
+        .borrow_mut()
+        .create_ast_graph(AstPtr::Assignment)?;
 
     Ok(())
 }
