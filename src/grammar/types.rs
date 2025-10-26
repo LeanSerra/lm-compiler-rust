@@ -385,8 +385,6 @@ pub enum Statement {
     StatementAssignment(Assignment),
     /// `<Statement> -> <IfStatement>`
     StatementIfStatement(IfStatement),
-    /// `<Statement> -> <ElseStatement>`
-    StatementElseStatement(ElseStatement),
     /// `<Statement> -> <WhileLoop>`
     StatementWhile(WhileLoop),
     /// `<Statement> -> <FunctionWrite>`
@@ -460,11 +458,20 @@ pub struct WhileLoop {
     pub token_cbclose: TokenCBClose,
 }
 
+/// Enum representing all the possible rules for the `<IfStatement>` non terminal
+#[derive(Debug, Clone)]
+pub enum IfStatement {
+    /// `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
+    IfStatementIfStatement(IfStatementIfStatement),
+    /// `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>`
+    IfStatementElseStatement(IfStatementElseStatement),
+}
+
 /// Struct representation of the rule
 ///
 /// `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[derive(Debug, Clone)]
-pub struct IfStatement {
+pub struct IfStatementIfStatement {
     pub token_if: TokenIf,
     pub token_par_open: TokenParOpen,
     pub conjunction: Conjunction,
@@ -472,6 +479,21 @@ pub struct IfStatement {
     pub token_cbopen: TokenCBOpen,
     pub body: Box<Body>,
     pub token_cbclose: TokenCBClose,
+}
+
+/// Struct representation of the rule
+///
+/// `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>`
+#[derive(Debug, Clone)]
+pub struct IfStatementElseStatement {
+    pub token_if: TokenIf,
+    pub token_par_open: TokenParOpen,
+    pub conjunction: Conjunction,
+    pub token_par_close: TokenParClose,
+    pub token_cbopen: TokenCBOpen,
+    pub body: Box<Body>,
+    pub token_cbclose: TokenCBClose,
+    pub else_statement: Box<ElseStatement>,
 }
 
 /// Struct representation of the rule

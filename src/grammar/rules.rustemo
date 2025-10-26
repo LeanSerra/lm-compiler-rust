@@ -27,7 +27,6 @@ Expressions: Statement {ExpressionSingle}
 
 Statement: Assignment {StatementAssignment}
  | IfStatement {StatementIfStatement}
- | ElseStatement {StatementElseStatement}
  | WhileLoop {StatementWhile}
  | FunctionWrite {StatementWrite}
  | FunctionRead {StatementRead};
@@ -41,7 +40,8 @@ DataType: TokenInt {IntType}
 
 WhileLoop: TokenWhile TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {While};
 
-IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
+IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {IfStatement}
+ | TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose ElseStatement {IfElseStatement};
 
 ElseStatement: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
 

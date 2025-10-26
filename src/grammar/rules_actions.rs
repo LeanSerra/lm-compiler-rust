@@ -610,16 +610,6 @@ pub fn statement_statement_if_statement(
     Statement::StatementIfStatement(if_statement)
 }
 
-/// Parses the rule `<Statement> -> <ElseStatement>`
-pub fn statement_statement_else_statement(
-    _ctx: &Ctx,
-    else_statement: ElseStatement,
-    compiler_context: &mut CompilerContext,
-) -> Statement {
-    compiler_context.write_to_parser_file("<Statement> -> <ElseStatement>");
-    Statement::StatementElseStatement(else_statement)
-}
-
 /// Parses the rule `<Statement> -> <WhileLoop>`
 pub fn statement_statement_while(
     _ctx: &Ctx,
@@ -772,7 +762,7 @@ pub fn if_statement_if_statement(
         AstPtr::Body.into(),
         AstPtr::If,
     );
-    IfStatement {
+    IfStatement::IfStatementIfStatement(IfStatementIfStatement {
         token_if,
         token_par_open,
         conjunction,
@@ -780,7 +770,34 @@ pub fn if_statement_if_statement(
         token_cbopen,
         body: Box::new(body),
         token_cbclose,
-    }
+    })
+}
+
+/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>`
+#[expect(clippy::too_many_arguments)]
+pub fn if_statement_if_statement_else_statement(
+    _ctx: &Ctx,
+    token_if: TokenIf,
+    token_par_open: TokenParOpen,
+    conjunction: Conjunction,
+    token_par_close: TokenParClose,
+    token_cbopen: TokenCBOpen,
+    body: Body,
+    token_cbclose: TokenCBClose,
+    else_statement: ElseStatement,
+    compiler_context: &mut CompilerContext,
+) -> IfStatement {
+    compiler_context.write_to_parser_file("<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>");
+    IfStatement::IfStatementElseStatement(IfStatementElseStatement {
+        token_if,
+        token_par_open,
+        conjunction,
+        token_par_close,
+        token_cbopen,
+        body: Box::new(body),
+        token_cbclose,
+        else_statement: Box::new(else_statement),
+    })
 }
 
 /// Parses the rule `<ElseStatement>: TokenElse TokenCBOpen <Body> TokenCBClose`
