@@ -39,27 +39,25 @@ DataType: TokenInt {IntType}
  | TokenFloat {FloatType}
  | TokenString {StringType};
 
-WhileLoop: TokenWhile TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {While};
+WhileLoop: TokenWhile TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {While};
 
-IfStatement: TokenIf TokenParOpen BooleanExpression TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
+IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {IfStatement};
 
 ElseStatement: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
 
-BooleanExpression: SimpleExpression BooleanExpressionChain {BooleanExpressionSimpleExpression}
+BooleanExpression: SimpleExpression ComparisonOp SimpleExpression {BooleanExpressionSimpleExpression}
  | TokenTrue {BooleanExpressionTrue}
  | TokenFalse {BooleanExpressionFalse}
- | SimpleExpression BooleanExpressionChain Conjunction BooleanExpression {BooleanExpressionSimpleExpressionRecursive}
  | NotStatement {BooleanExpressionNotStatement}
- | FunctionIsZero {BooleanExpressionIsZero};
-
-BooleanExpressionChain: ComparisonOp SimpleExpression BooleanExpressionChain {BooleanExpressionChainAux}
- | EMPTY {BooleanExpressionChainEmpty};
+ | FunctionIsZero {BooleanExpressionIsZero}
+ | TokenId {BooleanExpressionVar};
 
 SimpleExpression: ArithmeticExpression {SimpleExpressionArithmetic}
  | TokenStringLiteral {SimpleExpressionString};
 
-Conjunction: TokenAnd {ConjunctionAnd}
- | TokenOr {ConjunctionOr};
+Conjunction: BooleanExpression TokenAnd Conjunction{ConjunctionAnd}
+ | BooleanExpression TokenOr Conjunction {ConjunctionOr}
+ | BooleanExpression {ConjunctionBoolean};
 
 ComparisonOp: TokenEqual {ComparisonOpEqual}
  | TokenNotEqual {ComparisonOpNotEqual}

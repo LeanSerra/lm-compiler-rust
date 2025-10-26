@@ -710,13 +710,13 @@ pub fn data_type_string_type(
     DataType::StringType(token_string)
 }
 
-/// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn while_loop_while(
     _ctx: &Ctx,
     token_while: TokenWhile,
     token_par_open: TokenParOpen,
-    boolean_expression: BooleanExpression,
+    conjunction: Conjunction,
     token_par_close: TokenParClose,
     token_cbopen: TokenCBOpen,
     body: Body,
@@ -724,12 +724,12 @@ pub fn while_loop_while(
     compiler_context: &mut CompilerContext,
 ) -> WhileLoop {
     compiler_context.write_to_parser_file(&format!(
-        "<WhileLoop> -> {token_while} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+        "<WhileLoop> -> {token_while} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
     WhileLoop {
         token_while,
         token_par_open,
-        boolean_expression,
+        conjunction,
         token_par_close,
         token_cbopen,
         body: Box::new(body),
@@ -737,13 +737,13 @@ pub fn while_loop_while(
     }
 }
 
-/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn if_statement_if_statement(
     _ctx: &Ctx,
     token_if: TokenIf,
     token_par_open: TokenParOpen,
-    boolean_expression: BooleanExpression,
+    conjunction: Conjunction,
     token_par_close: TokenParClose,
     token_cbopen: TokenCBOpen,
     body: Body,
@@ -751,12 +751,12 @@ pub fn if_statement_if_statement(
     compiler_context: &mut CompilerContext,
 ) -> IfStatement {
     compiler_context.write_to_parser_file(&format!(
-        "<IfStatement> -> {token_if} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+        "<IfStatement> -> {token_if} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
     IfStatement {
         token_if,
         token_par_open,
-        boolean_expression,
+        conjunction,
         token_par_close,
         token_cbopen,
         body: Box::new(body),
@@ -784,18 +784,21 @@ pub fn else_statement_else_statement(
     }
 }
 
-/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>`
+/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`
 pub fn boolean_expression_boolean_expression_simple_expression(
     _ctx: &Ctx,
     simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
+    comparison_op: ComparisonOp,
+    simple_expression_2: SimpleExpression,
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
-    compiler_context
-        .write_to_parser_file("<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>");
+    compiler_context.write_to_parser_file(
+        "<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>",
+    );
     BooleanExpression::BooleanExpressionSimpleExpression(BooleanExpressionSimpleExpression {
         simple_expression,
-        boolean_expression_chain,
+        comparison_op,
+        simple_expression_2,
     })
 }
 
@@ -819,26 +822,14 @@ pub fn boolean_expression_boolean_expression_false(
     BooleanExpression::BooleanExpressionFalse(token_false)
 }
 
-/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>`
-pub fn boolean_expression_boolean_expression_simple_expression_recursive(
+/// Parses the rule `<BooleanExpression> -> TokenId
+pub fn boolean_expression_boolean_expression_token_id(
     _ctx: &Ctx,
-    simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
-    conjunction: Conjunction,
-    boolean_expression: BooleanExpression,
+    token_id: TokenId,
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
-    compiler_context.write_to_parser_file(
-        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>",
-    );
-    BooleanExpression::BooleanExpressionSimpleExpressionRecursive(
-        BooleanExpressionSimpleExpressionRecursive {
-            simple_expression,
-            boolean_expression_chain,
-            conjunction,
-            boolean_expression: Box::new(boolean_expression),
-        },
-    )
+    compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_id}"));
+    BooleanExpression::BooleanExpressionTokenId(token_id)
 }
 
 /// Parses the rule `<BooleanExpression> -> <NotStatement>`
@@ -859,33 +850,6 @@ pub fn boolean_expression_boolean_expression_is_zero(
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file("<BooleanExpression> -> <FunctionIsZero>");
     BooleanExpression::BooleanExpressionIsZero(function_is_zero)
-}
-
-/// Parses the rule `<BooleanExpressionChain> -> ComparisonOp <SimpleExpression> <BooleanExpressionChain>`
-pub fn boolean_expression_chain_boolean_expression_chain_aux(
-    _ctx: &Ctx,
-    comparison_op: ComparisonOp,
-    simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
-    compiler_context: &mut CompilerContext,
-) -> BooleanExpressionChain {
-    compiler_context.write_to_parser_file(
-        "<BooleanExpressionChain> -> <ComparisonOp> <SimpleExpression> <BooleanExpressionChain>",
-    );
-    Some(BooleanExpressionChainNoO {
-        comparison_op,
-        simple_expression,
-        boolean_expression_chain: Box::new(boolean_expression_chain),
-    })
-}
-
-/// Parses the rule `<BooleanExpressionChain> -> EMPTY`
-pub fn boolean_expression_chain_boolean_expression_chain_empty(
-    _ctx: &Ctx,
-    compiler_context: &mut CompilerContext,
-) -> BooleanExpressionChain {
-    compiler_context.write_to_parser_file("<BooleanExpressionChain> -> EMPTY");
-    None
 }
 
 /// Parses the rule `<SimpleExpression> -> <ArithmeticExpression>`
@@ -913,24 +877,50 @@ pub fn simple_expression_simple_expression_string(
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
 
-/// Parses the rule `<Conjunction> -> "and"`
+/// Parses the rule `<Conjunction> -> <BooleanExpression> "and" <Conjunction>`
 pub fn conjunction_conjunction_and(
     _ctx: &Ctx,
+    boolean_expression: BooleanExpression,
     token_and: TokenAnd,
+    conjunction: Conjunction,
     compiler_context: &mut CompilerContext,
 ) -> Conjunction {
-    compiler_context.write_to_parser_file(&format!("<Conjunction> -> {token_and}"));
-    Conjunction::ConjunctionAnd(token_and)
+    compiler_context.write_to_parser_file(&format!(
+        "<Conjunction> -> <BooleanExpression> {token_and} <Conjunction>"
+    ));
+    Conjunction::ConjunctionAnd(ConjunctionAnd {
+        boolean_expression,
+        token_and,
+        conjunction: Box::new(conjunction),
+    })
 }
 
-/// Parses the rule `<Conjunction> -> "or"`
+/// Parses the rule `<Conjunction> -> <BooleanExpression> "or" <Conjunction>`
 pub fn conjunction_conjunction_or(
     _ctx: &Ctx,
+    boolean_expression: BooleanExpression,
     token_or: TokenOr,
+    conjunction: Conjunction,
     compiler_context: &mut CompilerContext,
 ) -> Conjunction {
-    compiler_context.write_to_parser_file(&format!("<Conjunction> -> {token_or}"));
-    Conjunction::ConjunctionOr(token_or)
+    compiler_context.write_to_parser_file(&format!(
+        "<Conjunction> -> <BooleanExpression> {token_or} <Conjunction>"
+    ));
+    Conjunction::ConjunctionOr(ConjunctionOr {
+        boolean_expression,
+        token_or,
+        conjunction: Box::new(conjunction),
+    })
+}
+
+/// Parses the rule `<Conjunction> -> <BooleanExpression>`
+pub fn conjunction_conjunction_boolean_expression(
+    _ctx: &Ctx,
+    boolean_expression: BooleanExpression,
+    compiler_context: &mut CompilerContext,
+) -> Conjunction {
+    compiler_context.write_to_parser_file("<Conjunction> -> <BooleanExpression>");
+    Conjunction::ConjunctionBooleanExpression(boolean_expression)
 }
 
 /// Parses the rule `<ComparisonOp> -> "=="`

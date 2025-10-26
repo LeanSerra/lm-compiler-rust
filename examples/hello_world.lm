@@ -16,7 +16,7 @@ main(){
         a := 1
     }
 
-    if(a > b > c > d) {
+    if(a > b and c > d) {
         a := 1
     }
     else {

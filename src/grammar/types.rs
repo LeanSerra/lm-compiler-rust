@@ -448,12 +448,12 @@ impl Display for DataType {
 
 /// Struct representation of the rule
 ///
-/// `<WhileLoop> -> TokenWhile TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[derive(Debug, Clone)]
 pub struct WhileLoop {
     pub token_while: TokenWhile,
     pub token_par_open: TokenParOpen,
-    pub boolean_expression: BooleanExpression,
+    pub conjunction: Conjunction,
     pub token_par_close: TokenParClose,
     pub token_cbopen: TokenCBOpen,
     pub body: Box<Body>,
@@ -462,12 +462,12 @@ pub struct WhileLoop {
 
 /// Struct representation of the rule
 ///
-/// `<IfStatement> -> TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[derive(Debug, Clone)]
 pub struct IfStatement {
     pub token_if: TokenIf,
     pub token_par_open: TokenParOpen,
-    pub boolean_expression: BooleanExpression,
+    pub conjunction: Conjunction,
     pub token_par_close: TokenParClose,
     pub token_cbopen: TokenCBOpen,
     pub body: Box<Body>,
@@ -488,27 +488,28 @@ pub struct ElseStatement {
 /// Enum representing all the possible rules for the `<BooleanExpression>` non terminal
 #[derive(Debug, Clone)]
 pub enum BooleanExpression {
-    /// `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>`
+    /// `<BooleanExpression> -> <SimpleExpression> <Conjunction> <SimpleExpression>`
     BooleanExpressionSimpleExpression(BooleanExpressionSimpleExpression),
     /// `<BooleanExpression> -> "true"`
     BooleanExpressionTrue(TokenTrue),
     /// `<BooleanExpression> -> "false"`
     BooleanExpressionFalse(TokenFalse),
-    /// `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>`
-    BooleanExpressionSimpleExpressionRecursive(BooleanExpressionSimpleExpressionRecursive),
     /// `<BooleanExpression> -> <NotStatement>`
     BooleanExpressionNotStatement(NotStatement),
     /// `<BooleanExpression> -> <FunctionIsZero>`
     BooleanExpressionIsZero(FunctionIsZero),
+    /// `<BooleanExpression> -> TokenId`
+    BooleanExpressionTokenId(TokenId),
 }
 
 /// Struct representation of the rule
 ///
-/// `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>`
+/// `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`
 #[derive(Debug, Clone)]
 pub struct BooleanExpressionSimpleExpression {
     pub simple_expression: SimpleExpression,
-    pub boolean_expression_chain: BooleanExpressionChain,
+    pub comparison_op: ComparisonOp,
+    pub simple_expression_2: SimpleExpression,
 }
 
 /// Struct representation of the rule
@@ -548,9 +549,25 @@ pub enum SimpleExpression {
 #[derive(Debug, Clone)]
 pub enum Conjunction {
     /// `<Conjunction> -> "and"`
-    ConjunctionAnd(TokenAnd),
+    ConjunctionAnd(ConjunctionAnd),
     /// `<Conjunction> -> "or"`
-    ConjunctionOr(TokenOr),
+    ConjunctionOr(ConjunctionOr),
+    /// `<Conjunction> -> <BooleanExpression>`
+    ConjunctionBooleanExpression(BooleanExpression),
+}
+
+#[derive(Debug, Clone)]
+pub struct ConjunctionAnd {
+    pub boolean_expression: BooleanExpression,
+    pub token_and: TokenAnd,
+    pub conjunction: Box<Conjunction>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConjunctionOr {
+    pub boolean_expression: BooleanExpression,
+    pub token_or: TokenOr,
+    pub conjunction: Box<Conjunction>,
 }
 
 /// Enum representing all the possible rules for the `<ComparisonOp>` non terminal
