@@ -15,7 +15,7 @@ use rustemo::debug::{log, logn};
 #[cfg(debug_assertions)]
 use rustemo::colored::*;
 pub type Input = str;
-const STATE_COUNT: usize = 117usize;
+const STATE_COUNT: usize = 118usize;
 const MAX_RECOGNIZERS: usize = 20usize;
 #[allow(dead_code)]
 const TERMINAL_COUNT: usize = 39usize;
@@ -102,6 +102,7 @@ pub enum ProdKind {
     WhileLoopWhile,
     IfStatementIfStatement,
     IfStatementIfElseStatement,
+    DummyElseP1,
     ElseStatementElseStatement,
     BooleanExpressionBooleanExpressionSimpleExpression,
     BooleanExpressionBooleanExpressionTrue,
@@ -201,8 +202,9 @@ impl std::fmt::Debug for ProdKind {
                 "IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose"
             }
             ProdKind::IfStatementIfElseStatement => {
-                "IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose ElseStatement"
+                "IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose DummyElse ElseStatement"
             }
+            ProdKind::DummyElseP1 => "DummyElse: ",
             ProdKind::ElseStatementElseStatement => {
                 "ElseStatement: TokenElse TokenCBOpen Body TokenCBClose"
             }
@@ -294,6 +296,7 @@ pub enum NonTermKind {
     DataType,
     WhileLoop,
     IfStatement,
+    DummyElse,
     ElseStatement,
     BooleanExpression,
     SimpleExpression,
@@ -348,6 +351,7 @@ impl From<ProdKind> for NonTermKind {
             ProdKind::WhileLoopWhile => NonTermKind::WhileLoop,
             ProdKind::IfStatementIfStatement => NonTermKind::IfStatement,
             ProdKind::IfStatementIfElseStatement => NonTermKind::IfStatement,
+            ProdKind::DummyElseP1 => NonTermKind::DummyElse,
             ProdKind::ElseStatementElseStatement => NonTermKind::ElseStatement,
             ProdKind::BooleanExpressionBooleanExpressionSimpleExpression => {
                 NonTermKind::BooleanExpression
@@ -523,11 +527,12 @@ pub enum State {
     BodyS109,
     TokenCBCloseS110,
     TokenCBCloseS111,
-    TokenElseS112,
-    ElseStatementS113,
-    TokenCBOpenS114,
-    BodyS115,
-    TokenCBCloseS116,
+    DummyElseS112,
+    TokenElseS113,
+    ElseStatementS114,
+    TokenCBOpenS115,
+    BodyS116,
+    TokenCBCloseS117,
 }
 impl StateT for State {
     fn default_layout() -> Option<Self> {
@@ -654,11 +659,12 @@ impl std::fmt::Debug for State {
             State::BodyS109 => "109:Body",
             State::TokenCBCloseS110 => "110:TokenCBClose",
             State::TokenCBCloseS111 => "111:TokenCBClose",
-            State::TokenElseS112 => "112:TokenElse",
-            State::ElseStatementS113 => "113:ElseStatement",
-            State::TokenCBOpenS114 => "114:TokenCBOpen",
-            State::BodyS115 => "115:Body",
-            State::TokenCBCloseS116 => "116:TokenCBClose",
+            State::DummyElseS112 => "112:DummyElse",
+            State::TokenElseS113 => "113:TokenElse",
+            State::ElseStatementS114 => "114:ElseStatement",
+            State::TokenCBOpenS115 => "115:TokenCBOpen",
+            State::BodyS116 => "116:Body",
+            State::TokenCBCloseS117 => "117:TokenCBClose",
         };
         write!(f, "{name}")
     }
@@ -2361,31 +2367,37 @@ fn action_tokencbclose_s111(token_kind: TokenKind) -> Vec<Action<State, ProdKind
         TK::TokenCBClose => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         TK::TokenWhile => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         TK::TokenIf => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
-        TK::TokenElse => Vec::from(&[Shift(State::TokenElseS112)]),
+        TK::TokenElse => Vec::from(&[Reduce(PK::DummyElseP1, 0usize)]),
         TK::TokenRead => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         TK::TokenWrite => Vec::from(&[Reduce(PK::IfStatementIfStatement, 7usize)]),
         _ => vec![],
     }
 }
-fn action_tokenelse_s112(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_dummyelse_s112(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS114)]),
+        TK::TokenElse => Vec::from(&[Shift(State::TokenElseS113)]),
         _ => vec![],
     }
 }
-fn action_elsestatement_s113(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokenelse_s113(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::STOP => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenId => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenCBClose => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenWhile => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenIf => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenRead => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
-        TK::TokenWrite => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 8usize)]),
+        TK::TokenCBOpen => Vec::from(&[Shift(State::TokenCBOpenS115)]),
         _ => vec![],
     }
 }
-fn action_tokencbopen_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_elsestatement_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+    match token_kind {
+        TK::STOP => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenId => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenCBClose => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenWhile => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenIf => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenRead => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        TK::TokenWrite => Vec::from(&[Reduce(PK::IfStatementIfElseStatement, 9usize)]),
+        _ => vec![],
+    }
+}
+fn action_tokencbopen_s115(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::TokenId => Vec::from(&[Shift(State::TokenIdS24)]),
         TK::TokenCBClose => Vec::from(&[Reduce(PK::BodyBodyEmpty, 0usize)]),
@@ -2397,13 +2409,13 @@ fn action_tokencbopen_s114(token_kind: TokenKind) -> Vec<Action<State, ProdKind>
         _ => vec![],
     }
 }
-fn action_body_s115(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_body_s116(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
-        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS116)]),
+        TK::TokenCBClose => Vec::from(&[Shift(State::TokenCBCloseS117)]),
         _ => vec![],
     }
 }
-fn action_tokencbclose_s116(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
+fn action_tokencbclose_s117(token_kind: TokenKind) -> Vec<Action<State, ProdKind>> {
     match token_kind {
         TK::STOP => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
         TK::TokenId => Vec::from(&[Reduce(PK::ElseStatementElseStatement, 4usize)]),
@@ -2876,7 +2888,7 @@ fn goto_term_s103(nonterm_kind: NonTermKind) -> State {
 }
 fn goto_tokencbclose_s111(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::ElseStatement => State::ElseStatementS113,
+        NonTermKind::DummyElse => State::DummyElseS112,
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
@@ -2885,9 +2897,20 @@ fn goto_tokencbclose_s111(nonterm_kind: NonTermKind) -> State {
         }
     }
 }
-fn goto_tokencbopen_s114(nonterm_kind: NonTermKind) -> State {
+fn goto_dummyelse_s112(nonterm_kind: NonTermKind) -> State {
     match nonterm_kind {
-        NonTermKind::Body => State::BodyS115,
+        NonTermKind::ElseStatement => State::ElseStatementS114,
+        _ => {
+            panic!(
+                "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
+                State::DummyElseS112
+            )
+        }
+    }
+}
+fn goto_tokencbopen_s115(nonterm_kind: NonTermKind) -> State {
+    match nonterm_kind {
+        NonTermKind::Body => State::BodyS116,
         NonTermKind::FunctionRead => State::FunctionReadS9,
         NonTermKind::FunctionWrite => State::FunctionWriteS10,
         NonTermKind::Expressions => State::ExpressionsS11,
@@ -2898,7 +2921,7 @@ fn goto_tokencbopen_s114(nonterm_kind: NonTermKind) -> State {
         _ => {
             panic!(
                 "Invalid terminal kind ({nonterm_kind:?}) for GOTO state ({:?}).",
-                State::TokenCBOpenS114
+                State::TokenCBOpenS115
             )
         }
     }
@@ -3020,11 +3043,12 @@ pub(crate) static PARSER_DEFINITION: RulesParserDefinition = RulesParserDefiniti
         action_body_s109,
         action_tokencbclose_s110,
         action_tokencbclose_s111,
-        action_tokenelse_s112,
-        action_elsestatement_s113,
-        action_tokencbopen_s114,
-        action_body_s115,
-        action_tokencbclose_s116,
+        action_dummyelse_s112,
+        action_tokenelse_s113,
+        action_elsestatement_s114,
+        action_tokencbopen_s115,
+        action_body_s116,
+        action_tokencbclose_s117,
     ],
     gotos: [
         goto_aug_s0,
@@ -3139,9 +3163,10 @@ pub(crate) static PARSER_DEFINITION: RulesParserDefinition = RulesParserDefiniti
         goto_invalid,
         goto_invalid,
         goto_tokencbclose_s111,
+        goto_dummyelse_s112,
         goto_invalid,
         goto_invalid,
-        goto_tokencbopen_s114,
+        goto_tokencbopen_s115,
         goto_invalid,
         goto_invalid,
     ],
@@ -5597,6 +5622,28 @@ pub(crate) static PARSER_DEFINITION: RulesParserDefinition = RulesParserDefiniti
             Some((TK::TokenElse, false)),
             Some((TK::TokenRead, false)),
             Some((TK::TokenWrite, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        [
+            Some((TK::TokenElse, false)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             None,
             None,
             None,

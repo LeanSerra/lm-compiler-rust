@@ -720,6 +720,9 @@ pub type DummyAE = Option<Dummy>;
 /// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should alway be EMPTY
 pub type DummyT = Option<Dummy>;
 
+/// Type declaration for the `<DummyElse>` non terminal represented by an `Option<T>` because it should always be EMPTY
+pub type DummyElse = Option<Dummy>;
+
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let text = match self {

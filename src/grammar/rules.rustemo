@@ -41,7 +41,9 @@ DataType: TokenInt {IntType}
 WhileLoop: TokenWhile TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {While};
 
 IfStatement: TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose {IfStatement}
- | TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose ElseStatement {IfElseStatement};
+ | TokenIf TokenParOpen Conjunction TokenParClose TokenCBOpen Body TokenCBClose DummyElse ElseStatement {IfElseStatement};
+
+DummyElse: EMPTY;
 
 ElseStatement: TokenElse TokenCBOpen Body TokenCBClose {ElseStatement};
 

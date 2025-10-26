@@ -740,10 +740,10 @@ pub fn while_loop_while(
     }
 }
 
-/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn if_statement_if_statement(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_if: TokenIf,
     token_par_open: TokenParOpen,
     conjunction: Conjunction,
@@ -756,9 +756,21 @@ pub fn if_statement_if_statement(
     compiler_context.write_to_parser_file(&format!(
         "<IfStatement> -> {token_if} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
+    let Some(conjunction_node) = compiler_context.ast.conjunction_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
     compiler_context.ast.create_node(
         AstAction::If,
-        AstPtr::Conjunction.into(),
+        conjunction_node.into(),
         AstPtr::Body.into(),
         AstPtr::If,
     );
@@ -773,10 +785,10 @@ pub fn if_statement_if_statement(
     })
 }
 
-/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>`
+/// Parses the rule `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`
 #[expect(clippy::too_many_arguments)]
 pub fn if_statement_if_statement_else_statement(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_if: TokenIf,
     token_par_open: TokenParOpen,
     conjunction: Conjunction,
@@ -787,7 +799,45 @@ pub fn if_statement_if_statement_else_statement(
     else_statement: ElseStatement,
     compiler_context: &mut CompilerContext,
 ) -> IfStatement {
-    compiler_context.write_to_parser_file("<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <ElseStatement>");
+    compiler_context.write_to_parser_file(&format!(
+        "<IfStatement> -> {token_if} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose} <DummyElse> <ElseStatement>"
+    ));
+    let Some(if_true_body) = compiler_context.ast.if_body_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "IfBody stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    let else_node = compiler_context.ast.create_node(
+        AstAction::Else,
+        if_true_body.into(),
+        AstPtr::Body.into(),
+        AstPtr::If,
+    );
+    let Some(conjunction_node) = compiler_context.ast.conjunction_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::If,
+        conjunction_node.into(),
+        else_node.into(),
+        AstPtr::If,
+    );
     IfStatement::IfStatementElseStatement(IfStatementElseStatement {
         token_if,
         token_par_open,
@@ -800,7 +850,15 @@ pub fn if_statement_if_statement_else_statement(
     })
 }
 
-/// Parses the rule `<ElseStatement>: TokenElse TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<DummyElse> -> EMPTY`
+pub fn dummy_else_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> DummyElse {
+    compiler_context.write_to_parser_file("<DummyElse> -> EMPTY");
+    let body_node = compiler_context.ast.get_node_from_ptr(AstPtr::Body);
+    compiler_context.ast.if_body_stack.push(body_node);
+    None
+}
+
+/// Parses the rule `<ElseStatement> -> TokenElse TokenCBOpen <Body> TokenCBClose`
 pub fn else_statement_else_statement(
     _ctx: &Ctx,
     token_else: TokenElse,
@@ -983,12 +1041,30 @@ pub fn conjunction_conjunction_and(
             compiler_context,
         )
     };
-    compiler_context.ast.create_node(
+
+    let Some(conjunction_node) = compiler_context.ast.conjunction_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    let conjunction_node = compiler_context.ast.create_node(
         AstAction::And,
         boolean_expression_node.into(),
-        AstPtr::Conjunction.into(),
+        conjunction_node.into(),
         AstPtr::Conjunction,
     );
+    compiler_context
+        .ast
+        .conjunction_stack
+        .push(conjunction_node);
+
     Conjunction::ConjunctionAnd(ConjunctionAnd {
         boolean_expression,
         token_and,
@@ -1019,12 +1095,28 @@ pub fn conjunction_conjunction_or(
             compiler_context,
         )
     };
-    compiler_context.ast.create_node(
+    let Some(conjunction_node) = compiler_context.ast.conjunction_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    let conjunction_node = compiler_context.ast.create_node(
         AstAction::Or,
         boolean_expression_node.into(),
-        AstPtr::Conjunction.into(),
+        conjunction_node.into(),
         AstPtr::Conjunction,
     );
+    compiler_context
+        .ast
+        .conjunction_stack
+        .push(conjunction_node);
     Conjunction::ConjunctionOr(ConjunctionOr {
         boolean_expression,
         token_or,
@@ -1051,10 +1143,10 @@ pub fn conjunction_conjunction_boolean_expression(
             compiler_context,
         )
     };
-
     compiler_context
         .ast
-        .assign_node_to_ptr(boolean_expression_node.into(), AstPtr::Conjunction);
+        .conjunction_stack
+        .push(boolean_expression_node);
     Conjunction::ConjunctionBooleanExpression(boolean_expression)
 }
 
