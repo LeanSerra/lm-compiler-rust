@@ -723,7 +723,7 @@ pub fn data_type_string_type(
 /// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn while_loop_while(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_while: TokenWhile,
     token_par_open: TokenParOpen,
     conjunction: Conjunction,
