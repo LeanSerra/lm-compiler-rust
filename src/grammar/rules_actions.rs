@@ -393,6 +393,10 @@ pub fn body_body_expressions(
 /// Parses the rule `<Body> -> EMPTY`
 pub fn body_body_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> Body {
     compiler_context.write_to_parser_file("<Body> -> EMPTY");
+    let leaf = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    compiler_context
+        .ast
+        .assign_node_to_ptr(Rc::new(leaf).into(), AstPtr::Body);
     None
 }
 
