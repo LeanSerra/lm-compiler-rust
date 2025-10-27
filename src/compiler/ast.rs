@@ -47,6 +47,7 @@ pub enum AstPtr {
     Not,
     IsZero,
     While,
+    Read,
     Write,
 }
 
@@ -126,6 +127,7 @@ pub enum AstAction {
     LT,
     LTE,
     While,
+    Read,
     Write,
     Noop,
 }
@@ -151,6 +153,7 @@ impl Display for AstAction {
             Self::Not => write!(f, "NOT"),
             Self::IsZero => write!(f, "ISZERO"),
             Self::While => write!(f, "WHILE"),
+            Self::Read => write!(f, "READ"),
             Self::Write => write!(f, "WRITE"),
             Self::Noop => write!(f, "NOOP"),
         }

@@ -430,6 +430,14 @@ pub fn function_read_function_read_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionRead> -> {token_read} {token_par_open} {token_id} {token_par_close}"
     ));
+    let right_child = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    let left_child = Node::new_leaf(NodeValue::Value(token_id.clone()));
+    compiler_context.ast.create_node(
+        AstAction::Read,
+        Rc::new(left_child).into(),
+        Rc::new(right_child).into(),
+        AstPtr::Read,
+    );
     FunctionRead {
         token_read,
         token_par_open,
@@ -654,6 +662,9 @@ pub fn statement_statement_read(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <FunctionRead>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Read.into(), AstPtr::Statement);
     Statement::StatementRead(function_read)
 }
 
