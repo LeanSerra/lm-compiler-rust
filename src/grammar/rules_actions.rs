@@ -621,6 +621,9 @@ pub fn statement_statement_while(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <WhileLoop>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::While.into(), AstPtr::Statement);
     Statement::StatementWhile(while_loop)
 }
 
@@ -733,6 +736,24 @@ pub fn while_loop_while(
     compiler_context.write_to_parser_file(&format!(
         "<WhileLoop> -> {token_while} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
+    let Some(conjunction_node) = compiler_context.ast.conjunction_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Conjunction stack was empty when parsing `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::While,
+        conjunction_node.into(),
+        AstPtr::Body.into(),
+        AstPtr::While,
+    );
     WhileLoop {
         token_while,
         token_par_open,
