@@ -450,6 +450,13 @@ pub fn function_write_function_write_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionWrite> -> {token_write} {token_par_open} <SimpleExpression> {token_par_close}"
     ));
+    let leaf = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    compiler_context.ast.create_node(
+        AstAction::Write,
+        AstPtr::SimpleExpression.into(),
+        Rc::new(leaf).into(),
+        AstPtr::Write,
+    );
     FunctionWrite {
         token_write,
         token_par_open,
@@ -634,6 +641,9 @@ pub fn statement_statement_write(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <FunctionWrite>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Write.into(), AstPtr::Statement);
     Statement::StatementWrite(function_write)
 }
 
@@ -1040,6 +1050,9 @@ pub fn simple_expression_simple_expression_string(
 ) -> SimpleExpression {
     compiler_context.push_to_symbol_table(token_string_literal.clone().into());
     compiler_context.write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
+    compiler_context
+        .ast
+        .create_leaf(token_string_literal.clone(), AstPtr::SimpleExpression);
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
 
