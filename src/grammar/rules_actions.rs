@@ -587,12 +587,22 @@ pub fn var_declaration_var_declaration_recursive(
 
 /// Parses the rule `<Expressions> -> <Statement>`
 pub fn expressions_expression_single(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     statement: Statement,
     compiler_context: &mut CompilerContext,
 ) -> Expressions {
     compiler_context.write_to_parser_file("<Expressions> -> <Statement>");
-    let statement_node = compiler_context.ast.statement_stack.pop().unwrap();
+    let Some(statement_node) = compiler_context.ast.statement_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Statement stack was empty when parsing `<Expressions> -> <Statement>`".into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
     compiler_context
         .ast
         .assign_node_to_ptr(statement_node.into(), AstPtr::Expressions);
@@ -601,13 +611,23 @@ pub fn expressions_expression_single(
 
 /// Parses the rule `<Expressions> -> <Statement> <Expressions>`
 pub fn expressions_expression_recursive(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     statement: Statement,
     expressions: Expressions,
     compiler_context: &mut CompilerContext,
 ) -> Expressions {
     compiler_context.write_to_parser_file("<Expressions> -> <Statement> <Expressions>");
-    let statement_node = compiler_context.ast.statement_stack.pop().unwrap();
+    let Some(statement_node) = compiler_context.ast.statement_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Statement stack was empty when parsing `<Expressions> -> <Statement> <Expressions>`".into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
     compiler_context.ast.create_node(
         AstAction::S,
         AstPtr::Expressions.into(),
