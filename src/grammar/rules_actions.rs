@@ -494,6 +494,13 @@ pub fn function_is_zero_function_is_zero_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionIsZero> -> {token_is_zero} {token_par_open} <E> {token_par_close}"
     ));
+    let zero_leaf = Rc::new(Node::new_leaf(NodeValue::Value("0".into())));
+    compiler_context.ast.create_node(
+        AstAction::EQ,
+        AstPtr::ArithmeticExpression.into(),
+        zero_leaf.into(),
+        AstPtr::IsZero,
+    );
     FunctionIsZero {
         token_is_zero,
         token_par_open,
