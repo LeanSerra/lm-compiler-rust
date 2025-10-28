@@ -132,6 +132,7 @@ pub enum AstAction {
     Read,
     Write,
     S,
+    Negative,
     Noop,
 }
 
@@ -159,6 +160,7 @@ impl Display for AstAction {
             Self::Read => write!(f, "READ"),
             Self::Write => write!(f, "WRITE"),
             Self::S => write!(f, "S"),
+            Self::Negative => write!(f, "NEG"),
             Self::Noop => write!(f, "NOOP"),
         }
     }

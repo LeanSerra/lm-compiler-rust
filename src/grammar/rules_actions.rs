@@ -1442,6 +1442,9 @@ pub fn number_number_float(
 ) -> Number {
     compiler_context.push_to_symbol_table(token_float_literal.clone().into());
     compiler_context.write_to_parser_file(&format!("<Number> -> {}", token_float_literal.original));
+    compiler_context
+        .ast
+        .create_leaf(token_float_literal.original.clone(), AstPtr::Number);
     Number::NumberFloat(token_float_literal)
 }
 
@@ -1455,6 +1458,16 @@ pub fn number_number_negative_int(
     let value: i64 = format!("{token_sub}{token_int_literal}").parse().unwrap();
     compiler_context.push_to_symbol_table(value.into());
     compiler_context.write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
+    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(
+        token_int_literal.to_string(),
+    )));
+    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    compiler_context.ast.create_node(
+        AstAction::Negative,
+        leaf.into(),
+        noop.into(),
+        AstPtr::Number,
+    );
     Number::NumberInt(value)
 }
 
@@ -1472,6 +1485,17 @@ pub fn number_number_negative_float(
         "<Number> -> {token_sub} {}",
         token_float_literal.original
     ));
+    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(
+        token_float_literal.original.clone(),
+    )));
+    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    compiler_context.ast.create_node(
+        AstAction::Negative,
+        leaf.into(),
+        noop.into(),
+        AstPtr::Number,
+    );
+
     Number::NumberFloat(token_float_literal)
 }
 
