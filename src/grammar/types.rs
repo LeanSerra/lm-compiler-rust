@@ -692,10 +692,10 @@ pub struct FactorParen {
 #[derive(Debug)]
 pub enum Dummy {}
 
-/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should alway be EMPTY
+/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should always be EMPTY
 pub type DummyAE = Option<Dummy>;
 
-/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should alway be EMPTY
+/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should always be EMPTY
 pub type DummyT = Option<Dummy>;
 
 impl Display for TokenKind {
