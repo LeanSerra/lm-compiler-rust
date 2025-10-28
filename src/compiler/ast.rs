@@ -50,6 +50,7 @@ pub enum AstPtr {
     While,
     Read,
     Write,
+    ConvDate,
 }
 
 pub enum AstNodeRef {

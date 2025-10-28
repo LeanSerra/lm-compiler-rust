@@ -514,6 +514,46 @@ pub fn function_conv_date_function_conv_date_variable_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionConvDate> -> {token_conv_date} {token_par_open} {token_date} {token_par_close}"
     ));
+    let thousand_leaf = Rc::new(Node::new_leaf(NodeValue::Value("1000".into())));
+    let hundread_leaf = Rc::new(Node::new_leaf(NodeValue::Value("100".into())));
+    let one_leaf = Rc::new(Node::new_leaf(NodeValue::Value("1".into())));
+
+    let year_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.year.clone())));
+    let month_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.month.clone())));
+    let day_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.day.clone())));
+
+    let year_node = compiler_context.ast.create_node(
+        AstAction::Mult,
+        year_leaf.into(),
+        thousand_leaf.into(),
+        AstPtr::ConvDate,
+    );
+    let month_node = compiler_context.ast.create_node(
+        AstAction::Mult,
+        month_leaf.into(),
+        hundread_leaf.into(),
+        AstPtr::ConvDate,
+    );
+    let day_node = compiler_context.ast.create_node(
+        AstAction::Mult,
+        day_leaf.into(),
+        one_leaf.into(),
+        AstPtr::ConvDate,
+    );
+
+    let sum_year_month_node = compiler_context.ast.create_node(
+        AstAction::Plus,
+        year_node.into(),
+        month_node.into(),
+        AstPtr::ConvDate,
+    );
+    compiler_context.ast.create_node(
+        AstAction::Plus,
+        sum_year_month_node.into(),
+        day_node.into(),
+        AstPtr::ConvDate,
+    );
+
     FunctionConvDate {
         token_conv_date,
         token_par_open,
@@ -751,6 +791,13 @@ pub fn assignment_assignment_conv_date(
     compiler_context.write_to_parser_file(&format!(
         "<Assignment> -> {token_id} {token_assign} <FunctionConvDate>"
     ));
+    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_id.clone())));
+    compiler_context.ast.create_node(
+        AstAction::Assign,
+        leaf.into(),
+        AstPtr::ConvDate.into(),
+        AstPtr::Assignment,
+    );
     Assignment::AssignmentConvDate(ConvDate {
         token_id,
         token_assign,
