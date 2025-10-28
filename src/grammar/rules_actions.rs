@@ -656,13 +656,9 @@ pub fn expressions_expression_single(
 
     let ast = &mut compiler_context.ast;
     let Some(statement_node) = ast.statement_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Statement stack was empty when parsing `<Expressions> -> <Statement>`".into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Statement stack was empty when parsing `<Expressions> -> <Statement>`",
+            ctx,
             compiler_context,
         )
     };
@@ -682,13 +678,9 @@ pub fn expressions_expression_recursive(
 
     let ast = &mut compiler_context.ast;
     let Some(statement_node) = ast.statement_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Statement stack was empty when parsing `<Expressions> -> <Statement> <Expressions>`".into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Statement stack was empty when parsing `<Expressions> -> <Statement> <Expressions>`",
+            ctx,
             compiler_context,
         )
     };
@@ -890,14 +882,9 @@ pub fn while_loop_while(
 
     let ast = &mut compiler_context.ast;
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Conjunction stack was empty when parsing `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Conjunction stack was empty when parsing `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`",
+            ctx,
             compiler_context,
         )
     };
@@ -938,16 +925,11 @@ pub fn if_statement_if_statement(
 
     let ast = &mut compiler_context.ast;
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     ast.create_node(
         AstAction::If,
@@ -987,14 +969,9 @@ pub fn if_statement_if_statement_else_statement(
 
     let ast = &mut compiler_context.ast;
     let Some(if_true_body) = ast.if_body_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "IfBody stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "IfBody stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`",
+            ctx,
             compiler_context,
         )
     };
@@ -1005,14 +982,9 @@ pub fn if_statement_if_statement_else_statement(
         AstPtr::If,
     );
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Conjunction stack was empty when parsing `<IfStatement> -> TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose <DummyElse> <ElseStatement>`",
+            ctx,
             compiler_context,
         )
     };
@@ -1080,28 +1052,18 @@ pub fn boolean_expression_boolean_expression_simple_expression(
 
     let ast = &mut compiler_context.ast;
     let Some(left_child) = ast.comparision_expressions_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "ComparisonExpressions stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "ComparisonExpressions stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     let Some(operator) = ast.comparision_op_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "ComparisonOperator stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "ComparisonOperator stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     let node = ast.create_node(
         operator.into(),
@@ -1239,26 +1201,16 @@ pub fn conjunction_conjunction_and(
 
     let ast = &mut compiler_context.ast;
     let Some(boolean_expression_node) = ast.boolean_expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`",
+            ctx,
             compiler_context,
         )
     };
@@ -1291,28 +1243,18 @@ pub fn conjunction_conjunction_or(
 
     let ast = &mut compiler_context.ast;
     let Some(boolean_expression_node) = ast.boolean_expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Conjunction stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     let conjunction_node = ast.create_node(
         AstAction::Or,
@@ -1339,16 +1281,11 @@ pub fn conjunction_conjunction_boolean_expression(
 
     let ast = &mut compiler_context.ast;
     let Some(boolean_expression_node) = ast.boolean_expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     ast.conjunction_stack.push(boolean_expression_node);
 
@@ -1556,16 +1493,11 @@ pub fn not_statement_not(
 
     let ast = &mut compiler_context.ast;
     let Some(boolean_expression_node) = ast.boolean_expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "BooleanExpression stack was empty when parsing `<NotStatement> -> TokenNot <BooleanExpression>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "BooleanExpression stack was empty when parsing `<NotStatement> -> TokenNot <BooleanExpression>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
 
     let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop));
@@ -1596,16 +1528,11 @@ pub fn arithmetic_expression_arithmetic_expression_sum_term(
 
     let ast = &mut compiler_context.ast;
     let Some(node) = ast.expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSum <Term>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSum <Term>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     ast.create_node(
         AstAction::Plus,
@@ -1635,14 +1562,9 @@ pub fn arithmetic_expression_arithmetic_expression_sub_term(
 
     let ast = &mut compiler_context.ast;
     let Some(node) = ast.expression_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSub <Term>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSub <Term>`",
+            ctx,
             compiler_context,
         )
     };
@@ -1696,16 +1618,11 @@ pub fn term_term_mul_factor(
 
     let ast = &mut compiler_context.ast;
     let Some(node) = ast.term_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenMul <Factor>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenMul <Factor>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     ast.create_node(
         AstAction::Mult,
@@ -1734,16 +1651,11 @@ pub fn term_term_div_factor(
 
     let ast = &mut compiler_context.ast;
     let Some(node) = ast.term_stack.pop() else {
-        log_error_and_exit(
-            ctx.range(),
-            CompilerError::Internal(
-                "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenDiv <Factor>`"
-                    .into(),
-            ),
-            0,
-            true,
+        log_ast_error(
+            "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenDiv <Factor>`",
+            ctx,
             compiler_context,
-        )
+        );
     };
     ast.create_node(
         AstAction::Div,
@@ -1830,4 +1742,14 @@ pub fn factor_factor_paren(
         arithmetic_expression: Box::new(arithmetic_expression),
         token_par_close,
     })
+}
+
+fn log_ast_error(error: &str, ctx: &Ctx, compiler_context: &mut CompilerContext) -> ! {
+    log_error_and_exit(
+        ctx.range(),
+        CompilerError::Internal(error.into()),
+        0,
+        true,
+        compiler_context,
+    )
 }
