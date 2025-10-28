@@ -7,7 +7,8 @@ Simple compiler written in Rust using:
 
 ## Prerequisites
 
-Install [Rust](https://rustup.rs/)
+- [Rust](https://rustup.rs/)
+- [Graphviz](https://graphviz.org/) (optional for AST visualization)
 
 ## Features
 

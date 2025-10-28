@@ -1,4 +1,12 @@
-use std::{array, cell::Cell, mem, rc::Rc};
+use std::{
+    array,
+    cell::Cell,
+    fmt::Display,
+    fs::File,
+    io::{self, Write},
+    mem,
+    rc::Rc,
+};
 
 pub struct Ast {
     tree: [Rc<Node>; mem::variant_count::<AstPtr>()],
@@ -46,6 +54,15 @@ pub enum NodeValue {
     Value(String),
 }
 
+impl Display for NodeValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Value(value) => write!(f, "{value}"),
+            Self::Action(action) => write!(f, "{action}"),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum AstAction {
     Plus,
@@ -53,6 +70,18 @@ pub enum AstAction {
     Mult,
     Div,
     Assign,
+}
+
+impl Display for AstAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Plus => write!(f, "PLUS"),
+            Self::Sub => write!(f, "SUB"),
+            Self::Mult => write!(f, "MUL"),
+            Self::Div => write!(f, "DIV"),
+            Self::Assign => write!(f, "ASSIGN"),
+        }
+    }
 }
 
 impl Default for Ast {
@@ -119,20 +148,43 @@ impl Ast {
         leaf
     }
 
-    pub fn traverse_from(&self, from: AstPtr) {
-        Ast::recursive_traverse(&self.tree[from as usize], 0);
+    pub fn graph_ast(
+        &self,
+        from: AstPtr,
+        graph_label: &str,
+        file: &mut File,
+    ) -> Result<(), io::Error> {
+        writeln!(file, "graph \"\"")?;
+        writeln!(file, "{{")?;
+        writeln!(file, "    fontname=\"Arial\"")?;
+        writeln!(file, "    node [fontname=\"Arial\"]")?;
+        writeln!(file, "    edge [fontname=\"Arial\"]")?;
+        writeln!(file, "    label=\"{}\"", graph_label.trim())?;
+        writeln!(file)?;
+        Ast::graph_recursive_traverse(&self.tree[from as usize], 0, file)?;
+        writeln!(file, "}}")
     }
 
-    fn recursive_traverse(node: &Rc<Node>, depth: usize) {
+    fn graph_recursive_traverse(
+        node: &Rc<Node>,
+        mut node_count: usize,
+        file: &mut File,
+    ) -> Result<usize, io::Error> {
+        let node_name = format!("n{node_count:0>3}");
+        writeln!(file, "    {node_name:0>3} ;")?;
+        writeln!(file, "    {node_name:0>3} [label=\"{:}\"] ;", node.value)?;
         if let Some(left_child) = &node.left_child {
-            Ast::recursive_traverse(left_child, depth + 1);
+            node_count += 1;
+            writeln!(file, "    {node_name} -- n{node_count:0>3} ;")?;
+            node_count = Ast::graph_recursive_traverse(left_child, node_count, file)?;
         }
-
-        println!("DEPTH: {depth}|{:?}", node.value);
 
         if let Some(right_child) = &node.right_child {
-            Ast::recursive_traverse(right_child, depth + 1);
+            node_count += 1;
+            writeln!(file, "    {node_name} -- n{node_count:0>3} ;")?;
+            node_count = Ast::graph_recursive_traverse(right_child, node_count, file)?;
         }
+        Ok(node_count)
     }
 
     pub fn push_t_stack(&mut self, node: AstNodeRef) {

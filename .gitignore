@@ -2,3 +2,4 @@
 *.lexer
 *.parser
 *.symbol_table
+*.dot
