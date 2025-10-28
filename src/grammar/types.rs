@@ -671,6 +671,16 @@ pub struct FactorParen {
     pub token_par_close: TokenParClose,
 }
 
+/// Enum used for all the non terminals used as markers for generating the intermediate representation
+#[derive(Debug)]
+pub enum Dummy {}
+
+/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should always be EMPTY
+pub type DummyAE = Option<Dummy>;
+
+/// Type declaration for the `<DummyAE>` non terminal represented by an `Option<T>` because it should always be EMPTY
+pub type DummyT = Option<Dummy>;
+
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let text = match self {

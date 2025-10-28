@@ -1,6 +1,10 @@
-use crate::compiler::context::CompilerContext;
+use crate::compiler::{
+    ast::{AstAction, AstNodeRef, AstPtr, Node, NodeValue},
+    context::CompilerContext,
+    error::{CompilerError, log_error_and_exit},
+};
 pub use crate::grammar::types::*;
-use rustemo::Input;
+use rustemo::{Context, Input};
 
 /// Parses the keyword "int"
 pub fn token_int(_ctx: &Ctx, token: Token, compiler_context: &mut CompilerContext) -> TokenInt {
@@ -644,6 +648,13 @@ pub fn assignment_assignment_expression(
     compiler_context.write_to_parser_file(&format!(
         "<Assignment> -> {token_id} {token_assign} <SimpleExpression>"
     ));
+    let leaf = Node::new_leaf(NodeValue::Value(token_id.clone()));
+    compiler_context.ast.create_node(
+        AstAction::Assign,
+        AstNodeRef::Node(leaf.into()),
+        AstNodeRef::Ptr(AstPtr::SimpleExpression),
+        AstPtr::Assignment,
+    );
     Assignment::AssignmentExpression(AssignmentExpression {
         token_id,
         token_assign,
@@ -884,6 +895,10 @@ pub fn simple_expression_simple_expression_arithmetic(
     compiler_context: &mut CompilerContext,
 ) -> SimpleExpression {
     compiler_context.write_to_parser_file("<SimpleExpression> -> <ArithmeticExpression>");
+    compiler_context.ast.assign_node_to_ptr(
+        AstNodeRef::Ptr(AstPtr::ArithmeticExpression),
+        AstPtr::SimpleExpression,
+    );
     SimpleExpression::SimpleExpressionArithmeticExpression(arithmetic_expression)
 }
 
@@ -986,6 +1001,9 @@ pub fn number_number_int(
 ) -> Number {
     compiler_context.push_to_symbol_table(token_int_literal.into());
     compiler_context.write_to_parser_file(&format!("<Number> -> {token_int_literal}"));
+    compiler_context
+        .ast
+        .create_leaf(token_int_literal.to_string(), AstPtr::Number);
     Number::NumberInt(token_int_literal)
 }
 
@@ -1046,17 +1064,35 @@ pub fn not_statement_not(
     }
 }
 
-/// Parses the rule `<ArithmeticExpression> -> <ArithmeticExpression> TokenSum <Term>`
+/// Parses the rule `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSum <Term>`
 pub fn arithmetic_expression_arithmetic_expression_sum_term(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     arithmetic_expression: ArithmeticExpression,
     token_sum: TokenSum,
     term: Term,
     compiler_context: &mut CompilerContext,
 ) -> ArithmeticExpression {
     compiler_context.write_to_parser_file(&format!(
-        "<ArithmeticExpression> -> <ArithmeticExpression> {token_sum} <Term>"
+        "<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> {token_sum} <Term>"
     ));
+    let Some(node) = compiler_context.ast.pop_e_stack() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSum <Term>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::Plus,
+        AstNodeRef::Node(node),
+        AstNodeRef::Ptr(AstPtr::Term),
+        AstPtr::ArithmeticExpression,
+    );
     ArithmeticExpression::ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm {
         arithmetic_expression: Box::new(arithmetic_expression),
         token_sum,
@@ -1064,22 +1100,48 @@ pub fn arithmetic_expression_arithmetic_expression_sum_term(
     })
 }
 
-/// Parses the rule `<ArithmeticExpression> -> <ArithmeticExpression> TokenSub <Term>`
+/// Parses the rule `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSub <Term>`
 pub fn arithmetic_expression_arithmetic_expression_sub_term(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     arithmetic_expression: ArithmeticExpression,
     token_sub: TokenSub,
     term: Term,
     compiler_context: &mut CompilerContext,
 ) -> ArithmeticExpression {
     compiler_context.write_to_parser_file(&format!(
-        "<ArithmeticExpression> -> <ArithmeticExpression> {token_sub} <Term>"
+        "<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> {token_sub} <Term>"
     ));
+    let Some(node) = compiler_context.ast.pop_e_stack() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSub <Term>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::Sub,
+        AstNodeRef::Node(node),
+        AstNodeRef::Ptr(AstPtr::Term),
+        AstPtr::ArithmeticExpression,
+    );
     ArithmeticExpression::ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm {
         arithmetic_expression: Box::new(arithmetic_expression),
         token_sub,
         term,
     })
+}
+
+// Parses the rule `<DummyAE> -> EMPTY`
+pub fn dummy_ae_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> DummyAE {
+    compiler_context
+        .ast
+        .push_e_stack(AstNodeRef::Ptr(AstPtr::ArithmeticExpression));
+    None
 }
 
 /// Parses the rule `<ArithmeticExpression> -> <Term>`
@@ -1089,18 +1151,40 @@ pub fn arithmetic_expression_arithmetic_expression_term(
     compiler_context: &mut CompilerContext,
 ) -> ArithmeticExpression {
     compiler_context.write_to_parser_file("<ArithmeticExpression> -> <Term>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Term), AstPtr::ArithmeticExpression);
     ArithmeticExpression::ArithmeticExpressionTerm(term)
 }
 
-/// Parses the rule `<Term> -> <Term> TokenMul <Factor>`
+/// Parses the rule `<Term> -> <Term> <DummyT> TokenMul <Factor>`
 pub fn term_term_mul_factor(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     term: Term,
     token_mul: TokenMul,
     factor: Factor,
     compiler_context: &mut CompilerContext,
 ) -> Term {
-    compiler_context.write_to_parser_file(&format!("<Term> -> <Term> {token_mul} <Factor>"));
+    compiler_context
+        .write_to_parser_file(&format!("<Term> -> <Term> <DummyT> {token_mul} <Factor>"));
+    let Some(node) = compiler_context.ast.pop_t_stack() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenMul <Factor>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::Mult,
+        AstNodeRef::Node(node),
+        AstNodeRef::Ptr(AstPtr::Factor),
+        AstPtr::Term,
+    );
     Term::TermMulFactor(TermMulFactor {
         term: Box::new(term),
         token_mul,
@@ -1108,20 +1192,47 @@ pub fn term_term_mul_factor(
     })
 }
 
-/// Parses the rule `<Term> -> <Term> TokenDiv <Factor>`
+/// Parses the rule `<Term> -> <Term> <DummyT> TokenDiv <Factor>`
 pub fn term_term_div_factor(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     term: Term,
     token_div: TokenDiv,
     factor: Factor,
     compiler_context: &mut CompilerContext,
 ) -> Term {
-    compiler_context.write_to_parser_file(&format!("<Term> -> <Term> {token_div} <Factor>"));
+    compiler_context
+        .write_to_parser_file(&format!("<Term> -> <Term> <DummyT> {token_div} <Factor>"));
+    let Some(node) = compiler_context.ast.pop_t_stack() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenDiv <Factor>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::Div,
+        AstNodeRef::Node(node),
+        AstNodeRef::Ptr(AstPtr::Factor),
+        AstPtr::Term,
+    );
     Term::TermDivFactor(TermDivFactor {
         term: Box::new(term),
         token_div,
         factor,
     })
+}
+
+// Parses the rule `<DummyT> -> EMPTY`
+pub fn dummy_t_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> DummyT {
+    compiler_context
+        .ast
+        .push_t_stack(AstNodeRef::Ptr(AstPtr::Term));
+    None
 }
 
 /// Parses the rule `<Term> -> <Factor>`
@@ -1131,6 +1242,9 @@ pub fn term_term_factor(
     compiler_context: &mut CompilerContext,
 ) -> Term {
     compiler_context.write_to_parser_file("<Term> -> <Factor>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Factor), AstPtr::Term);
     Term::TermFactor(factor)
 }
 
@@ -1141,6 +1255,9 @@ pub fn factor_factor_id(
     compiler_context: &mut CompilerContext,
 ) -> Factor {
     compiler_context.write_to_parser_file(&format!("<Factor> -> {token_id}"));
+    compiler_context
+        .ast
+        .create_leaf(token_id.clone(), AstPtr::Factor);
     Factor::FactorId(token_id)
 }
 
@@ -1151,6 +1268,9 @@ pub fn factor_factor_number(
     compiler_context: &mut CompilerContext,
 ) -> Factor {
     compiler_context.write_to_parser_file("<Factor> -> <Number>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Number), AstPtr::Factor);
     Factor::FactorNumber(number)
 }
 
@@ -1165,6 +1285,10 @@ pub fn factor_factor_paren(
     compiler_context.write_to_parser_file(&format!(
         "<Factor> -> {token_par_open} <ArithmeticExpression> {token_par_close}"
     ));
+    compiler_context.ast.assign_node_to_ptr(
+        AstNodeRef::Ptr(AstPtr::ArithmeticExpression),
+        AstPtr::Factor,
+    );
     Factor::FactorParen(FactorParen {
         token_par_open,
         arithmetic_expression: Box::new(arithmetic_expression),

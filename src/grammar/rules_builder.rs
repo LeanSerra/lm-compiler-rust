@@ -80,6 +80,8 @@ pub enum NonTerminal {
     ArithmeticExpression(rules_actions::ArithmeticExpression),
     Term(rules_actions::Term),
     Factor(rules_actions::Factor),
+    DummyAE(rules_actions::DummyAE),
+    DummyT(rules_actions::DummyT),
 }
 
 impl Builder for Compiler {
@@ -1311,11 +1313,17 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
             ProdKind::ArithmeticExpressionArithmeticExpressionSumTerm => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 3usize)
+                    .split_off(stack_len - 4usize)
                     .into_iter();
-                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                match (
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                ) {
                     (
                         Symbol::NonTerminal(NonTerminal::ArithmeticExpression(p0)),
+                        Symbol::NonTerminal(NonTerminal::DummyAE(_)),
                         Symbol::Terminal(Terminal::TokenSum(p1)),
                         Symbol::NonTerminal(NonTerminal::Term(p2)),
                     ) => NonTerminal::ArithmeticExpression(
@@ -1333,11 +1341,17 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
             ProdKind::ArithmeticExpressionArithmeticExpressionSubTerm => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 3usize)
+                    .split_off(stack_len - 4usize)
                     .into_iter();
-                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                match (
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                ) {
                     (
                         Symbol::NonTerminal(NonTerminal::ArithmeticExpression(p0)),
+                        Symbol::NonTerminal(NonTerminal::DummyAE(_)),
                         Symbol::Terminal(Terminal::TokenSub(p1)),
                         Symbol::NonTerminal(NonTerminal::Term(p2)),
                     ) => NonTerminal::ArithmeticExpression(
@@ -1373,11 +1387,17 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
             ProdKind::TermTermMulFactor => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 3usize)
+                    .split_off(stack_len - 4usize)
                     .into_iter();
-                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                match (
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                ) {
                     (
                         Symbol::NonTerminal(NonTerminal::Term(p0)),
+                        Symbol::NonTerminal(NonTerminal::DummyT(_)),
                         Symbol::Terminal(Terminal::TokenMul(p1)),
                         Symbol::NonTerminal(NonTerminal::Factor(p2)),
                     ) => NonTerminal::Term(rules_actions::term_term_mul_factor(
@@ -1393,11 +1413,17 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
             ProdKind::TermTermDivFactor => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 3usize)
+                    .split_off(stack_len - 4usize)
                     .into_iter();
-                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                match (
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                ) {
                     (
                         Symbol::NonTerminal(NonTerminal::Term(p0)),
+                        Symbol::NonTerminal(NonTerminal::DummyT(_)),
                         Symbol::Terminal(Terminal::TokenDiv(p1)),
                         Symbol::NonTerminal(NonTerminal::Factor(p2)),
                     ) => NonTerminal::Term(rules_actions::term_term_div_factor(
@@ -1465,6 +1491,13 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     )),
                     _ => panic!("Invalid symbol parse stack data."),
                 }
+            }
+            ProdKind::DummyAEP1 => NonTerminal::DummyAE(rules_actions::dummy_ae_empty(
+                context,
+                &mut compiler_context,
+            )),
+            ProdKind::DummyTP1 => {
+                NonTerminal::DummyT(rules_actions::dummy_t_empty(context, &mut compiler_context))
             }
         };
         compiler_context.res_stack.push(Symbol::NonTerminal(prod));

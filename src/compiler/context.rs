@@ -1,5 +1,5 @@
 use crate::{
-    compiler::error::CompilerError,
+    compiler::{ast::Ast, error::CompilerError},
     grammar::{
         rules_builder::Symbol,
         types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
@@ -35,6 +35,7 @@ pub struct CompilerContext {
     parser_file: File,
     lexer_file: File,
     symbol_table_file: File,
+    pub ast: Ast,
 }
 
 impl CompilerContext {
@@ -52,6 +53,7 @@ impl CompilerContext {
             parser_file,
             lexer_file,
             symbol_table_file,
+            ast: Ast::new(),
         })
     }
 

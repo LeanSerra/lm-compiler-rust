@@ -15,6 +15,8 @@ pub enum CompilerError {
     Context(String),
     #[error("IO error: {0}")]
     IO(String),
+    #[error("Compiler internal error: {0}. This is a bug.")]
+    Internal(String),
 }
 
 pub fn log_error_and_exit(

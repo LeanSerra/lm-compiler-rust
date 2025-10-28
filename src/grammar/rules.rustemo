@@ -75,13 +75,17 @@ Number: TokenIntLiteral {NumberInt}
 
 NotStatement: TokenNot BooleanExpression {Not};
 
-ArithmeticExpression: ArithmeticExpression TokenSum Term {ArithmeticExpressionSumTerm}
-| ArithmeticExpression TokenSub Term {ArithmeticExpressionSubTerm}
+ArithmeticExpression: ArithmeticExpression DummyAE TokenSum Term {ArithmeticExpressionSumTerm}
+| ArithmeticExpression DummyAE TokenSub Term {ArithmeticExpressionSubTerm}
 | Term {ArithmeticExpressionTerm};
 
-Term: Term TokenMul Factor {TermMulFactor}
-| Term TokenDiv Factor {TermDivFactor}
+DummyAE: EMPTY;
+
+Term: Term DummyT TokenMul Factor {TermMulFactor}
+| Term DummyT TokenDiv Factor {TermDivFactor}
 | Factor {TermFactor};
+
+DummyT: EMPTY;
 
 Factor: TokenId {FactorId}
 | Number {FactorNumber}

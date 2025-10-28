@@ -19,9 +19,8 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: 1.89.0
           components: clippy, rustfmt
 
       - name: Run cargo check
@@ -40,9 +39,7 @@ jobs:
         uses: actions/checkout@v5
       
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.89.0
+        uses: dtolnay/rust-toolchain@nightly
 
       - name: Run cargo test
         run: cargo test
