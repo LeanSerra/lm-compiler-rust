@@ -1,7 +1,8 @@
+use crate::grammar::types::ComparisonOp;
 use std::{
     array,
     cell::Cell,
-    fmt::Display,
+    fmt::{Debug, Display},
     fs::File,
     io::{self, Write},
     mem,
@@ -10,8 +11,20 @@ use std::{
 
 pub struct Ast {
     tree: [Rc<Node>; mem::variant_count::<AstPtr>()],
-    stack_t: Vec<Rc<Node>>,
-    stack_e: Vec<Rc<Node>>,
+    pub stack_t: Vec<Rc<Node>>,
+    pub stack_e: Vec<Rc<Node>>,
+    pub comparision_op_stack: Vec<ComparisonOp>,
+    pub comparision_expressions_stack: Vec<Rc<Node>>,
+    pub boolean_expression_stack: Vec<Rc<Node>>,
+}
+
+impl Debug for Ast {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{:?}", self.stack_t)?;
+        writeln!(f, "{:?}", self.stack_e)?;
+        writeln!(f, "{:?}", self.comparision_op_stack)?;
+        writeln!(f, "{:?}", self.comparision_expressions_stack)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -22,7 +35,15 @@ pub enum AstPtr {
     Factor,
     Term,
     ArithmeticExpression,
+    BooleanExpression,
+    Conjunction,
     SimpleExpression,
+    Body,
+    Statement,
+    Expressions,
+    If,
+    Not,
+    IsZero,
 }
 
 pub enum AstNodeRef {
@@ -30,11 +51,29 @@ pub enum AstNodeRef {
     Node(Rc<Node>),
 }
 
+impl From<AstPtr> for AstNodeRef {
+    fn from(value: AstPtr) -> Self {
+        Self::Ptr(value)
+    }
+}
+
+impl From<Rc<Node>> for AstNodeRef {
+    fn from(value: Rc<Node>) -> Self {
+        Self::Node(value)
+    }
+}
+
 pub struct Node {
     pub value: NodeValue,
     parent: Cell<Option<Rc<Node>>>,
     left_child: Option<Rc<Node>>,
     right_child: Option<Rc<Node>>,
+}
+
+impl Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
 }
 
 impl Node {
@@ -70,16 +109,53 @@ pub enum AstAction {
     Mult,
     Div,
     Assign,
+    If,
+    And,
+    Or,
+    Not,
+    IsZero,
+    GT,
+    GTE,
+    EQ,
+    NE,
+    LT,
+    LTE,
+    Noop,
 }
 
 impl Display for AstAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Plus => write!(f, "PLUS"),
-            Self::Sub => write!(f, "SUB"),
-            Self::Mult => write!(f, "MUL"),
-            Self::Div => write!(f, "DIV"),
-            Self::Assign => write!(f, "ASSIGN"),
+            Self::Plus => write!(f, "+"),
+            Self::Sub => write!(f, "-"),
+            Self::Mult => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+            Self::Assign => write!(f, ":="),
+            Self::GT => write!(f, ">"),
+            Self::GTE => write!(f, ">="),
+            Self::EQ => write!(f, "=="),
+            Self::NE => write!(f, "!="),
+            Self::LT => write!(f, "<"),
+            Self::LTE => write!(f, "<="),
+            Self::If => write!(f, "IF"),
+            Self::And => write!(f, "AND"),
+            Self::Or => write!(f, "OR"),
+            Self::Not => write!(f, "NOT"),
+            Self::IsZero => write!(f, "ISZERO"),
+            Self::Noop => write!(f, "NOOP"),
+        }
+    }
+}
+
+impl From<ComparisonOp> for AstAction {
+    fn from(value: ComparisonOp) -> Self {
+        match value {
+            ComparisonOp::ComparisonOpEqual(_) => Self::EQ,
+            ComparisonOp::ComparisonOpNotEqual(_) => Self::NE,
+            ComparisonOp::ComparisonOpLess(_) => Self::LT,
+            ComparisonOp::ComparisonOpLessEqual(_) => Self::LTE,
+            ComparisonOp::ComparisonOpGreater(_) => Self::GT,
+            ComparisonOp::ComparisonOpGreaterEqual(_) => Self::GTE,
         }
     }
 }
@@ -90,6 +166,9 @@ impl Default for Ast {
             tree: array::from_fn(|_| Rc::new(Node::new_leaf(NodeValue::Value("".to_string())))),
             stack_e: Vec::new(),
             stack_t: Vec::new(),
+            comparision_op_stack: Vec::new(),
+            comparision_expressions_stack: Vec::new(),
+            boolean_expression_stack: Vec::new(),
         }
     }
 }
@@ -211,5 +290,9 @@ impl Ast {
 
     pub fn pop_e_stack(&mut self) -> Option<Rc<Node>> {
         self.stack_e.pop()
+    }
+
+    pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
+        self.tree[from as usize].clone()
     }
 }

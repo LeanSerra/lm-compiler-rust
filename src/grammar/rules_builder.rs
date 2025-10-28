@@ -71,7 +71,6 @@ pub enum NonTerminal {
     IfStatement(rules_actions::IfStatement),
     ElseStatement(rules_actions::ElseStatement),
     BooleanExpression(rules_actions::BooleanExpression),
-    BooleanExpressionChain(rules_actions::BooleanExpressionChain),
     SimpleExpression(rules_actions::SimpleExpression),
     Conjunction(rules_actions::Conjunction),
     ComparisonOp(rules_actions::ComparisonOp),
@@ -838,7 +837,7 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     (
                         Symbol::Terminal(Terminal::TokenWhile(p0)),
                         Symbol::Terminal(Terminal::TokenParOpen(p1)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpression(p2)),
+                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
                         Symbol::Terminal(Terminal::TokenParClose(p3)),
                         Symbol::Terminal(Terminal::TokenCBOpen(p4)),
                         Symbol::NonTerminal(NonTerminal::Body(p5)),
@@ -874,7 +873,7 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     (
                         Symbol::Terminal(Terminal::TokenIf(p0)),
                         Symbol::Terminal(Terminal::TokenParOpen(p1)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpression(p2)),
+                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
                         Symbol::Terminal(Terminal::TokenParClose(p3)),
                         Symbol::Terminal(Terminal::TokenCBOpen(p4)),
                         Symbol::NonTerminal(NonTerminal::Body(p5)),
@@ -923,17 +922,19 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
             ProdKind::BooleanExpressionBooleanExpressionSimpleExpression => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 2usize)
+                    .split_off(stack_len - 3usize)
                     .into_iter();
-                match (i.next().unwrap(), i.next().unwrap()) {
+                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
                     (
                         Symbol::NonTerminal(NonTerminal::SimpleExpression(p0)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpressionChain(p1)),
+                        Symbol::NonTerminal(NonTerminal::ComparisonOp(p1)),
+                        Symbol::NonTerminal(NonTerminal::SimpleExpression(p2)),
                     ) => NonTerminal::BooleanExpression(
                         rules_actions::boolean_expression_boolean_expression_simple_expression(
                             context,
                             p0,
                             p1,
+                            p2,
                             &mut compiler_context,
                         ),
                     ),
@@ -972,33 +973,78 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::BooleanExpressionBooleanExpressionSimpleExpressionRecursive => {
+            ProdKind::BooleanExpressionBooleanExpressionVar => {
                 let mut i = compiler_context
                     .res_stack
-                    .split_off(stack_len - 4usize)
+                    .split_off(stack_len - 1_usize)
                     .into_iter();
-                match (
-                    i.next().unwrap(),
-                    i.next().unwrap(),
-                    i.next().unwrap(),
-                    i.next().unwrap(),
-                ) {
-                    (
-                        Symbol::NonTerminal(NonTerminal::SimpleExpression(p0)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpressionChain(p1)),
-                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpression(p3)),
-                    ) => {
-                        NonTerminal::BooleanExpression(
-                            rules_actions::boolean_expression_boolean_expression_simple_expression_recursive(
+                match i.next().unwrap() {
+                    Symbol::Terminal(Terminal::TokenId(p0)) => NonTerminal::BooleanExpression(
+                        rules_actions::boolean_expression_boolean_expression_token_id(
+                            context,
+                            p0,
+                            &mut compiler_context,
+                        ),
+                    ),
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::ConjunctionConjunctionBoolean => {
+                let mut i = compiler_context
+                    .res_stack
+                    .split_off(stack_len - 1_usize)
+                    .into_iter();
+                match i.next().unwrap() {
+                    Symbol::NonTerminal(NonTerminal::BooleanExpression(p0)) => {
+                        NonTerminal::Conjunction(
+                            rules_actions::conjunction_conjunction_boolean_expression(
                                 context,
                                 p0,
-                                p1,
-                                p2,
-                                p3,&mut compiler_context
+                                &mut compiler_context,
                             ),
                         )
                     }
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::ConjunctionConjunctionAnd => {
+                let mut i = compiler_context
+                    .res_stack
+                    .split_off(stack_len - 3usize)
+                    .into_iter();
+                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                    (
+                        Symbol::NonTerminal(NonTerminal::BooleanExpression(p0)),
+                        Symbol::Terminal(Terminal::TokenAnd(p1)),
+                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
+                    ) => NonTerminal::Conjunction(rules_actions::conjunction_conjunction_and(
+                        context,
+                        p0,
+                        p1,
+                        p2,
+                        &mut compiler_context,
+                    )),
+
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::ConjunctionConjunctionOr => {
+                let mut i = compiler_context
+                    .res_stack
+                    .split_off(stack_len - 3usize)
+                    .into_iter();
+                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
+                    (
+                        Symbol::NonTerminal(NonTerminal::BooleanExpression(p0)),
+                        Symbol::Terminal(Terminal::TokenOr(p1)),
+                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
+                    ) => NonTerminal::Conjunction(rules_actions::conjunction_conjunction_or(
+                        context,
+                        p0,
+                        p1,
+                        p2,
+                        &mut compiler_context,
+                    )),
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
@@ -1038,36 +1084,6 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::BooleanExpressionChainBooleanExpressionChainAux => {
-                let mut i = compiler_context
-                    .res_stack
-                    .split_off(stack_len - 3usize)
-                    .into_iter();
-                match (i.next().unwrap(), i.next().unwrap(), i.next().unwrap()) {
-                    (
-                        Symbol::NonTerminal(NonTerminal::ComparisonOp(p0)),
-                        Symbol::NonTerminal(NonTerminal::SimpleExpression(p1)),
-                        Symbol::NonTerminal(NonTerminal::BooleanExpressionChain(p2)),
-                    ) => NonTerminal::BooleanExpressionChain(
-                        rules_actions::boolean_expression_chain_boolean_expression_chain_aux(
-                            context,
-                            p0,
-                            p1,
-                            p2,
-                            &mut compiler_context,
-                        ),
-                    ),
-                    _ => panic!("Invalid symbol parse stack data."),
-                }
-            }
-            ProdKind::BooleanExpressionChainBooleanExpressionChainEmpty => {
-                NonTerminal::BooleanExpressionChain(
-                    rules_actions::boolean_expression_chain_boolean_expression_chain_empty(
-                        context,
-                        &mut compiler_context,
-                    ),
-                )
-            }
             ProdKind::SimpleExpressionSimpleExpressionArithmetic => {
                 let mut i = compiler_context
                     .res_stack
@@ -1104,38 +1120,7 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::ConjunctionConjunctionAnd => {
-                let mut i = compiler_context
-                    .res_stack
-                    .split_off(stack_len - 1usize)
-                    .into_iter();
-                match i.next().unwrap() {
-                    Symbol::Terminal(Terminal::TokenAnd(p0)) => {
-                        NonTerminal::Conjunction(rules_actions::conjunction_conjunction_and(
-                            context,
-                            p0,
-                            &mut compiler_context,
-                        ))
-                    }
-                    _ => panic!("Invalid symbol parse stack data."),
-                }
-            }
-            ProdKind::ConjunctionConjunctionOr => {
-                let mut i = compiler_context
-                    .res_stack
-                    .split_off(stack_len - 1usize)
-                    .into_iter();
-                match i.next().unwrap() {
-                    Symbol::Terminal(Terminal::TokenOr(p0)) => {
-                        NonTerminal::Conjunction(rules_actions::conjunction_conjunction_or(
-                            context,
-                            p0,
-                            &mut compiler_context,
-                        ))
-                    }
-                    _ => panic!("Invalid symbol parse stack data."),
-                }
-            }
+
             ProdKind::ComparisonOpComparisonOpEqual => {
                 let mut i = compiler_context
                     .res_stack

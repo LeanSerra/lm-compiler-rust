@@ -1,10 +1,11 @@
 use crate::compiler::{
-    ast::{AstAction, AstNodeRef, AstPtr, Node, NodeValue},
+    ast::{AstAction, AstPtr, Node, NodeValue},
     context::CompilerContext,
     error::{CompilerError, log_error_and_exit},
 };
 pub use crate::grammar::types::*;
 use rustemo::{Context, Input};
+use std::rc::Rc;
 
 /// Parses the keyword "int"
 pub fn token_int(_ctx: &Ctx, token: Token, compiler_context: &mut CompilerContext) -> TokenInt {
@@ -383,6 +384,9 @@ pub fn body_body_expressions(
     compiler_context: &mut CompilerContext,
 ) -> Body {
     compiler_context.write_to_parser_file("<Body> -> <Expressions>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Expressions.into(), AstPtr::Body);
     Some(BodyNoO::BodyExpressions(expressions))
 }
 
@@ -560,6 +564,9 @@ pub fn expressions_expression_single(
     compiler_context: &mut CompilerContext,
 ) -> Expressions {
     compiler_context.write_to_parser_file("<Expressions> -> <Statement>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Statement.into(), AstPtr::Expressions);
     Expressions::ExpressionSingle(statement)
 }
 
@@ -584,6 +591,9 @@ pub fn statement_statement_assignment(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <Assignment>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Assignment.into(), AstPtr::Statement);
     Statement::StatementAssignment(assignment)
 }
 
@@ -594,6 +604,9 @@ pub fn statement_statement_if_statement(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <IfStatement>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::If.into(), AstPtr::Statement);
     Statement::StatementIfStatement(if_statement)
 }
 
@@ -651,8 +664,8 @@ pub fn assignment_assignment_expression(
     let leaf = Node::new_leaf(NodeValue::Value(token_id.clone()));
     compiler_context.ast.create_node(
         AstAction::Assign,
-        AstNodeRef::Node(leaf.into()),
-        AstNodeRef::Ptr(AstPtr::SimpleExpression),
+        Rc::new(leaf).into(),
+        AstPtr::SimpleExpression.into(),
         AstPtr::Assignment,
     );
     Assignment::AssignmentExpression(AssignmentExpression {
@@ -710,13 +723,13 @@ pub fn data_type_string_type(
     DataType::StringType(token_string)
 }
 
-/// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<WhileLoop> -> TokenWhile TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn while_loop_while(
     _ctx: &Ctx,
     token_while: TokenWhile,
     token_par_open: TokenParOpen,
-    boolean_expression: BooleanExpression,
+    conjunction: Conjunction,
     token_par_close: TokenParClose,
     token_cbopen: TokenCBOpen,
     body: Body,
@@ -724,12 +737,12 @@ pub fn while_loop_while(
     compiler_context: &mut CompilerContext,
 ) -> WhileLoop {
     compiler_context.write_to_parser_file(&format!(
-        "<WhileLoop> -> {token_while} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+        "<WhileLoop> -> {token_while} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
     WhileLoop {
         token_while,
         token_par_open,
-        boolean_expression,
+        conjunction,
         token_par_close,
         token_cbopen,
         body: Box::new(body),
@@ -737,13 +750,13 @@ pub fn while_loop_while(
     }
 }
 
-/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <BooleanExpression> TokenParClose TokenCBOpen <Body> TokenCBClose`
+/// Parses the rule `<IfStatement>: TokenIf TokenParOpen <Conjunction> TokenParClose TokenCBOpen <Body> TokenCBClose`
 #[expect(clippy::too_many_arguments)]
 pub fn if_statement_if_statement(
     _ctx: &Ctx,
     token_if: TokenIf,
     token_par_open: TokenParOpen,
-    boolean_expression: BooleanExpression,
+    conjunction: Conjunction,
     token_par_close: TokenParClose,
     token_cbopen: TokenCBOpen,
     body: Body,
@@ -751,12 +764,18 @@ pub fn if_statement_if_statement(
     compiler_context: &mut CompilerContext,
 ) -> IfStatement {
     compiler_context.write_to_parser_file(&format!(
-        "<IfStatement> -> {token_if} {token_par_open} <BooleanExpression> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
+        "<IfStatement> -> {token_if} {token_par_open} <Conjunction> {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
+    compiler_context.ast.create_node(
+        AstAction::If,
+        AstPtr::Conjunction.into(),
+        AstPtr::Body.into(),
+        AstPtr::If,
+    );
     IfStatement {
         token_if,
         token_par_open,
-        boolean_expression,
+        conjunction,
         token_par_close,
         token_cbopen,
         body: Box::new(body),
@@ -784,18 +803,52 @@ pub fn else_statement_else_statement(
     }
 }
 
-/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>`
+/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`
 pub fn boolean_expression_boolean_expression_simple_expression(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
+    comparison_op: ComparisonOp,
+    simple_expression_2: SimpleExpression,
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
-    compiler_context
-        .write_to_parser_file("<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain>");
+    compiler_context.write_to_parser_file(
+        "<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>",
+    );
+    let Some(left_child) = compiler_context.ast.comparision_expressions_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "ComparisonExpressions stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    let Some(operator) = compiler_context.ast.comparision_op_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "ComparisonOperator stack was empty when parsing `<BooleanExpression> -> <SimpleExpression> <ComparisonOp> <SimpleExpression>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    let node = compiler_context.ast.create_node(
+        operator.into(),
+        left_child.into(),
+        AstPtr::SimpleExpression.into(),
+        AstPtr::BooleanExpression,
+    );
+    compiler_context.ast.boolean_expression_stack.push(node);
     BooleanExpression::BooleanExpressionSimpleExpression(BooleanExpressionSimpleExpression {
         simple_expression,
-        boolean_expression_chain,
+        comparison_op,
+        simple_expression_2,
     })
 }
 
@@ -806,6 +859,10 @@ pub fn boolean_expression_boolean_expression_true(
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_true}"));
+    let node = compiler_context
+        .ast
+        .create_leaf(token_true.clone(), AstPtr::BooleanExpression);
+    compiler_context.ast.boolean_expression_stack.push(node);
     BooleanExpression::BooleanExpressionTrue(token_true)
 }
 
@@ -816,29 +873,25 @@ pub fn boolean_expression_boolean_expression_false(
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_false}"));
+    let node = compiler_context
+        .ast
+        .create_leaf(token_false.clone(), AstPtr::BooleanExpression);
+    compiler_context.ast.boolean_expression_stack.push(node);
     BooleanExpression::BooleanExpressionFalse(token_false)
 }
 
-/// Parses the rule `<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>`
-pub fn boolean_expression_boolean_expression_simple_expression_recursive(
+/// Parses the rule `<BooleanExpression> -> TokenId
+pub fn boolean_expression_boolean_expression_token_id(
     _ctx: &Ctx,
-    simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
-    conjunction: Conjunction,
-    boolean_expression: BooleanExpression,
+    token_id: TokenId,
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
-    compiler_context.write_to_parser_file(
-        "<BooleanExpression> -> <SimpleExpression> <BooleanExpressionChain> <Conjunction> <BooleanExpression>",
-    );
-    BooleanExpression::BooleanExpressionSimpleExpressionRecursive(
-        BooleanExpressionSimpleExpressionRecursive {
-            simple_expression,
-            boolean_expression_chain,
-            conjunction,
-            boolean_expression: Box::new(boolean_expression),
-        },
-    )
+    compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_id}"));
+    let node = compiler_context
+        .ast
+        .create_leaf(token_id.clone(), AstPtr::BooleanExpression);
+    compiler_context.ast.boolean_expression_stack.push(node);
+    BooleanExpression::BooleanExpressionTokenId(token_id)
 }
 
 /// Parses the rule `<BooleanExpression> -> <NotStatement>`
@@ -848,6 +901,8 @@ pub fn boolean_expression_boolean_expression_not_statement(
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file("<BooleanExpression> -> <NotStatement>");
+    let node = compiler_context.ast.get_node_from_ptr(AstPtr::Not);
+    compiler_context.ast.boolean_expression_stack.push(node);
     BooleanExpression::BooleanExpressionNotStatement(not_statement)
 }
 
@@ -858,34 +913,9 @@ pub fn boolean_expression_boolean_expression_is_zero(
     compiler_context: &mut CompilerContext,
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file("<BooleanExpression> -> <FunctionIsZero>");
+    let node = compiler_context.ast.get_node_from_ptr(AstPtr::IsZero);
+    compiler_context.ast.boolean_expression_stack.push(node);
     BooleanExpression::BooleanExpressionIsZero(function_is_zero)
-}
-
-/// Parses the rule `<BooleanExpressionChain> -> ComparisonOp <SimpleExpression> <BooleanExpressionChain>`
-pub fn boolean_expression_chain_boolean_expression_chain_aux(
-    _ctx: &Ctx,
-    comparison_op: ComparisonOp,
-    simple_expression: SimpleExpression,
-    boolean_expression_chain: BooleanExpressionChain,
-    compiler_context: &mut CompilerContext,
-) -> BooleanExpressionChain {
-    compiler_context.write_to_parser_file(
-        "<BooleanExpressionChain> -> <ComparisonOp> <SimpleExpression> <BooleanExpressionChain>",
-    );
-    Some(BooleanExpressionChainNoO {
-        comparison_op,
-        simple_expression,
-        boolean_expression_chain: Box::new(boolean_expression_chain),
-    })
-}
-
-/// Parses the rule `<BooleanExpressionChain> -> EMPTY`
-pub fn boolean_expression_chain_boolean_expression_chain_empty(
-    _ctx: &Ctx,
-    compiler_context: &mut CompilerContext,
-) -> BooleanExpressionChain {
-    compiler_context.write_to_parser_file("<BooleanExpressionChain> -> EMPTY");
-    None
 }
 
 /// Parses the rule `<SimpleExpression> -> <ArithmeticExpression>`
@@ -896,7 +926,7 @@ pub fn simple_expression_simple_expression_arithmetic(
 ) -> SimpleExpression {
     compiler_context.write_to_parser_file("<SimpleExpression> -> <ArithmeticExpression>");
     compiler_context.ast.assign_node_to_ptr(
-        AstNodeRef::Ptr(AstPtr::ArithmeticExpression),
+        AstPtr::ArithmeticExpression.into(),
         AstPtr::SimpleExpression,
     );
     SimpleExpression::SimpleExpressionArithmeticExpression(arithmetic_expression)
@@ -913,24 +943,102 @@ pub fn simple_expression_simple_expression_string(
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
 
-/// Parses the rule `<Conjunction> -> "and"`
+/// Parses the rule `<Conjunction> -> <BooleanExpression> "and" <Conjunction>`
 pub fn conjunction_conjunction_and(
-    _ctx: &Ctx,
+    ctx: &Ctx,
+    boolean_expression: BooleanExpression,
     token_and: TokenAnd,
+    conjunction: Conjunction,
     compiler_context: &mut CompilerContext,
 ) -> Conjunction {
-    compiler_context.write_to_parser_file(&format!("<Conjunction> -> {token_and}"));
-    Conjunction::ConjunctionAnd(token_and)
+    compiler_context.write_to_parser_file(&format!(
+        "<Conjunction> -> <BooleanExpression> {token_and} <Conjunction>"
+    ));
+    let Some(boolean_expression_node) = compiler_context.ast.boolean_expression_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"and\" <Conjunction>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::And,
+        boolean_expression_node.into(),
+        AstPtr::Conjunction.into(),
+        AstPtr::Conjunction,
+    );
+    Conjunction::ConjunctionAnd(ConjunctionAnd {
+        boolean_expression,
+        token_and,
+        conjunction: Box::new(conjunction),
+    })
 }
 
-/// Parses the rule `<Conjunction> -> "or"`
+/// Parses the rule `<Conjunction> -> <BooleanExpression> "or" <Conjunction>`
 pub fn conjunction_conjunction_or(
-    _ctx: &Ctx,
+    ctx: &Ctx,
+    boolean_expression: BooleanExpression,
     token_or: TokenOr,
+    conjunction: Conjunction,
     compiler_context: &mut CompilerContext,
 ) -> Conjunction {
-    compiler_context.write_to_parser_file(&format!("<Conjunction> -> {token_or}"));
-    Conjunction::ConjunctionOr(token_or)
+    compiler_context.write_to_parser_file(&format!(
+        "<Conjunction> -> <BooleanExpression> {token_or} <Conjunction>"
+    ));
+    let Some(boolean_expression_node) = compiler_context.ast.boolean_expression_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression> \"or\" <Conjunction>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::Or,
+        boolean_expression_node.into(),
+        AstPtr::Conjunction.into(),
+        AstPtr::Conjunction,
+    );
+    Conjunction::ConjunctionOr(ConjunctionOr {
+        boolean_expression,
+        token_or,
+        conjunction: Box::new(conjunction),
+    })
+}
+
+/// Parses the rule `<Conjunction> -> <BooleanExpression>`
+pub fn conjunction_conjunction_boolean_expression(
+    ctx: &Ctx,
+    boolean_expression: BooleanExpression,
+    compiler_context: &mut CompilerContext,
+) -> Conjunction {
+    compiler_context.write_to_parser_file("<Conjunction> -> <BooleanExpression>");
+    let Some(boolean_expression_node) = compiler_context.ast.boolean_expression_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "BooleanExpression stack was empty when parsing `<Conjunction> -> <BooleanExpression>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+
+    compiler_context
+        .ast
+        .assign_node_to_ptr(boolean_expression_node.into(), AstPtr::Conjunction);
+    Conjunction::ConjunctionBooleanExpression(boolean_expression)
 }
 
 /// Parses the rule `<ComparisonOp> -> "=="`
@@ -940,7 +1048,17 @@ pub fn comparison_op_comparison_op_equal(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_equal}"));
-    ComparisonOp::ComparisonOpEqual(token_equal)
+    let result = ComparisonOp::ComparisonOpEqual(token_equal);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule  `<ComparisonOp> -> "!="`
@@ -950,7 +1068,17 @@ pub fn comparison_op_comparison_op_not_equal(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_not_equal}"));
-    ComparisonOp::ComparisonOpNotEqual(token_not_equal)
+    let result = ComparisonOp::ComparisonOpNotEqual(token_not_equal);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule `<ComparisonOp> -> "<"`
@@ -960,7 +1088,17 @@ pub fn comparison_op_comparison_op_less(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_less}"));
-    ComparisonOp::ComparisonOpLess(token_less)
+    let result = ComparisonOp::ComparisonOpLess(token_less);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule `<ComparisonOp> -> ">="`
@@ -970,7 +1108,17 @@ pub fn comparison_op_comparison_op_less_equal(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_less_equal}"));
-    ComparisonOp::ComparisonOpLessEqual(token_less_equal)
+    let result = ComparisonOp::ComparisonOpLessEqual(token_less_equal);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule `<ComparisonOp> -> ">"`
@@ -980,7 +1128,17 @@ pub fn comparison_op_comparison_op_greater(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_greater}"));
-    ComparisonOp::ComparisonOpGreater(token_greater)
+    let result = ComparisonOp::ComparisonOpGreater(token_greater);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule `<ComparisonOp> -> ">="`
@@ -990,7 +1148,17 @@ pub fn comparison_op_comparison_op_greater_equal(
     compiler_context: &mut CompilerContext,
 ) -> ComparisonOp {
     compiler_context.write_to_parser_file(&format!("<ComparisonOp> -> {token_greater_equal}"));
-    ComparisonOp::ComparisonOpGreaterEqual(token_greater_equal)
+    let result = ComparisonOp::ComparisonOpGreaterEqual(token_greater_equal);
+    compiler_context
+        .ast
+        .comparision_op_stack
+        .push(result.clone());
+    compiler_context.ast.comparision_expressions_stack.push(
+        compiler_context
+            .ast
+            .get_node_from_ptr(AstPtr::SimpleExpression),
+    );
+    result
 }
 
 /// Parses the rule `<Number> -> TokenIntLiteral`
@@ -1050,7 +1218,7 @@ pub fn number_number_negative_float(
 
 /// Parses the rule `<NotStatement> -> TokenNot <BooleanExpression>`
 pub fn not_statement_not(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_not: TokenNot,
     boolean_expression: BooleanExpression,
     compiler_context: &mut CompilerContext,
@@ -1058,6 +1226,26 @@ pub fn not_statement_not(
     compiler_context.write_to_parser_file(&format!(
         "<NotStatement> -> {token_not} <BooleanExpression>"
     ));
+    let Some(boolean_expression_node) = compiler_context.ast.boolean_expression_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "BooleanExpression stack was empty when parsing `<NotStatement> -> TokenNot <BooleanExpression>`"
+                    .into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+
+    let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    compiler_context.ast.create_node(
+        AstAction::Not,
+        boolean_expression_node.into(),
+        Rc::new(dummy).into(),
+        AstPtr::Not,
+    );
     NotStatement {
         token_not,
         boolean_expression: Box::new(boolean_expression),
@@ -1089,8 +1277,8 @@ pub fn arithmetic_expression_arithmetic_expression_sum_term(
     };
     compiler_context.ast.create_node(
         AstAction::Plus,
-        AstNodeRef::Node(node),
-        AstNodeRef::Ptr(AstPtr::Term),
+        node.into(),
+        AstPtr::Term.into(),
         AstPtr::ArithmeticExpression,
     );
     ArithmeticExpression::ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm {
@@ -1125,8 +1313,8 @@ pub fn arithmetic_expression_arithmetic_expression_sub_term(
     };
     compiler_context.ast.create_node(
         AstAction::Sub,
-        AstNodeRef::Node(node),
-        AstNodeRef::Ptr(AstPtr::Term),
+        node.into(),
+        AstPtr::Term.into(),
         AstPtr::ArithmeticExpression,
     );
     ArithmeticExpression::ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm {
@@ -1140,7 +1328,7 @@ pub fn arithmetic_expression_arithmetic_expression_sub_term(
 pub fn dummy_ae_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> DummyAE {
     compiler_context
         .ast
-        .push_e_stack(AstNodeRef::Ptr(AstPtr::ArithmeticExpression));
+        .push_e_stack(AstPtr::ArithmeticExpression.into());
     None
 }
 
@@ -1153,7 +1341,7 @@ pub fn arithmetic_expression_arithmetic_expression_term(
     compiler_context.write_to_parser_file("<ArithmeticExpression> -> <Term>");
     compiler_context
         .ast
-        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Term), AstPtr::ArithmeticExpression);
+        .assign_node_to_ptr(AstPtr::Term.into(), AstPtr::ArithmeticExpression);
     ArithmeticExpression::ArithmeticExpressionTerm(term)
 }
 
@@ -1181,8 +1369,8 @@ pub fn term_term_mul_factor(
     };
     compiler_context.ast.create_node(
         AstAction::Mult,
-        AstNodeRef::Node(node),
-        AstNodeRef::Ptr(AstPtr::Factor),
+        node.into(),
+        AstPtr::Factor.into(),
         AstPtr::Term,
     );
     Term::TermMulFactor(TermMulFactor {
@@ -1216,8 +1404,8 @@ pub fn term_term_div_factor(
     };
     compiler_context.ast.create_node(
         AstAction::Div,
-        AstNodeRef::Node(node),
-        AstNodeRef::Ptr(AstPtr::Factor),
+        node.into(),
+        AstPtr::Factor.into(),
         AstPtr::Term,
     );
     Term::TermDivFactor(TermDivFactor {
@@ -1229,9 +1417,7 @@ pub fn term_term_div_factor(
 
 // Parses the rule `<DummyT> -> EMPTY`
 pub fn dummy_t_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> DummyT {
-    compiler_context
-        .ast
-        .push_t_stack(AstNodeRef::Ptr(AstPtr::Term));
+    compiler_context.ast.push_t_stack(AstPtr::Term.into());
     None
 }
 
@@ -1244,7 +1430,7 @@ pub fn term_term_factor(
     compiler_context.write_to_parser_file("<Term> -> <Factor>");
     compiler_context
         .ast
-        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Factor), AstPtr::Term);
+        .assign_node_to_ptr(AstPtr::Factor.into(), AstPtr::Term);
     Term::TermFactor(factor)
 }
 
@@ -1270,7 +1456,7 @@ pub fn factor_factor_number(
     compiler_context.write_to_parser_file("<Factor> -> <Number>");
     compiler_context
         .ast
-        .assign_node_to_ptr(AstNodeRef::Ptr(AstPtr::Number), AstPtr::Factor);
+        .assign_node_to_ptr(AstPtr::Number.into(), AstPtr::Factor);
     Factor::FactorNumber(number)
 }
 
@@ -1285,10 +1471,9 @@ pub fn factor_factor_paren(
     compiler_context.write_to_parser_file(&format!(
         "<Factor> -> {token_par_open} <ArithmeticExpression> {token_par_close}"
     ));
-    compiler_context.ast.assign_node_to_ptr(
-        AstNodeRef::Ptr(AstPtr::ArithmeticExpression),
-        AstPtr::Factor,
-    );
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::ArithmeticExpression.into(), AstPtr::Factor);
     Factor::FactorParen(FactorParen {
         token_par_open,
         arithmetic_expression: Box::new(arithmetic_expression),

@@ -26,10 +26,7 @@ fn main() -> Result<(), CompilerError> {
 
     println!("{rules}");
 
-    compiler
-        .inner
-        .borrow_mut()
-        .create_ast_graph(AstPtr::Assignment)?;
+    compiler.inner.borrow_mut().create_ast_graph(AstPtr::Body)?;
 
     Ok(())
 }

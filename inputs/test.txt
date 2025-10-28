@@ -31,7 +31,7 @@ else {
     b2 := 20
 }
 
-while(c33 == 5.34 and d4 <= 2 < c33 or e5 >= 1) {
+while(c33 == 5.34 and d4 <= 2 and not c33 or e5 >= 1) {
     a1 := a1+1
     if(not isZero(a1)) {
         a1 := -125
