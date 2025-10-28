@@ -11,8 +11,8 @@ use std::{
 
 pub struct Ast {
     tree: [Rc<Node>; mem::variant_count::<AstPtr>()],
-    pub stack_t: Vec<Rc<Node>>,
-    pub stack_e: Vec<Rc<Node>>,
+    pub term_stack: Vec<Rc<Node>>,
+    pub expression_stack: Vec<Rc<Node>>,
     pub comparision_op_stack: Vec<ComparisonOp>,
     pub comparision_expressions_stack: Vec<Rc<Node>>,
     pub boolean_expression_stack: Vec<Rc<Node>>,
@@ -23,8 +23,8 @@ pub struct Ast {
 
 impl Debug for Ast {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{:?}", self.stack_t)?;
-        writeln!(f, "{:?}", self.stack_e)?;
+        writeln!(f, "{:?}", self.term_stack)?;
+        writeln!(f, "{:?}", self.expression_stack)?;
         writeln!(f, "{:?}", self.comparision_op_stack)?;
         writeln!(f, "{:?}", self.comparision_expressions_stack)
     }
@@ -183,8 +183,8 @@ impl Default for Ast {
     fn default() -> Self {
         Self {
             tree: array::from_fn(|_| Rc::new(Node::new_leaf(NodeValue::Value("".to_string())))),
-            stack_e: Vec::new(),
-            stack_t: Vec::new(),
+            expression_stack: Vec::new(),
+            term_stack: Vec::new(),
             comparision_op_stack: Vec::new(),
             comparision_expressions_stack: Vec::new(),
             boolean_expression_stack: Vec::new(),
@@ -286,32 +286,6 @@ impl Ast {
             node_count = Ast::graph_recursive_traverse(right_child, node_count, file)?;
         }
         Ok(node_count)
-    }
-
-    pub fn push_t_stack(&mut self, node: AstNodeRef) {
-        let node = match node {
-            AstNodeRef::Node(node) => node,
-            AstNodeRef::Ptr(ptr) => self.tree[ptr as usize].clone(),
-        };
-
-        self.stack_t.push(node);
-    }
-
-    pub fn pop_t_stack(&mut self) -> Option<Rc<Node>> {
-        self.stack_t.pop()
-    }
-
-    pub fn push_e_stack(&mut self, node: AstNodeRef) {
-        let node = match node {
-            AstNodeRef::Node(node) => node,
-            AstNodeRef::Ptr(ptr) => self.tree[ptr as usize].clone(),
-        };
-
-        self.stack_e.push(node);
-    }
-
-    pub fn pop_e_stack(&mut self) -> Option<Rc<Node>> {
-        self.stack_e.pop()
     }
 
     pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
