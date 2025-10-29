@@ -16,6 +16,8 @@ pub struct Ast {
     pub comparision_op_stack: Vec<ComparisonOp>,
     pub comparision_expressions_stack: Vec<Rc<Node>>,
     pub boolean_expression_stack: Vec<Rc<Node>>,
+    pub if_body_stack: Vec<Rc<Node>>,
+    pub conjunction_stack: Vec<Rc<Node>>,
 }
 
 impl Debug for Ast {
@@ -110,6 +112,7 @@ pub enum AstAction {
     Div,
     Assign,
     If,
+    Else,
     And,
     Or,
     Not,
@@ -138,6 +141,7 @@ impl Display for AstAction {
             Self::LT => write!(f, "<"),
             Self::LTE => write!(f, "<="),
             Self::If => write!(f, "IF"),
+            Self::Else => write!(f, "ELSE"),
             Self::And => write!(f, "AND"),
             Self::Or => write!(f, "OR"),
             Self::Not => write!(f, "NOT"),
@@ -169,6 +173,8 @@ impl Default for Ast {
             comparision_op_stack: Vec::new(),
             comparision_expressions_stack: Vec::new(),
             boolean_expression_stack: Vec::new(),
+            if_body_stack: Vec::new(),
+            conjunction_stack: Vec::new(),
         }
     }
 }

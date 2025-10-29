@@ -81,6 +81,7 @@ pub enum NonTerminal {
     Factor(rules_actions::Factor),
     DummyAE(rules_actions::DummyAE),
     DummyT(rules_actions::DummyT),
+    DummyElse(rules_actions::DummyElse),
 }
 
 impl Builder for Compiler {
@@ -684,22 +685,6 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
-            ProdKind::StatementStatementElseStatement => {
-                let mut i = compiler_context
-                    .res_stack
-                    .split_off(stack_len - 1usize)
-                    .into_iter();
-                match i.next().unwrap() {
-                    Symbol::NonTerminal(NonTerminal::ElseStatement(p0)) => {
-                        NonTerminal::Statement(rules_actions::statement_statement_else_statement(
-                            context,
-                            p0,
-                            &mut compiler_context,
-                        ))
-                    }
-                    _ => panic!("Invalid symbol parse stack data."),
-                }
-            }
             ProdKind::StatementStatementWhile => {
                 let mut i = compiler_context
                     .res_stack
@@ -892,6 +877,53 @@ impl<'i> LRBuilder<'i, Input, Context<'i, Input>, State, ProdKind, TokenKind> fo
                     _ => panic!("Invalid symbol parse stack data."),
                 }
             }
+            ProdKind::IfStatementIfElseStatement => {
+                let mut i = compiler_context
+                    .res_stack
+                    .split_off(stack_len - 9usize)
+                    .into_iter();
+                match (
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                    i.next().unwrap(),
+                ) {
+                    (
+                        Symbol::Terminal(Terminal::TokenIf(p0)),
+                        Symbol::Terminal(Terminal::TokenParOpen(p1)),
+                        Symbol::NonTerminal(NonTerminal::Conjunction(p2)),
+                        Symbol::Terminal(Terminal::TokenParClose(p3)),
+                        Symbol::Terminal(Terminal::TokenCBOpen(p4)),
+                        Symbol::NonTerminal(NonTerminal::Body(p5)),
+                        Symbol::Terminal(Terminal::TokenCBClose(p6)),
+                        Symbol::NonTerminal(NonTerminal::DummyElse(_)),
+                        Symbol::NonTerminal(NonTerminal::ElseStatement(p7)),
+                    ) => NonTerminal::IfStatement(
+                        rules_actions::if_statement_if_statement_else_statement(
+                            context,
+                            p0,
+                            p1,
+                            p2,
+                            p3,
+                            p4,
+                            p5,
+                            p6,
+                            p7,
+                            &mut compiler_context,
+                        ),
+                    ),
+                    _ => panic!("Invalid symbol parse stack data."),
+                }
+            }
+            ProdKind::DummyElseP1 => NonTerminal::DummyElse(rules_actions::dummy_else_empty(
+                context,
+                &mut compiler_context,
+            )),
             ProdKind::ElseStatementElseStatement => {
                 let mut i = compiler_context
                     .res_stack
