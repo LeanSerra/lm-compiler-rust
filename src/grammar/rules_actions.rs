@@ -326,6 +326,9 @@ pub fn program_program_with_main(
     compiler_context.write_to_parser_file(&format!(
         "<Program> -> {token_id} {token_par_open} {token_par_close} {token_cbopen} <Body> {token_cbclose}"
     ));
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Body.into(), AstPtr::Program);
     Program::ProgramWithMain(ProgramWithMain {
         token_id,
         token_par_open,
@@ -343,6 +346,9 @@ pub fn program_program_only_body(
     compiler_context: &mut CompilerContext,
 ) -> Program {
     compiler_context.write_to_parser_file("<Program> -> <Body>");
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Body.into(), AstPtr::Program);
     Program::ProgramOnlyBody(body)
 }
 
@@ -356,6 +362,9 @@ pub fn body_body_init_expressions(
 ) -> Body {
     compiler_context
         .write_to_parser_file(&format!("<Body> -> {token_init} <InitBody> <Expressions>"));
+    compiler_context
+        .ast
+        .assign_node_to_ptr(AstPtr::Expressions.into(), AstPtr::Body);
     Some(BodyNoO::BodyInitExpressions(BodyInitExpressions {
         token_init,
         init_body,
@@ -430,6 +439,14 @@ pub fn function_read_function_read_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionRead> -> {token_read} {token_par_open} {token_id} {token_par_close}"
     ));
+    let right_child = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    let left_child = Node::new_leaf(NodeValue::Value(token_id.clone()));
+    compiler_context.ast.create_node(
+        AstAction::Read,
+        Rc::new(left_child).into(),
+        Rc::new(right_child).into(),
+        AstPtr::Read,
+    );
     FunctionRead {
         token_read,
         token_par_open,
@@ -450,6 +467,13 @@ pub fn function_write_function_write_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionWrite> -> {token_write} {token_par_open} <SimpleExpression> {token_par_close}"
     ));
+    let leaf = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    compiler_context.ast.create_node(
+        AstAction::Write,
+        AstPtr::SimpleExpression.into(),
+        Rc::new(leaf).into(),
+        AstPtr::Write,
+    );
     FunctionWrite {
         token_write,
         token_par_open,
@@ -563,25 +587,53 @@ pub fn var_declaration_var_declaration_recursive(
 
 /// Parses the rule `<Expressions> -> <Statement>`
 pub fn expressions_expression_single(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     statement: Statement,
     compiler_context: &mut CompilerContext,
 ) -> Expressions {
     compiler_context.write_to_parser_file("<Expressions> -> <Statement>");
+    let Some(statement_node) = compiler_context.ast.statement_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Statement stack was empty when parsing `<Expressions> -> <Statement>`".into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
     compiler_context
         .ast
-        .assign_node_to_ptr(AstPtr::Statement.into(), AstPtr::Expressions);
+        .assign_node_to_ptr(statement_node.into(), AstPtr::Expressions);
     Expressions::ExpressionSingle(statement)
 }
 
 /// Parses the rule `<Expressions> -> <Statement> <Expressions>`
 pub fn expressions_expression_recursive(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     statement: Statement,
     expressions: Expressions,
     compiler_context: &mut CompilerContext,
 ) -> Expressions {
     compiler_context.write_to_parser_file("<Expressions> -> <Statement> <Expressions>");
+    let Some(statement_node) = compiler_context.ast.statement_stack.pop() else {
+        log_error_and_exit(
+            ctx.range(),
+            CompilerError::Internal(
+                "Statement stack was empty when parsing `<Expressions> -> <Statement> <Expressions>`".into(),
+            ),
+            0,
+            true,
+            compiler_context,
+        )
+    };
+    compiler_context.ast.create_node(
+        AstAction::S,
+        AstPtr::Expressions.into(),
+        statement_node.into(),
+        AstPtr::Expressions,
+    );
     Expressions::ExpressionRecursive(ExpressionRecursive {
         statement,
         expressions: Box::new(expressions),
@@ -595,9 +647,11 @@ pub fn statement_statement_assignment(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <Assignment>");
+    let assignment_node = compiler_context.ast.get_node_from_ptr(AstPtr::Assignment);
     compiler_context
         .ast
-        .assign_node_to_ptr(AstPtr::Assignment.into(), AstPtr::Statement);
+        .assign_node_to_ptr(assignment_node.clone().into(), AstPtr::Statement);
+    compiler_context.ast.statement_stack.push(assignment_node);
     Statement::StatementAssignment(assignment)
 }
 
@@ -608,9 +662,11 @@ pub fn statement_statement_if_statement(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <IfStatement>");
+    let if_node = compiler_context.ast.get_node_from_ptr(AstPtr::If);
     compiler_context
         .ast
-        .assign_node_to_ptr(AstPtr::If.into(), AstPtr::Statement);
+        .assign_node_to_ptr(if_node.clone().into(), AstPtr::Statement);
+    compiler_context.ast.statement_stack.push(if_node);
     Statement::StatementIfStatement(if_statement)
 }
 
@@ -621,9 +677,11 @@ pub fn statement_statement_while(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <WhileLoop>");
+    let while_node = compiler_context.ast.get_node_from_ptr(AstPtr::While);
     compiler_context
         .ast
-        .assign_node_to_ptr(AstPtr::While.into(), AstPtr::Statement);
+        .assign_node_to_ptr(while_node.clone().into(), AstPtr::Statement);
+    compiler_context.ast.statement_stack.push(while_node);
     Statement::StatementWhile(while_loop)
 }
 
@@ -634,6 +692,11 @@ pub fn statement_statement_write(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <FunctionWrite>");
+    let write_node = compiler_context.ast.get_node_from_ptr(AstPtr::Write);
+    compiler_context
+        .ast
+        .assign_node_to_ptr(write_node.clone().into(), AstPtr::Statement);
+    compiler_context.ast.statement_stack.push(write_node);
     Statement::StatementWrite(function_write)
 }
 
@@ -644,6 +707,11 @@ pub fn statement_statement_read(
     compiler_context: &mut CompilerContext,
 ) -> Statement {
     compiler_context.write_to_parser_file("<Statement> -> <FunctionRead>");
+    let read_node = compiler_context.ast.get_node_from_ptr(AstPtr::Read);
+    compiler_context
+        .ast
+        .assign_node_to_ptr(read_node.clone().into(), AstPtr::Statement);
+    compiler_context.ast.statement_stack.push(read_node);
     Statement::StatementRead(function_read)
 }
 
@@ -1040,6 +1108,9 @@ pub fn simple_expression_simple_expression_string(
 ) -> SimpleExpression {
     compiler_context.push_to_symbol_table(token_string_literal.clone().into());
     compiler_context.write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
+    compiler_context
+        .ast
+        .create_leaf(token_string_literal.clone(), AstPtr::SimpleExpression);
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
 

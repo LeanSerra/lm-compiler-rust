@@ -18,6 +18,7 @@ pub struct Ast {
     pub boolean_expression_stack: Vec<Rc<Node>>,
     pub if_body_stack: Vec<Rc<Node>>,
     pub conjunction_stack: Vec<Rc<Node>>,
+    pub statement_stack: Vec<Rc<Node>>,
 }
 
 impl Debug for Ast {
@@ -47,6 +48,8 @@ pub enum AstPtr {
     Not,
     IsZero,
     While,
+    Read,
+    Write,
 }
 
 pub enum AstNodeRef {
@@ -125,6 +128,9 @@ pub enum AstAction {
     LT,
     LTE,
     While,
+    Read,
+    Write,
+    S,
     Noop,
 }
 
@@ -149,6 +155,9 @@ impl Display for AstAction {
             Self::Not => write!(f, "NOT"),
             Self::IsZero => write!(f, "ISZERO"),
             Self::While => write!(f, "WHILE"),
+            Self::Read => write!(f, "READ"),
+            Self::Write => write!(f, "WRITE"),
+            Self::S => write!(f, "S"),
             Self::Noop => write!(f, "NOOP"),
         }
     }
@@ -178,6 +187,7 @@ impl Default for Ast {
             boolean_expression_stack: Vec::new(),
             if_body_stack: Vec::new(),
             conjunction_stack: Vec::new(),
+            statement_stack: Vec::new(),
         }
     }
 }
