@@ -46,6 +46,7 @@ pub enum AstPtr {
     If,
     Not,
     IsZero,
+    While,
 }
 
 pub enum AstNodeRef {
@@ -123,6 +124,7 @@ pub enum AstAction {
     NE,
     LT,
     LTE,
+    While,
     Noop,
 }
 
@@ -146,6 +148,7 @@ impl Display for AstAction {
             Self::Or => write!(f, "OR"),
             Self::Not => write!(f, "NOT"),
             Self::IsZero => write!(f, "ISZERO"),
+            Self::While => write!(f, "WHILE"),
             Self::Noop => write!(f, "NOOP"),
         }
     }
