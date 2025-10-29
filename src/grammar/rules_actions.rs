@@ -1646,7 +1646,7 @@ pub fn term_term_div_factor(
     compiler_context: &mut CompilerContext,
 ) -> Term {
     compiler_context
-        .write_to_parser_file(&format!("<Term> -><Term> <DummyT> {token_div} <Factor>"));
+        .write_to_parser_file(&format!("<Term> -> <Term> <DummyT> {token_div} <Factor>"));
 
     let ast = &mut compiler_context.ast;
     let Some(node) = ast.term_stack.pop() else {
