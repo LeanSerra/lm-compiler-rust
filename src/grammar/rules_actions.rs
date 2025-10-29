@@ -690,7 +690,6 @@ pub fn expressions_expression_recursive(
         statement_node.into(),
         AstPtr::Expressions,
     );
-
     Expressions::ExpressionRecursive(ExpressionRecursive {
         statement,
         expressions: Box::new(expressions),
