@@ -686,8 +686,8 @@ pub fn expressions_expression_recursive(
     };
     ast.create_node(
         AstAction::S,
-        AstPtr::Expressions.into(),
         statement_node.into(),
+        AstPtr::Expressions.into(),
         AstPtr::Expressions,
     );
     Expressions::ExpressionRecursive(ExpressionRecursive {
