@@ -1,5 +1,5 @@
 use crate::compiler::{
-    ast::{AstAction, AstPtr, Node, NodeValue},
+    ast::{AstAction, AstPtr, ExpressionType, Node, NodeValue},
     context::CompilerContext,
     error::{CompilerError, log_error_and_exit},
 };
@@ -40,7 +40,10 @@ pub fn token_int_literal(
     compiler_context: &mut CompilerContext,
 ) -> TokenIntLiteral {
     compiler_context.write_to_lexer_file(&format!("INT_LITERAL: {}", token.value));
-    token.value.parse().unwrap()
+    TokenIntLiteral {
+        original: token.value.into(),
+        parsed: token.value.parse().unwrap(),
+    }
 }
 
 /// Parses a float literal into i64
@@ -408,7 +411,7 @@ pub fn body_body_empty(_ctx: &Ctx, compiler_context: &mut CompilerContext) -> Bo
     compiler_context.write_to_parser_file("<Body> -> EMPTY");
 
     let ast = &mut compiler_context.ast;
-    let leaf = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    let leaf = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
     ast.assign_node_to_ptr(leaf.into(), AstPtr::Body);
 
     None
@@ -434,7 +437,7 @@ pub fn init_body_init_body(
 
 /// Parses the rule `<FunctionRead> -> TokenRead TokenParOpen TokenId TokenParClose`
 pub fn function_read_function_read_call(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_read: TokenRead,
     token_par_open: TokenParOpen,
     token_id: TokenId,
@@ -445,14 +448,24 @@ pub fn function_read_function_read_call(
         "<FunctionRead> -> {token_read} {token_par_open} {token_id} {token_par_close}"
     ));
 
+    let Some(rhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+        log_undeclared_variable_error(&token_id, ctx, compiler_context)
+    };
+
     let ast = &mut compiler_context.ast;
-    let right_child = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
-    let left_child = Rc::new(Node::new_leaf(NodeValue::Value(token_id.clone())));
+
+    let right_child = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
+    let left_child = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_id.clone()),
+        Some(rhs_type.into()),
+    ));
+
     ast.create_node(
         AstAction::Read,
         left_child.into(),
         right_child.into(),
         AstPtr::Read,
+        None,
     );
 
     FunctionRead {
@@ -477,12 +490,13 @@ pub fn function_write_function_write_call(
     ));
 
     let ast = &mut compiler_context.ast;
-    let leaf = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    let leaf = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
     ast.create_node(
         AstAction::Write,
         AstPtr::SimpleExpression.into(),
         leaf.into(),
         AstPtr::Write,
+        None,
     );
 
     FunctionWrite {
@@ -505,13 +519,19 @@ pub fn function_is_zero_function_is_zero_call(
     compiler_context.write_to_parser_file(&format!(
         "<FunctionIsZero> -> {token_is_zero} {token_par_open} <E> {token_par_close}"
     ));
-    let zero_leaf = Rc::new(Node::new_leaf(NodeValue::Value("0".into())));
+
+    let zero_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value("0".into()),
+        Some(ExpressionType::Int),
+    ));
     compiler_context.ast.create_node(
         AstAction::EQ,
         AstPtr::ArithmeticExpression.into(),
         zero_leaf.into(),
         AstPtr::IsZero,
+        None,
     );
+
     FunctionIsZero {
         token_is_zero,
         token_par_open,
@@ -535,31 +555,52 @@ pub fn function_conv_date_function_conv_date_variable_call(
 
     let ast = &mut compiler_context.ast;
 
-    let thousand_leaf = Rc::new(Node::new_leaf(NodeValue::Value("1000".into())));
-    let hundread_leaf = Rc::new(Node::new_leaf(NodeValue::Value("100".into())));
-    let one_leaf = Rc::new(Node::new_leaf(NodeValue::Value("1".into())));
+    let thousand_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value("1000".into()),
+        Some(ExpressionType::Int),
+    ));
+    let hundread_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value("100".into()),
+        Some(ExpressionType::Int),
+    ));
+    let one_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value("1".into()),
+        Some(ExpressionType::Int),
+    ));
 
-    let year_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.year.clone())));
-    let month_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.month.clone())));
-    let day_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_date.day.clone())));
+    let year_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_date.year.clone()),
+        Some(ExpressionType::Int),
+    ));
+    let month_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_date.month.clone()),
+        Some(ExpressionType::Int),
+    ));
+    let day_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_date.day.clone()),
+        Some(ExpressionType::Int),
+    ));
 
     let year_node = ast.create_node(
         AstAction::Mult,
         year_leaf.into(),
         thousand_leaf.into(),
         AstPtr::ConvDate,
+        Some(ExpressionType::Int),
     );
     let month_node = ast.create_node(
         AstAction::Mult,
         month_leaf.into(),
         hundread_leaf.into(),
         AstPtr::ConvDate,
+        Some(ExpressionType::Int),
     );
     let day_node = ast.create_node(
         AstAction::Mult,
         day_leaf.into(),
         one_leaf.into(),
         AstPtr::ConvDate,
+        Some(ExpressionType::Int),
     );
 
     let sum_year_month_node = ast.create_node(
@@ -567,12 +608,14 @@ pub fn function_conv_date_function_conv_date_variable_call(
         year_node.into(),
         month_node.into(),
         AstPtr::ConvDate,
+        Some(ExpressionType::Int),
     );
     ast.create_node(
         AstAction::Plus,
         sum_year_month_node.into(),
         day_node.into(),
         AstPtr::ConvDate,
+        Some(ExpressionType::Int),
     );
 
     FunctionConvDate {
@@ -689,6 +732,7 @@ pub fn expressions_expression_recursive(
         statement_node.into(),
         AstPtr::Expressions.into(),
         AstPtr::Expressions,
+        None,
     );
     Expressions::ExpressionRecursive(ExpressionRecursive {
         statement,
@@ -778,7 +822,7 @@ pub fn statement_statement_read(
 
 /// Parses the rule `<Assignment> -> TokenId TokenAssign <SimpleExpression>`
 pub fn assignment_assignment_expression(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_id: TokenId,
     token_assign: TokenAssign,
     simple_expression: SimpleExpression,
@@ -788,13 +832,34 @@ pub fn assignment_assignment_expression(
         "<Assignment> -> {token_id} {token_assign} <SimpleExpression>"
     ));
 
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+        log_undeclared_variable_error(&token_id, ctx, compiler_context)
+    };
+    let lhs_type = lhs_type.into();
+
     let ast = &mut compiler_context.ast;
-    let leaf = Node::new_leaf(NodeValue::Value(token_id.clone()));
+
+    let rhs = ast.get_node_from_ptr(AstPtr::SimpleExpression);
+
+    let Some(rhs_type) = rhs.r#type.clone() else {
+        log_ast_error(
+            "The rhs of an assignment is not an expression",
+            ctx,
+            compiler_context,
+        )
+    };
+
+    if lhs_type != rhs_type {
+        log_type_error(&format!("{lhs_type} := {rhs_type}"), ctx, compiler_context)
+    }
+
+    let leaf = Node::new_leaf(NodeValue::Value(token_id.clone()), Some(lhs_type));
     ast.create_node(
         AstAction::Assign,
         Rc::new(leaf).into(),
         AstPtr::SimpleExpression.into(),
         AstPtr::Assignment,
+        None,
     );
 
     Assignment::AssignmentExpression(AssignmentExpression {
@@ -806,7 +871,7 @@ pub fn assignment_assignment_expression(
 
 /// Parses the rule `<Assignment> -> TokenId TokenAssign <FunctionConvDate>`
 pub fn assignment_assignment_conv_date(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_id: TokenId,
     token_assign: TokenAssign,
     function_conv_date: FunctionConvDate,
@@ -816,13 +881,36 @@ pub fn assignment_assignment_conv_date(
         "<Assignment> -> {token_id} {token_assign} <FunctionConvDate>"
     ));
 
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+        log_undeclared_variable_error(&token_id, ctx, compiler_context)
+    };
+    let lhs_type = lhs_type.into();
+
     let ast = &mut compiler_context.ast;
-    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_id.clone())));
+    let rhs = ast.get_node_from_ptr(AstPtr::ConvDate);
+
+    let Some(rhs_type) = rhs.r#type.clone() else {
+        log_ast_error(
+            "The rhs of an assignment is not an expression",
+            ctx,
+            compiler_context,
+        )
+    };
+
+    if lhs_type != rhs_type {
+        log_type_error(&format!("{lhs_type} := {rhs_type}"), ctx, compiler_context)
+    }
+    let leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_id.clone()),
+        Some(lhs_type),
+    ));
+
     ast.create_node(
         AstAction::Assign,
         leaf.into(),
         AstPtr::ConvDate.into(),
         AstPtr::Assignment,
+        None,
     );
 
     Assignment::AssignmentConvDate(ConvDate {
@@ -892,6 +980,7 @@ pub fn while_loop_while(
         conjunction_node.into(),
         AstPtr::Body.into(),
         AstPtr::While,
+        None,
     );
 
     WhileLoop {
@@ -935,6 +1024,7 @@ pub fn if_statement_if_statement(
         conjunction_node.into(),
         AstPtr::Body.into(),
         AstPtr::If,
+        None,
     );
 
     IfStatement::IfStatementIfStatement(IfStatementIfStatement {
@@ -979,6 +1069,7 @@ pub fn if_statement_if_statement_else_statement(
         if_true_body.into(),
         AstPtr::Body.into(),
         AstPtr::If,
+        None,
     );
     let Some(conjunction_node) = ast.conjunction_stack.pop() else {
         log_ast_error(
@@ -992,6 +1083,7 @@ pub fn if_statement_if_statement_else_statement(
         conjunction_node.into(),
         else_node.into(),
         AstPtr::If,
+        None,
     );
 
     IfStatement::IfStatementElseStatement(IfStatementElseStatement {
@@ -1069,6 +1161,7 @@ pub fn boolean_expression_boolean_expression_simple_expression(
         left_child.into(),
         AstPtr::SimpleExpression.into(),
         AstPtr::BooleanExpression,
+        None,
     );
     ast.boolean_expression_stack.push(node);
 
@@ -1088,7 +1181,7 @@ pub fn boolean_expression_boolean_expression_true(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_true}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_true.clone(), AstPtr::BooleanExpression);
+    let node = ast.create_leaf(token_true.clone(), AstPtr::BooleanExpression, None);
     ast.boolean_expression_stack.push(node);
 
     BooleanExpression::BooleanExpressionTrue(token_true)
@@ -1103,7 +1196,7 @@ pub fn boolean_expression_boolean_expression_false(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_false}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_false.clone(), AstPtr::BooleanExpression);
+    let node = ast.create_leaf(token_false.clone(), AstPtr::BooleanExpression, None);
     ast.boolean_expression_stack.push(node);
 
     BooleanExpression::BooleanExpressionFalse(token_false)
@@ -1118,7 +1211,7 @@ pub fn boolean_expression_boolean_expression_token_id(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_id}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_id.clone(), AstPtr::BooleanExpression);
+    let node = ast.create_leaf(token_id.clone(), AstPtr::BooleanExpression, None);
     ast.boolean_expression_stack.push(node);
 
     BooleanExpression::BooleanExpressionTokenId(token_id)
@@ -1181,7 +1274,11 @@ pub fn simple_expression_simple_expression_string(
     compiler_context.write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
 
     let ast = &mut compiler_context.ast;
-    ast.create_leaf(token_string_literal.clone(), AstPtr::SimpleExpression);
+    ast.create_leaf(
+        token_string_literal.clone(),
+        AstPtr::SimpleExpression,
+        Some(ExpressionType::String),
+    );
 
     SimpleExpression::SimpleExpressionString(token_string_literal)
 }
@@ -1218,6 +1315,7 @@ pub fn conjunction_conjunction_and(
         boolean_expression_node.into(),
         conjunction_node.into(),
         AstPtr::Conjunction,
+        None,
     );
     ast.conjunction_stack.push(conjunction_node);
 
@@ -1260,6 +1358,7 @@ pub fn conjunction_conjunction_or(
         boolean_expression_node.into(),
         conjunction_node.into(),
         AstPtr::Conjunction,
+        None,
     );
     ast.conjunction_stack.push(conjunction_node);
 
@@ -1399,11 +1498,15 @@ pub fn number_number_int(
     token_int_literal: TokenIntLiteral,
     compiler_context: &mut CompilerContext,
 ) -> Number {
-    compiler_context.push_to_symbol_table(token_int_literal.into());
-    compiler_context.write_to_parser_file(&format!("<Number> -> {token_int_literal}"));
+    compiler_context.push_to_symbol_table(token_int_literal.clone().into());
+    compiler_context.write_to_parser_file(&format!("<Number> -> {}", token_int_literal.original));
 
     let ast = &mut compiler_context.ast;
-    ast.create_leaf(token_int_literal.to_string(), AstPtr::Number);
+    ast.create_leaf(
+        token_int_literal.original.clone(),
+        AstPtr::Number,
+        Some(ExpressionType::Int),
+    );
 
     Number::NumberInt(token_int_literal)
 }
@@ -1418,7 +1521,11 @@ pub fn number_number_float(
     compiler_context.write_to_parser_file(&format!("<Number> -> {}", token_float_literal.original));
 
     let ast = &mut compiler_context.ast;
-    ast.create_leaf(token_float_literal.original.clone(), AstPtr::Number);
+    ast.create_leaf(
+        token_float_literal.original.clone(),
+        AstPtr::Number,
+        Some(ExpressionType::Float),
+    );
 
     Number::NumberFloat(token_float_literal)
 }
@@ -1430,23 +1537,27 @@ pub fn number_number_negative_int(
     token_int_literal: TokenIntLiteral,
     compiler_context: &mut CompilerContext,
 ) -> Number {
-    let value: i64 = format!("{token_sub}{token_int_literal}").parse().unwrap();
-    compiler_context.push_to_symbol_table(value.into());
-    compiler_context.write_to_parser_file(&format!("<Number> -> {token_sub} {token_int_literal}"));
+    compiler_context.push_to_symbol_table(token_int_literal.clone().into());
+    compiler_context.write_to_parser_file(&format!(
+        "<Number> -> {token_sub} {}",
+        token_int_literal.original
+    ));
 
     let ast = &mut compiler_context.ast;
-    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(
-        token_int_literal.to_string(),
-    )));
-    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    let leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_int_literal.original.clone()),
+        Some(ExpressionType::Int),
+    ));
+    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
     ast.create_node(
         AstAction::Negative,
         leaf.into(),
         noop.into(),
         AstPtr::Number,
+        Some(ExpressionType::Int),
     );
 
-    Number::NumberInt(value)
+    Number::NumberInt(token_int_literal)
 }
 
 /// Parses the rule `<Number> -> TokenSub TokenFloatLiteral`
@@ -1465,15 +1576,17 @@ pub fn number_number_negative_float(
     ));
 
     let ast = &mut compiler_context.ast;
-    let leaf = Rc::new(Node::new_leaf(NodeValue::Value(
-        token_float_literal.original.clone(),
-    )));
-    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop)));
+    let leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(token_float_literal.original.clone()),
+        Some(ExpressionType::Int),
+    ));
+    let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
     ast.create_node(
         AstAction::Negative,
         leaf.into(),
         noop.into(),
         AstPtr::Number,
+        Some(ExpressionType::Float),
     );
 
     Number::NumberFloat(token_float_literal)
@@ -1499,12 +1612,13 @@ pub fn not_statement_not(
         );
     };
 
-    let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop));
+    let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop), None);
     ast.create_node(
         AstAction::Not,
         boolean_expression_node.into(),
         Rc::new(dummy).into(),
         AstPtr::Not,
+        None,
     );
 
     NotStatement {
@@ -1526,18 +1640,44 @@ pub fn arithmetic_expression_arithmetic_expression_sum_term(
     ));
 
     let ast = &mut compiler_context.ast;
-    let Some(node) = ast.expression_stack.pop() else {
+
+    let right_child = ast.get_node_from_ptr(AstPtr::Term);
+    let Some(left_child) = ast.expression_stack.pop() else {
         log_ast_error(
             "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSum <Term>`",
             ctx,
             compiler_context,
         );
     };
+
+    let Some(left_child_type) = left_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Left hand side of an addition has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    let Some(right_child_type) = right_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Right hand side of an addition has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    if left_child_type != right_child_type {
+        log_type_error(
+            &format!("{left_child_type} + {right_child_type}"),
+            ctx,
+            compiler_context,
+        )
+    }
+
     ast.create_node(
         AstAction::Plus,
-        node.into(),
-        AstPtr::Term.into(),
+        left_child.into(),
+        right_child.into(),
         AstPtr::ArithmeticExpression,
+        Some(left_child_type),
     );
 
     ArithmeticExpression::ArithmeticExpressionSumTerm(ArithmeticExpressionSumTerm {
@@ -1560,18 +1700,44 @@ pub fn arithmetic_expression_arithmetic_expression_sub_term(
     ));
 
     let ast = &mut compiler_context.ast;
-    let Some(node) = ast.expression_stack.pop() else {
+
+    let right_child = ast.get_node_from_ptr(AstPtr::Term);
+    let Some(left_child) = ast.expression_stack.pop() else {
         log_ast_error(
             "ArithmeticExpression stack was empty when parsing `<ArithmeticExpression> -> <ArithmeticExpression> <DummyAE> TokenSub <Term>`",
             ctx,
             compiler_context,
         )
     };
+
+    let Some(left_child_type) = left_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Left hand side of a substraction has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    let Some(right_child_type) = right_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Right hand side of a substraction has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    if left_child_type != right_child_type {
+        log_type_error(
+            &format!("{left_child_type} - {right_child_type}"),
+            ctx,
+            compiler_context,
+        )
+    }
+
     compiler_context.ast.create_node(
         AstAction::Sub,
-        node.into(),
-        AstPtr::Term.into(),
+        left_child.into(),
+        right_child.into(),
         AstPtr::ArithmeticExpression,
+        Some(left_child_type),
     );
 
     ArithmeticExpression::ArithmeticExpressionSubTerm(ArithmeticExpressionSubTerm {
@@ -1616,18 +1782,44 @@ pub fn term_term_mul_factor(
         .write_to_parser_file(&format!("<Term> -> <Term> <DummyT> {token_mul} <Factor>"));
 
     let ast = &mut compiler_context.ast;
-    let Some(node) = ast.term_stack.pop() else {
+
+    let right_child = ast.get_node_from_ptr(AstPtr::Factor);
+    let Some(left_child) = ast.term_stack.pop() else {
         log_ast_error(
             "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenMul <Factor>`",
             ctx,
             compiler_context,
         );
     };
+
+    let Some(left_child_type) = left_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Left hand side of a multiplication has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    let Some(right_child_type) = right_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Right hand side of a multiplication has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    if left_child_type != right_child_type {
+        log_type_error(
+            &format!("{left_child_type} * {right_child_type}"),
+            ctx,
+            compiler_context,
+        )
+    }
+
     ast.create_node(
         AstAction::Mult,
-        node.into(),
-        AstPtr::Factor.into(),
+        left_child.into(),
+        right_child.into(),
         AstPtr::Term,
+        Some(left_child_type),
     );
 
     Term::TermMulFactor(TermMulFactor {
@@ -1649,18 +1841,44 @@ pub fn term_term_div_factor(
         .write_to_parser_file(&format!("<Term> -> <Term> <DummyT> {token_div} <Factor>"));
 
     let ast = &mut compiler_context.ast;
-    let Some(node) = ast.term_stack.pop() else {
+
+    let right_child = ast.get_node_from_ptr(AstPtr::Factor);
+    let Some(left_child) = ast.term_stack.pop() else {
         log_ast_error(
             "Term stack was empty when parsing `<Term> -> <Term> <DummyT> TokenDiv <Factor>`",
             ctx,
             compiler_context,
         );
     };
+
+    let Some(left_child_type) = left_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Left hand side of a division has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    let Some(right_child_type) = right_child.r#type.as_ref().cloned() else {
+        log_ast_error(
+            "Right hand side of a division has no type",
+            ctx,
+            compiler_context,
+        )
+    };
+    if left_child_type != right_child_type {
+        log_type_error(
+            &format!("{left_child_type} / {right_child_type}"),
+            ctx,
+            compiler_context,
+        )
+    }
+
     ast.create_node(
         AstAction::Div,
-        node.into(),
-        AstPtr::Factor.into(),
+        left_child.into(),
+        right_child.into(),
         AstPtr::Term,
+        Some(left_child_type),
     );
 
     Term::TermDivFactor(TermDivFactor {
@@ -1695,14 +1913,18 @@ pub fn term_term_factor(
 
 /// Parses the rule `<Factor> -> TokenId`
 pub fn factor_factor_id(
-    _ctx: &Ctx,
+    ctx: &Ctx,
     token_id: TokenId,
     compiler_context: &mut CompilerContext,
 ) -> Factor {
     compiler_context.write_to_parser_file(&format!("<Factor> -> {token_id}"));
 
+    let Some(id_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+        log_undeclared_variable_error(&token_id, ctx, compiler_context)
+    };
+
     let ast = &mut compiler_context.ast;
-    ast.create_leaf(token_id.clone(), AstPtr::Factor);
+    ast.create_leaf(token_id.clone(), AstPtr::Factor, Some(id_type.into()));
 
     Factor::FactorId(token_id)
 }
@@ -1747,6 +1969,30 @@ fn log_ast_error(error: &str, ctx: &Ctx, compiler_context: &mut CompilerContext)
     log_error_and_exit(
         ctx.range(),
         CompilerError::Internal(error.into()),
+        0,
+        true,
+        compiler_context,
+    )
+}
+
+fn log_type_error(error: &str, ctx: &Ctx, compiler_context: &mut CompilerContext) -> ! {
+    log_error_and_exit(
+        ctx.range(),
+        CompilerError::TypeMismatch(error.into()),
+        0,
+        true,
+        compiler_context,
+    )
+}
+
+fn log_undeclared_variable_error(
+    var_name: &str,
+    ctx: &Ctx,
+    compiler_context: &mut CompilerContext,
+) -> ! {
+    log_error_and_exit(
+        ctx.range(),
+        CompilerError::UndeclaredVariable(var_name.into()),
         0,
         true,
         compiler_context,

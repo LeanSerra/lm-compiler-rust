@@ -1,4 +1,4 @@
-use crate::grammar::types::ComparisonOp;
+use crate::grammar::types::{ComparisonOp, DataType};
 use std::{
     array,
     cell::Cell,
@@ -75,6 +75,7 @@ pub struct Node {
     parent: Cell<Option<Rc<Node>>>,
     left_child: Option<Rc<Node>>,
     right_child: Option<Rc<Node>>,
+    pub r#type: Option<ExpressionType>,
 }
 
 impl Debug for Node {
@@ -84,12 +85,13 @@ impl Debug for Node {
 }
 
 impl Node {
-    pub fn new_leaf(value: NodeValue) -> Self {
+    pub fn new_leaf(value: NodeValue, node_type: Option<ExpressionType>) -> Self {
         Self {
             value,
             parent: Cell::new(None),
             left_child: None,
             right_child: None,
+            r#type: node_type,
         }
     }
 }
@@ -105,6 +107,33 @@ impl Display for NodeValue {
         match self {
             Self::Value(value) => write!(f, "{value}"),
             Self::Action(action) => write!(f, "{action}"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExpressionType {
+    Float,
+    Int,
+    String,
+}
+
+impl Display for ExpressionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Float => write!(f, "FLOAT"),
+            Self::Int => write!(f, "INT"),
+            Self::String => write!(f, "STRING"),
+        }
+    }
+}
+
+impl From<DataType> for ExpressionType {
+    fn from(value: DataType) -> Self {
+        match value {
+            DataType::FloatType(_) => ExpressionType::Float,
+            DataType::IntType(_) => ExpressionType::Int,
+            DataType::StringType(_) => ExpressionType::String,
         }
     }
 }
@@ -182,7 +211,9 @@ impl From<ComparisonOp> for AstAction {
 impl Default for Ast {
     fn default() -> Self {
         Self {
-            tree: array::from_fn(|_| Rc::new(Node::new_leaf(NodeValue::Value("".to_string())))),
+            tree: array::from_fn(|_| {
+                Rc::new(Node::new_leaf(NodeValue::Value("".to_string()), None))
+            }),
             expression_stack: Vec::new(),
             term_stack: Vec::new(),
             comparision_op_stack: Vec::new(),
@@ -215,6 +246,7 @@ impl Ast {
         left_child_ptr: AstNodeRef,
         right_child_ptr: AstNodeRef,
         dest_ptr: AstPtr,
+        r#type: Option<ExpressionType>,
     ) -> Rc<Node> {
         let left_child = match left_child_ptr {
             AstNodeRef::Ptr(ptr) => self.tree.get(ptr as usize).cloned(),
@@ -230,6 +262,7 @@ impl Ast {
             parent: Cell::new(None),
             left_child: left_child.clone(),
             right_child: right_child.clone(),
+            r#type,
         });
 
         if let Some(left) = left_child {
@@ -243,8 +276,13 @@ impl Ast {
         node
     }
 
-    pub fn create_leaf(&mut self, value: String, dest_ptr: AstPtr) -> Rc<Node> {
-        let leaf = Rc::new(Node::new_leaf(NodeValue::Value(value)));
+    pub fn create_leaf(
+        &mut self,
+        value: String,
+        dest_ptr: AstPtr,
+        node_type: Option<ExpressionType>,
+    ) -> Rc<Node> {
+        let leaf = Rc::new(Node::new_leaf(NodeValue::Value(value), node_type));
         self.tree[dest_ptr as usize] = leaf.clone();
         leaf
     }
@@ -273,7 +311,15 @@ impl Ast {
     ) -> Result<usize, io::Error> {
         let node_name = format!("n{node_count:0>3}");
         writeln!(file, "    {node_name:0>3} ;")?;
-        writeln!(file, "    {node_name:0>3} [label=\"{:}\"] ;", node.value)?;
+        writeln!(
+            file,
+            "    {node_name:0>3} [label=\"{}{}\"] ;",
+            node.value,
+            node.r#type
+                .as_ref()
+                .map(|t| format!(" | {t}"))
+                .unwrap_or_default()
+        )?;
         if let Some(left_child) = &node.left_child {
             node_count += 1;
             writeln!(file, "    {node_name} -- n{node_count:0>3} ;")?;

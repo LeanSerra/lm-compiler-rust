@@ -156,6 +156,13 @@ impl CompilerContext {
         self.symbol_table.contains(symbol)
     }
 
+    pub fn get_symbol_type(&self, symbol_name: &str) -> Option<Option<DataType>> {
+        self.symbol_table
+            .iter()
+            .find(|x| x.name == symbol_name)
+            .map(|x| x.data_type.clone())
+    }
+
     pub fn create_ast_graph(&mut self, from: AstPtr) -> Result<(), CompilerError> {
         self.ast
             .graph_ast(
@@ -167,66 +174,85 @@ impl CompilerContext {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum SymbolTableElement {
-    VarDeclaration(String, DataType, usize),
-    IntLiteral(TokenIntLiteral),
-    FloatLiteral(TokenFloatLiteral),
-    StringLiteral(TokenStringLiteral),
+#[derive(Default)]
+pub struct SymbolTableElement {
+    pub name: String,
+    pub data_type: Option<DataType>,
+    pub value: Option<String>,
+    pub length: Option<usize>,
 }
 
 impl Display for SymbolTableElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::FloatLiteral(float) => write!(
-                f,
-                "{}|CONST_FLOAT|{}|{}",
-                float.original,
-                float.original,
-                float.original.len()
-            )?,
-            Self::IntLiteral(int) => {
-                write!(f, "{}|CONST_INT|{}|{}", int, int, int.to_string().len())?
-            }
-            Self::StringLiteral(string) => {
-                write!(f, "{}|CONST_STRING|{}|{}", string, string, string.len())?
-            }
-            Self::VarDeclaration(token, r#type, length) => {
-                write!(f, "{}|{}|-|{}", token, r#type, length)?
-            }
-        };
-        Ok(())
+        let name = &self.name;
+        let data_type = self
+            .data_type
+            .as_ref()
+            .map(|r#type| r#type.to_string())
+            .unwrap_or_else(|| String::from("-"));
+        let value = self
+            .value
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| String::from("-"));
+        let length = self
+            .length
+            .map(|length| length.to_string())
+            .unwrap_or_else(|| String::from("-"));
+
+        write!(f, "{name}|{data_type}|{value}|{length}")
     }
 }
 
 impl PartialEq for SymbolTableElement {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::FloatLiteral(token0), Self::FloatLiteral(token1)) => token0 == token1,
-            (Self::IntLiteral(token0), Self::IntLiteral(token1)) => token0 == token1,
-            (Self::StringLiteral(token0), Self::StringLiteral(token1)) => token0 == token1,
-            (Self::VarDeclaration(token0, _, _), Self::VarDeclaration(token1, _, _)) => {
-                token0 == token1
-            }
-            _ => false,
-        }
+        self.name == other.name
     }
 }
 
+impl Eq for SymbolTableElement {}
+
 impl From<TokenIntLiteral> for SymbolTableElement {
     fn from(value: TokenIntLiteral) -> Self {
-        Self::IntLiteral(value)
+        let mut name = String::with_capacity(value.original.len() + 1);
+        name.push('_');
+        name.push_str(&value.original);
+
+        Self {
+            name,
+            data_type: None,
+            value: Some(value.original),
+            length: None,
+        }
     }
 }
 
 impl From<TokenFloatLiteral> for SymbolTableElement {
     fn from(value: TokenFloatLiteral) -> Self {
-        Self::FloatLiteral(value)
+        let mut name = String::with_capacity(value.original.len() + 1);
+        name.push('_');
+        name.push_str(&value.original);
+
+        Self {
+            name: value.original.clone(),
+            data_type: None,
+            value: Some(value.original),
+            length: None,
+        }
     }
 }
 
 impl From<TokenStringLiteral> for SymbolTableElement {
     fn from(value: TokenStringLiteral) -> Self {
-        Self::StringLiteral(value)
+        let mut name = String::with_capacity(value.len() + 1);
+        name.push('_');
+        name.push_str(&value);
+
+        Self {
+            name,
+            data_type: None,
+            length: Some(value.len()),
+            value: Some(value),
+        }
     }
 }

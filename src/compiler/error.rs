@@ -13,6 +13,10 @@ pub enum CompilerError {
     Lexer(String),
     #[error("Context error: {0}")]
     Context(String),
+    #[error("Type mismatch error: {0}")]
+    TypeMismatch(String),
+    #[error("Use of undeclared variable: {0}")]
+    UndeclaredVariable(String),
     #[error("IO error: {0}")]
     IO(String),
     #[error("Compiler internal error: {0}. This is a bug.")]

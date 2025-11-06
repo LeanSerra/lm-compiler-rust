@@ -18,7 +18,13 @@ pub type TokenFloat = String;
 pub type TokenString = String;
 
 /// Signed integer number
-pub type TokenIntLiteral = i64;
+#[derive(Debug, Clone)]
+pub struct TokenIntLiteral {
+    /// Original string representing the int
+    pub original: String,
+    /// Parsed representation of the int
+    pub parsed: i64,
+}
 
 /// Signed float with 32 bits precision
 #[derive(Debug, Clone)]
@@ -308,11 +314,13 @@ impl VarDeclaration {
     pub fn push_to_symbol_table(&self, compiler_context: &mut CompilerContext) -> DataType {
         match self {
             Self::VarDeclarationSingle(single) => {
-                let symbol = SymbolTableElement::VarDeclaration(
-                    single.token_id.clone(),
-                    single.data_type.clone(),
-                    single.token_id.len(),
-                );
+                let symbol = SymbolTableElement {
+                    name: single.token_id.clone(),
+                    data_type: Some(single.data_type.clone()),
+                    value: None,
+                    length: Some(single.token_id.len()),
+                };
+
                 // If the symbol already exists this is a redeclaration
                 if compiler_context.symbol_exists(&symbol) {
                     log_error_and_exit(
@@ -334,11 +342,13 @@ impl VarDeclaration {
                 let data_type = recursive
                     .var_declaration
                     .push_to_symbol_table(compiler_context);
-                let symbol = SymbolTableElement::VarDeclaration(
-                    recursive.token_id.clone(),
-                    data_type.clone(),
-                    recursive.token_id.len(),
-                );
+                let symbol = SymbolTableElement {
+                    name: recursive.token_id.clone(),
+                    data_type: Some(data_type.clone()),
+                    value: None,
+                    length: Some(recursive.token_id.len()),
+                };
+
                 // If the symbol already exists this is a redeclaration
                 if compiler_context.symbol_exists(&symbol) {
                     log_error_and_exit(
