@@ -16,34 +16,22 @@ Simple compiler written in Rust using:
 
 |Feature|Status|File/s|
 |-------|------|------|
-|Lexer|✅|[rflex lexer file](./src/lex.l)|
-|Grammar|✅|[rustemo grammar file](./src/rustemo.grammar)|
+|Lexer|✅|[rflex lexer file](./src/lexer/lex.l)|
+|Grammar|✅|[rustemo grammar file](./src/grammar/rules.rustemo)|
 |Symbol table|✅|Generate running the executable|
 |Tests|✅|Run using `cargo test`|
 
 ### v2.0.0
 |Feature|Status|File/s|
 |-------|------|------|
-|Intermediate code(Tree)|🏗️|-|
-|Tests|🏗️|-|
+|Intermediate code(Tree)|✅|[ast](./src/compiler/ast.rs)|
+|Tests|✅|Run using `cargo test`|
 
 ### v3.0.0
 |Feature|Status|File/s|
 |-------|------|------|
 |Assembler output|🏗️|-|
 |Linking script|🏗️|-|
-
-## Compiling
-
-1. Compile in debug mode
-```Shell
-cargo build
-```
-
-2. Compile in release mode
-```Shell
-cargo build --release
-```
 
 ## Running the compiler
 
@@ -69,11 +57,12 @@ cargo test
 
 ## Generated files
 
-When running the compiler it will output 3 files to the path of the source file
+When running the compiler it will output 4 files to the path of the source file
 
 - \<source-file-name\>.parser
 - \<source-file-name\>.lexer
 - \<source-file-name\>.symbol_table
+- \<source-file-name\>.dot
 
 ## Cli reference
 
