@@ -1564,11 +1564,9 @@ pub fn number_number_negative_int(
 pub fn number_number_negative_float(
     _ctx: &Ctx,
     token_sub: TokenSub,
-    mut token_float_literal: TokenFloatLiteral,
+    token_float_literal: TokenFloatLiteral,
     compiler_context: &mut CompilerContext,
 ) -> Number {
-    token_float_literal.original = format!("{token_sub}{}", token_float_literal.original);
-    token_float_literal.parsed *= -1_f32;
     compiler_context.push_to_symbol_table(token_float_literal.clone().into());
     compiler_context.write_to_parser_file(&format!(
         "<Number> -> {token_sub} {}",
@@ -1578,7 +1576,7 @@ pub fn number_number_negative_float(
     let ast = &mut compiler_context.ast;
     let leaf = Rc::new(Node::new_leaf(
         NodeValue::Value(token_float_literal.original.clone()),
-        Some(ExpressionType::Int),
+        Some(ExpressionType::Float),
     ));
     let noop = Rc::new(Node::new_leaf(NodeValue::Action(AstAction::Noop), None));
     ast.create_node(
