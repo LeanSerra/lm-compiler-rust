@@ -1,6 +1,6 @@
 main(){
     init {
-        x : float
+        x, c, r, z, f : int
     }
 
     x := 27 - c
