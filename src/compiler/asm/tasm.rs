@@ -12,6 +12,7 @@ use crate::compiler::{
 pub struct TasmGenerator<'a> {
     label_if_false_count: usize,
     label_if_body_count: usize,
+    label_if_else_body_count: usize,
     label_while_cond_count: usize,
     current_end_label: String,
     current_begin_label: String,
@@ -28,6 +29,7 @@ impl<'a> TasmGenerator<'a> {
             current_begin_label: String::new(),
             label_if_false_count: 0,
             label_if_body_count: 0,
+            label_if_else_body_count: 0,
             label_while_cond_count: 0,
         }
     }
@@ -112,7 +114,7 @@ impl<'a> TasmGenerator<'a> {
 
                 AstAction::If => self.generate_action_if(node),
                 AstAction::Else => {
-                    todo!()
+                    unreachable!("Tried to execute else branch from generate_asm_from_tree")
                 }
                 AstAction::And => self.generate_action_and(node),
                 AstAction::Or => self.generate_action_or(node),
@@ -171,6 +173,14 @@ impl<'a> TasmGenerator<'a> {
         };
         self.generate_asm_from_tree(left_child)?;
 
+        let Some(right_child) = &node.right_child else {
+            panic!("invalid if")
+        };
+
+        if let NodeValue::Action(AstAction::Else) = right_child.value {
+            return self.generate_action_else(right_child, left_child);
+        }
+
         let label_if_false = format!("if_false_{}", self.label_if_false_count);
         self.label_if_false_count += 1;
         self.current_end_label = label_if_false.clone();
@@ -217,7 +227,7 @@ impl<'a> TasmGenerator<'a> {
             },
         };
         // Generate If body
-        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
+        self.generate_asm_from_tree(right_child)?;
         // Label to jump if statement is false
         writeln!(self.file, "{label_if_false}:")?;
 
@@ -489,5 +499,55 @@ impl<'a> TasmGenerator<'a> {
         writeln!(self.file)?;
         // End of while label
         writeln!(self.file, "{while_end_label}:")
+    }
+
+    fn generate_action_else(
+        &mut self,
+        node: &Rc<Node>,
+        condition_node: &Rc<Node>,
+    ) -> Result<(), io::Error> {
+        let begin_else_label = format!("else_{}", self.label_if_else_body_count);
+        let end_if_else_label = format!("end_if_else{}", self.label_if_else_body_count);
+        self.current_begin_label = begin_else_label.clone();
+
+        match &condition_node.value {
+            NodeValue::Value(_val) => todo!("handle if(x) else {{}}"),
+            NodeValue::False => todo!("handle if(false) else {{}}"),
+            NodeValue::True => todo!("handle if(True) else {{}}"),
+            NodeValue::Action(action) => match action {
+                AstAction::GT => {
+                    writeln!(self.file, "    JNAE    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::GTE => {
+                    writeln!(self.file, "    JNA    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::EQ => {
+                    writeln!(self.file, "    JNE    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::NE => {
+                    writeln!(self.file, "    JE    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::LT => {
+                    writeln!(self.file, "    JAE    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::LTE => {
+                    writeln!(self.file, "    JA    {begin_else_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::And | AstAction::Or => {}
+                _ => panic!("invalid"),
+            },
+        }
+        self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
+        writeln!(self.file, "    JMP    {end_if_else_label}")?;
+        writeln!(self.file)?;
+        writeln!(self.file, "{}:", begin_else_label)?;
+        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
+        writeln!(self.file, "{}:", end_if_else_label)
     }
 }
