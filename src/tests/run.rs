@@ -4,10 +4,11 @@ use std::path::Path;
 
 fn integration_test(path: &Path) -> datatest_stable::Result<()> {
     let compiler = Compiler::new(path.into())?;
-    Ok(RulesParser::new(compiler.clone(), compiler.clone())
+    RulesParser::new(compiler.clone(), compiler.clone())
         .parse_file(path)
         .map_err(|e| e.to_string())
-        .map(|_| ())?)
+        .map(|_| ())?;
+    Ok(compiler.inner.borrow_mut().generate_asm()?)
 }
 
 #[cfg(test)]

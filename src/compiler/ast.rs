@@ -1,4 +1,7 @@
-use crate::grammar::types::{ComparisonOp, DataType};
+use crate::{
+    compiler::{asm::TasmGenerator, context::SymbolTable},
+    grammar::types::{ComparisonOp, DataType},
+};
 use std::{
     array,
     cell::Cell,
@@ -73,8 +76,8 @@ impl From<Rc<Node>> for AstNodeRef {
 pub struct Node {
     pub value: NodeValue,
     parent: Cell<Option<Rc<Node>>>,
-    left_child: Option<Rc<Node>>,
-    right_child: Option<Rc<Node>>,
+    pub(super) left_child: Option<Rc<Node>>,
+    pub(super) right_child: Option<Rc<Node>>,
     pub r#type: Option<ExpressionType>,
 }
 
@@ -340,5 +343,12 @@ impl Ast {
         Ok(node_count)
     }
 
+    pub fn generate_asm(
+        &self,
+        file: &mut File,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<(), io::Error> {
+        let node = self.get_node_from_ptr(AstPtr::Program);
+        TasmGenerator::new(symbol_table, file).generate_asm(node)
     }
 }

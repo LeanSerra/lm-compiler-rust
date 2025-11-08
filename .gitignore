@@ -3,3 +3,4 @@
 *.parser
 *.symbol_table
 *.dot
+*.asm
