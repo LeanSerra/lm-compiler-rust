@@ -12,6 +12,9 @@ use crate::compiler::{
 pub struct TasmGenerator<'a> {
     label_if_false_count: usize,
     label_if_body_count: usize,
+    label_while_cond_count: usize,
+    current_end_label: String,
+    current_begin_label: String,
     symbol_table: &'a mut SymbolTable,
     file: &'a mut File,
 }
@@ -21,8 +24,11 @@ impl<'a> TasmGenerator<'a> {
         Self {
             file,
             symbol_table,
+            current_end_label: String::new(),
+            current_begin_label: String::new(),
             label_if_false_count: 0,
             label_if_body_count: 0,
+            label_while_cond_count: 0,
         }
     }
 
@@ -113,9 +119,7 @@ impl<'a> TasmGenerator<'a> {
                 AstAction::Not => {
                     todo!()
                 }
-                AstAction::While => {
-                    todo!()
-                }
+                AstAction::While => self.generate_action_while(node),
                 AstAction::Read => {
                     todo!()
                 }
@@ -169,6 +173,7 @@ impl<'a> TasmGenerator<'a> {
 
         let label_if_false = format!("if_false_{}", self.label_if_false_count);
         self.label_if_false_count += 1;
+        self.current_end_label = label_if_false.clone();
         // Create jump to label if false depending on operator
         match &left_child.value {
             NodeValue::Value(_val) => todo!("handle if(a)"),
@@ -204,6 +209,7 @@ impl<'a> TasmGenerator<'a> {
                     // TODO should we generate this label every time?
                     let label_if_body = format!("if_body_{}", self.label_if_body_count);
                     self.label_if_body_count += 1;
+                    self.current_end_label = label_if_body.clone();
                     // Generate label to jump if any of the OR statements are true
                     writeln!(self.file, "{label_if_body}:")?;
                 }
@@ -219,7 +225,7 @@ impl<'a> TasmGenerator<'a> {
     }
 
     fn generate_action_and(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let label_if_false = format!("if_false_{}", self.label_if_false_count);
+        let label_jmp_to_end = &self.current_end_label.clone();
         let Some(left_child) = node.left_child.as_ref() else {
             panic!("invalid AND");
         };
@@ -238,27 +244,27 @@ impl<'a> TasmGenerator<'a> {
             }
             NodeValue::Action(action) => match action {
                 AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {label_if_false}")?;
+                    writeln!(self.file, "    JNAE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {label_if_false}")?;
+                    writeln!(self.file, "    JNA    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {label_if_false}")?;
+                    writeln!(self.file, "    JNE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::NE => {
-                    writeln!(self.file, "    JE    {label_if_false}")?;
+                    writeln!(self.file, "    JE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LT => {
-                    writeln!(self.file, "    JAE    {label_if_false}")?;
+                    writeln!(self.file, "    JAE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LTE => {
-                    writeln!(self.file, "    JA    {label_if_false}")?;
+                    writeln!(self.file, "    JA    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::Or => {
@@ -286,27 +292,27 @@ impl<'a> TasmGenerator<'a> {
             }
             NodeValue::Action(action) => match action {
                 AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {label_if_false}")?;
+                    writeln!(self.file, "    JNAE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {label_if_false}")?;
+                    writeln!(self.file, "    JNA    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {label_if_false}")?;
+                    writeln!(self.file, "    JNE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::NE => {
-                    writeln!(self.file, "    JE    {label_if_false}")?;
+                    writeln!(self.file, "    JE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LT => {
-                    writeln!(self.file, "    JAE    {label_if_false}")?;
+                    writeln!(self.file, "    JAE    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LTE => {
-                    writeln!(self.file, "    JA    {label_if_false}")?;
+                    writeln!(self.file, "    JA    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -317,8 +323,8 @@ impl<'a> TasmGenerator<'a> {
     }
 
     fn generate_action_or(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let label_if_body = format!("if_body_{}", self.label_if_body_count);
-        let label_if_false = format!("if_false_{}", self.label_if_false_count);
+        let label_begin_body = &self.current_begin_label.clone();
+        let label_end_body = &self.current_end_label.clone();
         let Some(left_child) = node.left_child.as_ref() else {
             panic!("invalid OR");
         };
@@ -337,27 +343,27 @@ impl<'a> TasmGenerator<'a> {
             }
             NodeValue::Action(action) => match action {
                 AstAction::GT => {
-                    writeln!(self.file, "    JA    {label_if_body}")?;
+                    writeln!(self.file, "    JA    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::GTE => {
-                    writeln!(self.file, "    JAE    {label_if_body}")?;
+                    writeln!(self.file, "    JAE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::EQ => {
-                    writeln!(self.file, "    JE    {label_if_body}")?;
+                    writeln!(self.file, "    JE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::NE => {
-                    writeln!(self.file, "    JNE    {label_if_body}")?;
+                    writeln!(self.file, "    JNE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LT => {
-                    writeln!(self.file, "    JNA    {label_if_body}")?;
+                    writeln!(self.file, "    JNA    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LTE => {
-                    writeln!(self.file, "    JNAE    {label_if_body}")?;
+                    writeln!(self.file, "    JNAE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -381,34 +387,35 @@ impl<'a> TasmGenerator<'a> {
             }
             NodeValue::Action(action) => match action {
                 AstAction::GT => {
-                    writeln!(self.file, "    JA    {label_if_body}")?;
+                    writeln!(self.file, "    JA    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::GTE => {
-                    writeln!(self.file, "    JAE    {label_if_body}")?;
+                    writeln!(self.file, "    JAE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::EQ => {
-                    writeln!(self.file, "    JE    {label_if_body}")?;
+                    writeln!(self.file, "    JE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::NE => {
-                    writeln!(self.file, "    JNE    {label_if_body}")?;
+                    writeln!(self.file, "    JNE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LT => {
-                    writeln!(self.file, "    JNA    {label_if_body}")?;
+                    writeln!(self.file, "    JNA    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::LTE => {
-                    writeln!(self.file, "    JNAE    {label_if_body}")?;
+                    writeln!(self.file, "    JNAE    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
                 _ => panic!("invalid"),
             },
         }
-        writeln!(self.file, "    JMP    {label_if_false}")
+        // None of the conditions are met jump to the end of the statement
+        writeln!(self.file, "    JMP    {label_end_body}")
     }
 
     fn generate_action_negative(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
@@ -426,5 +433,61 @@ impl<'a> TasmGenerator<'a> {
         writeln!(self.file, "    FST _@write")?;
         writeln!(self.file, "    DisplayFloat _@write, 2")?;
         writeln!(self.file)
+    }
+
+    fn generate_action_while(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+        let while_cond_label = format!("while_cond_{}", self.label_while_cond_count);
+        let while_end_label = format!("while_end_{}", self.label_while_cond_count);
+        self.label_while_cond_count += 1;
+        self.current_begin_label = while_cond_label.clone();
+        self.current_end_label = while_end_label.clone();
+
+        // Set the label to the beggining of the loop
+        writeln!(self.file, "{while_cond_label}:")?;
+        let Some(left_child) = node.left_child.as_ref() else {
+            panic!("invalid while");
+        };
+        self.generate_asm_from_tree(left_child)?;
+        // When the condition is false jump to the end of while
+        match &left_child.value {
+            NodeValue::Value(_val) => todo!("handle while(x)"),
+            NodeValue::False => todo!("handle while(false)"),
+            NodeValue::True => todo!("handle while(True)"),
+            NodeValue::Action(action) => match action {
+                AstAction::GT => {
+                    writeln!(self.file, "    JNAE    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::GTE => {
+                    writeln!(self.file, "    JNA    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::EQ => {
+                    writeln!(self.file, "    JNE    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::NE => {
+                    writeln!(self.file, "    JE    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::LT => {
+                    writeln!(self.file, "    JAE    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::LTE => {
+                    writeln!(self.file, "    JA    {while_end_label}")?;
+                    writeln!(self.file)?;
+                }
+                AstAction::And | AstAction::Or => {}
+                _ => panic!("invalid"),
+            },
+        };
+        // Generate body of the while
+        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
+        // Jump to begging of while
+        writeln!(self.file, "    JMP    {while_cond_label}")?;
+        writeln!(self.file)?;
+        // End of while label
+        writeln!(self.file, "{while_end_label}:")
     }
 }
