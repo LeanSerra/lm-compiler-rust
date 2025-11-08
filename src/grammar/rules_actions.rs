@@ -573,6 +573,19 @@ pub fn function_conv_date_function_conv_date_variable_call(
         parsed: 1,
     };
 
+    let year_symbol = TokenIntLiteral {
+        original: token_date.year.clone(),
+        parsed: token_date.year.parse().unwrap(),
+    };
+    let month_symbol = TokenIntLiteral {
+        original: token_date.month.clone(),
+        parsed: token_date.month.parse().unwrap(),
+    };
+    let day_symbol = TokenIntLiteral {
+        original: token_date.day.clone(),
+        parsed: token_date.day.parse().unwrap(),
+    };
+
     let ast = &mut compiler_context.ast;
 
     let thousand_leaf = Rc::new(Node::new_leaf(
@@ -589,15 +602,15 @@ pub fn function_conv_date_function_conv_date_variable_call(
     ));
 
     let year_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.year.clone()),
+        NodeValue::Value(year_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let month_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.month.clone()),
+        NodeValue::Value(month_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let day_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.day.clone()),
+        NodeValue::Value(day_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
 
@@ -641,6 +654,9 @@ pub fn function_conv_date_function_conv_date_variable_call(
     compiler_context.push_to_symbol_table(thousand_symbol.into());
     compiler_context.push_to_symbol_table(hundread_symbol.into());
     compiler_context.push_to_symbol_table(one_symbol.into());
+    compiler_context.push_to_symbol_table(year_symbol.into());
+    compiler_context.push_to_symbol_table(month_symbol.into());
+    compiler_context.push_to_symbol_table(day_symbol.into());
 
     FunctionConvDate {
         token_conv_date,
