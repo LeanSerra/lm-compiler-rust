@@ -100,6 +100,8 @@ impl Node {
 pub enum NodeValue {
     Action(AstAction),
     Value(String),
+    True,
+    False,
 }
 
 impl Display for NodeValue {
@@ -107,6 +109,8 @@ impl Display for NodeValue {
         match self {
             Self::Value(value) => write!(f, "{value}"),
             Self::Action(action) => write!(f, "{action}"),
+            Self::True => write!(f, "True"),
+            Self::False => write!(f, "False"),
         }
     }
 }
@@ -150,7 +154,6 @@ pub enum AstAction {
     And,
     Or,
     Not,
-    IsZero,
     GT,
     GTE,
     EQ,
@@ -184,7 +187,6 @@ impl Display for AstAction {
             Self::And => write!(f, "AND"),
             Self::Or => write!(f, "OR"),
             Self::Not => write!(f, "NOT"),
-            Self::IsZero => write!(f, "ISZERO"),
             Self::While => write!(f, "WHILE"),
             Self::Read => write!(f, "READ"),
             Self::Write => write!(f, "WRITE"),
@@ -287,6 +289,10 @@ impl Ast {
         leaf
     }
 
+    pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
+        self.tree[from as usize].clone()
+    }
+
     pub fn graph_ast(
         &self,
         from: AstPtr,
@@ -334,7 +340,5 @@ impl Ast {
         Ok(node_count)
     }
 
-    pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
-        self.tree[from as usize].clone()
     }
 }

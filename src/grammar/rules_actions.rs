@@ -520,6 +520,13 @@ pub fn function_is_zero_function_is_zero_call(
         "<FunctionIsZero> -> {token_is_zero} {token_par_open} <E> {token_par_close}"
     ));
 
+    compiler_context.push_to_symbol_table(
+        TokenIntLiteral {
+            original: "0".into(),
+            parsed: 0,
+        }
+        .into(),
+    );
     let zero_leaf = Rc::new(Node::new_leaf(
         NodeValue::Value("0".into()),
         Some(ExpressionType::Int),
@@ -553,18 +560,31 @@ pub fn function_conv_date_function_conv_date_variable_call(
         "<FunctionConvDate> -> {token_conv_date} {token_par_open} {token_date} {token_par_close}"
     ));
 
+    let thousand_symbol = TokenIntLiteral {
+        original: "1000".into(),
+        parsed: 1000,
+    };
+    let hundread_symbol = TokenIntLiteral {
+        original: "100".into(),
+        parsed: 100,
+    };
+    let one_symbol = TokenIntLiteral {
+        original: "1".into(),
+        parsed: 1,
+    };
+
     let ast = &mut compiler_context.ast;
 
     let thousand_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("1000".into()),
+        NodeValue::Value(thousand_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let hundread_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("100".into()),
+        NodeValue::Value(hundread_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let one_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("1".into()),
+        NodeValue::Value(one_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
 
@@ -617,6 +637,10 @@ pub fn function_conv_date_function_conv_date_variable_call(
         AstPtr::ConvDate,
         Some(ExpressionType::Int),
     );
+
+    compiler_context.push_to_symbol_table(thousand_symbol.into());
+    compiler_context.push_to_symbol_table(hundread_symbol.into());
+    compiler_context.push_to_symbol_table(one_symbol.into());
 
     FunctionConvDate {
         token_conv_date,
@@ -1181,8 +1205,8 @@ pub fn boolean_expression_boolean_expression_true(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_true}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_true.clone(), AstPtr::BooleanExpression, None);
-    ast.boolean_expression_stack.push(node);
+    let leaf = Rc::new(Node::new_leaf(NodeValue::True, None));
+    ast.boolean_expression_stack.push(leaf);
 
     BooleanExpression::BooleanExpressionTrue(token_true)
 }
@@ -1196,8 +1220,8 @@ pub fn boolean_expression_boolean_expression_false(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_false}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_false.clone(), AstPtr::BooleanExpression, None);
-    ast.boolean_expression_stack.push(node);
+    let leaf = Rc::new(Node::new_leaf(NodeValue::False, None));
+    ast.boolean_expression_stack.push(leaf);
 
     BooleanExpression::BooleanExpressionFalse(token_false)
 }

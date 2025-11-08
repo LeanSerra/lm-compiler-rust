@@ -12,7 +12,7 @@ use std::{
     cell::RefCell,
     fmt::Display,
     fs::{File, OpenOptions, read_to_string},
-    io::{Read, Seek, Write},
+    io::{self, Read, Seek, Write},
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -30,15 +30,67 @@ impl Compiler {
     }
 }
 
+#[derive(Default)]
+pub struct SymbolTable {
+    table: Vec<SymbolTableElement>,
+}
+
+impl SymbolTable {
+    pub fn to_data(&self, file: &mut File) -> Result<(), io::Error> {
+        writeln!(file, ".DATA")?;
+        for symbol in &self.table {
+            if let Some(data_type) = &symbol.data_type {
+                let var = match data_type {
+                    DataType::FloatType(_) => "dd\t?",
+                    DataType::IntType(_) => "dd\t?",
+                    DataType::StringType(_) => "db\t'?',\t'$'",
+                };
+
+                writeln!(file, "\t{}\t{}", symbol.name, var,)?;
+            } else {
+                writeln!(
+                    file,
+                    "\t{}\tdd\t{}",
+                    symbol.name,
+                    symbol.value.as_ref().unwrap()
+                )?
+            }
+        }
+        Ok(())
+    }
+
+    pub fn symbol_exists(&self, symbol: &SymbolTableElement) -> bool {
+        self.table.contains(symbol)
+    }
+
+    pub fn insert(&mut self, symbol: SymbolTableElement) {
+        if !self.symbol_exists(&symbol) {
+            self.table.push(symbol);
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &SymbolTableElement> {
+        self.table.iter()
+    }
+
+    pub fn get_symbol_asm_name(&self, name: &str) -> Option<String> {
+        self.table
+            .iter()
+            .find(|symbol| symbol.original == name)
+            .map(|x| x.name.clone())
+    }
+}
+
 pub struct CompilerContext {
     pub res_stack: Vec<Symbol>,
     source_code_path: PathBuf,
     source_code: String,
-    symbol_table: Vec<SymbolTableElement>,
+    symbol_table: SymbolTable,
     parser_file: File,
     lexer_file: File,
     symbol_table_file: File,
     graph_file: File,
+    asm_file: File,
     pub ast: Ast,
 }
 
@@ -49,16 +101,18 @@ impl CompilerContext {
         let lexer_file = CompilerContext::open_lexer_file(&path)?;
         let symbol_table_file = CompilerContext::open_symbol_table_file(&path)?;
         let graph_file = CompilerContext::open_graph_file(&path)?;
+        let asm_file = CompilerContext::open_asm_file(&path)?;
 
         Ok(Self {
             res_stack: Vec::new(),
             source_code_path: path,
             source_code,
-            symbol_table: Vec::new(),
+            symbol_table: SymbolTable::default(),
             parser_file,
             lexer_file,
             symbol_table_file,
             graph_file,
+            asm_file,
             ast: Ast::new(),
         })
     }
@@ -105,6 +159,15 @@ impl CompilerContext {
             .map_err(|e| CompilerError::IO(e.to_string()))
     }
 
+    fn open_asm_file(path: &Path) -> Result<File, CompilerError> {
+        OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(path.with_extension("asm"))
+            .map_err(|e| CompilerError::IO(e.to_string()))
+    }
+
     pub fn path(&self) -> String {
         self.source_code_path.to_string_lossy().into()
     }
@@ -118,6 +181,7 @@ impl CompilerContext {
             writeln!(self.symbol_table_file, "{symbol}")
                 .map_err(|e| CompilerError::IO(e.to_string()))?;
         }
+
         Ok(())
     }
 
@@ -147,19 +211,17 @@ impl CompilerContext {
     }
 
     pub fn push_to_symbol_table(&mut self, symbol: SymbolTableElement) {
-        if !self.symbol_exists(&symbol) {
-            self.symbol_table.push(symbol);
-        }
+        self.symbol_table.insert(symbol)
     }
 
     pub fn symbol_exists(&self, symbol: &SymbolTableElement) -> bool {
-        self.symbol_table.contains(symbol)
+        self.symbol_table.symbol_exists(symbol)
     }
 
     pub fn get_symbol_type(&self, symbol_name: &str) -> Option<Option<DataType>> {
         self.symbol_table
             .iter()
-            .find(|x| x.name == symbol_name)
+            .find(|x| x.original == symbol_name)
             .map(|x| x.data_type.clone())
     }
 
@@ -172,11 +234,18 @@ impl CompilerContext {
             )
             .map_err(|e| CompilerError::IO(e.to_string()))
     }
+
+    pub fn generate_asm(&mut self) -> Result<(), CompilerError> {
+        self.ast
+            .generate_asm(&mut self.asm_file, &mut self.symbol_table)
+            .map_err(|e| CompilerError::IO(e.to_string()))
+    }
 }
 
 #[derive(Default)]
 pub struct SymbolTableElement {
     pub name: String,
+    pub original: String,
     pub data_type: Option<DataType>,
     pub value: Option<String>,
     pub length: Option<usize>,
@@ -206,7 +275,7 @@ impl Display for SymbolTableElement {
 
 impl PartialEq for SymbolTableElement {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
+        self.original == other.original
     }
 }
 
@@ -220,6 +289,7 @@ impl From<TokenIntLiteral> for SymbolTableElement {
 
         Self {
             name,
+            original: value.original.clone(),
             data_type: None,
             value: Some(value.original),
             length: None,
@@ -234,7 +304,8 @@ impl From<TokenFloatLiteral> for SymbolTableElement {
         name.push_str(&value.original);
 
         Self {
-            name: value.original.clone(),
+            name,
+            original: value.original.clone(),
             data_type: None,
             value: Some(value.original),
             length: None,
@@ -250,6 +321,7 @@ impl From<TokenStringLiteral> for SymbolTableElement {
 
         Self {
             name,
+            original: value.clone(),
             data_type: None,
             length: Some(value.len()),
             value: Some(value),

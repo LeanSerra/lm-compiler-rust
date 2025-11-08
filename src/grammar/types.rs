@@ -315,7 +315,8 @@ impl VarDeclaration {
         match self {
             Self::VarDeclarationSingle(single) => {
                 let symbol = SymbolTableElement {
-                    name: single.token_id.clone(),
+                    name: format!("_{}", single.token_id),
+                    original: single.token_id.clone(),
                     data_type: Some(single.data_type.clone()),
                     value: None,
                     length: Some(single.token_id.len()),
@@ -343,7 +344,8 @@ impl VarDeclaration {
                     .var_declaration
                     .push_to_symbol_table(compiler_context);
                 let symbol = SymbolTableElement {
-                    name: recursive.token_id.clone(),
+                    name: format!("_{}", recursive.token_id),
+                    original: recursive.token_id.clone(),
                     data_type: Some(data_type.clone()),
                     value: None,
                     length: Some(recursive.token_id.len()),
