@@ -222,6 +222,14 @@ impl<'a> TasmGenerator<'a> {
         let Some(left_child) = &node.left_child else {
             panic!("invalid if")
         };
+        if let NodeValue::Action(AstAction::Or) = left_child.value {
+            let label_if_body = format!("if_body_{}", self.label_if_body_count);
+            self.label_if_body_count += 1;
+            self.current_begin_label = label_if_body.clone();
+        }
+        let label_if_false = format!("if_false_{}", self.label_if_false_count);
+
+        self.current_end_label = label_if_false.clone();
         self.generate_asm_from_tree(left_child)?;
 
         let Some(right_child) = &node.right_child else {
@@ -232,9 +240,6 @@ impl<'a> TasmGenerator<'a> {
             return self.generate_action_else(right_child, left_child);
         }
 
-        let label_if_false = format!("if_false_{}", self.label_if_false_count);
-        self.label_if_false_count += 1;
-        self.current_end_label = label_if_false.clone();
         // Create jump to label if false depending on operator
         match &left_child.value {
             NodeValue::Value(_val) => panic!("invalid if"),
@@ -258,8 +263,7 @@ impl<'a> TasmGenerator<'a> {
                 AstAction::Or => {
                     // TODO should we generate this label every time?
                     let label_if_body = format!("if_body_{}", self.label_if_body_count);
-                    self.label_if_body_count += 1;
-                    self.current_end_label = label_if_body.clone();
+                    self.label_if_false_count += 1;
                     // Generate label to jump if any of the OR statements are true
                     writeln!(self.file, "{label_if_body}:")?;
                 }
