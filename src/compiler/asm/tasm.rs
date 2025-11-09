@@ -240,14 +240,13 @@ impl<'a> TasmGenerator<'a> {
         let (left_child, right_child) =
             Self::get_left_and_right_child_or_error(node, "Invalid If node")?;
 
-        if let NodeValue::Action(AstAction::Or) = left_child.value {
-            let label_if_body = format!("if_body_{}", self.label_if_body_count);
-            self.label_if_body_count += 1;
-            self.current_begin_label = label_if_body.clone();
-        }
-
+        let label_if_body = format!("if_body_{}", self.label_if_body_count);
         let label_if_false = format!("if_false_{}", self.label_if_false_count);
+        self.label_if_body_count += 1;
+        self.label_if_false_count += 1;
         self.current_end_label = label_if_false.clone();
+        self.current_begin_label = label_if_body.clone();
+
         self.generate_asm_from_tree(&left_child)?;
 
         if let NodeValue::Action(AstAction::Else) = right_child.value {
@@ -280,13 +279,7 @@ impl<'a> TasmGenerator<'a> {
                     writeln!(self.file)?;
                 }
                 AstAction::And => {}
-                AstAction::Or => {
-                    // TODO should we generate this label every time?
-                    let label_if_body = format!("if_body_{}", self.label_if_body_count);
-                    self.label_if_false_count += 1;
-                    // Generate label to jump if any of the OR statements are true
-                    writeln!(self.file, "{label_if_body}:")?;
-                }
+                AstAction::Or => {}
                 action => {
                     return Err(CompilerError::Internal(format!(
                         "Invalid action: {action} in If node"
@@ -294,6 +287,8 @@ impl<'a> TasmGenerator<'a> {
                 }
             },
         };
+        // Generate label to jump if any of the OR statements are true
+        writeln!(self.file, "{label_if_body}:")?;
         // Generate If body
         self.generate_asm_from_tree(&right_child)?;
         // Label to jump if statement is false
@@ -305,7 +300,8 @@ impl<'a> TasmGenerator<'a> {
         let (left_child, right_child) =
             Self::get_left_and_right_child_or_error(node, "Invalid AND node")?;
 
-        let label_jmp_to_end = &self.current_end_label.clone();
+        let label_jmp_to_end = self.current_end_label.clone();
+        let label_jmp_to_begin = self.current_begin_label.clone();
         // Traverse the left subtree generating the comparison
         self.generate_asm_from_tree(&left_child)?;
         // If the generated left side is false then jump to the end of the if
@@ -372,10 +368,7 @@ impl<'a> TasmGenerator<'a> {
                     writeln!(self.file, "    {jmp}    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
-                AstAction::Or => {
-                    // TODO maybe we need this
-                    // writeln!(self.file, "    JMP    {label_if_false}")?;
-                }
+                AstAction::Or => {}
                 AstAction::And => {}
                 action => {
                     return Err(CompilerError::Internal(format!(
@@ -384,6 +377,8 @@ impl<'a> TasmGenerator<'a> {
                 }
             },
         }
+        // All of the conditions are true jump to begin of block
+        writeln!(self.file, "    JMP    {label_jmp_to_begin}")?;
         Ok(())
     }
 
@@ -586,6 +581,8 @@ impl<'a> TasmGenerator<'a> {
         let begin_else_label = format!("else_{}", self.label_if_else_body_count);
         let end_if_else_label = format!("end_if_else{}", self.label_if_else_body_count);
         self.current_begin_label = begin_else_label.clone();
+        self.current_end_label = end_if_else_label.clone();
+        self.label_if_else_body_count += 1;
 
         match &condition_node.value {
             NodeValue::Value(_val) => {
