@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     compiler::{
-        ast::{AstAction, Node, NodeValue},
+        ast::{AstAction, ExpressionType, Node, NodeValue},
         context::{SymbolTable, SymbolTableElement},
     },
     grammar::types::DataType,
@@ -74,14 +74,27 @@ impl<'a> TasmGenerator<'a> {
             data_type: Some(DataType::FloatType("".into())),
             length: None,
         };
-        let write_symbol = SymbolTableElement {
-            name: String::from("_@write"),
+        let write_number_symbol = SymbolTableElement {
+            name: String::from("_@write_number"),
             value: None,
-            original: String::from("_@write"),
+            original: String::from("_@write_number"),
             data_type: Some(DataType::FloatType("".into())),
             length: None,
         };
-        for symbol in [neg_one_symbol, l_comp_symbol, r_comp_symbol, write_symbol] {
+        let write_string_symbol = SymbolTableElement {
+            name: String::from("_@write_string"),
+            value: None,
+            original: String::from("_@write_string"),
+            data_type: Some(DataType::FloatType("".into())),
+            length: None,
+        };
+        for symbol in [
+            neg_one_symbol,
+            l_comp_symbol,
+            r_comp_symbol,
+            write_number_symbol,
+            write_string_symbol,
+        ] {
             self.symbol_table.insert(symbol);
         }
     }
@@ -470,10 +483,28 @@ impl<'a> TasmGenerator<'a> {
     }
 
     fn generate_action_write(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
+        let Some(left_child) = &node.left_child else {
+            panic!("invalid write")
+        };
+        self.generate_asm_from_tree(left_child)?;
+        let Some(write_type) = &left_child.r#type else {
+            panic!("invalid write")
+        };
 
-        writeln!(self.file, "    FST _@write")?;
-        writeln!(self.file, "    DisplayFloat _@write, 2")?;
+        match write_type {
+            ExpressionType::Float => {
+                writeln!(self.file, "    FST _@write_number")?;
+                writeln!(self.file, "    DisplayFloat _@write_number, 2")?;
+            }
+            ExpressionType::Int => {
+                writeln!(self.file, "    FST _@write_number")?;
+                writeln!(self.file, "    DisplayInteger _@write_number")?;
+            }
+            ExpressionType::String => {
+                writeln!(self.file, "    FST _@write_string")?;
+                writeln!(self.file, "    DisplayString _@write_string")?;
+            }
+        }
         writeln!(self.file)
     }
 
