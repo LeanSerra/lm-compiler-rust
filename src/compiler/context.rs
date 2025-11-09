@@ -73,11 +73,11 @@ impl SymbolTable {
         self.table.iter()
     }
 
-    pub fn get_symbol_asm_name(&self, name: &str) -> Option<String> {
+    pub fn get_symbol_asm_name(&self, name: &str) -> Option<SymbolTableElement> {
         self.table
             .iter()
             .find(|symbol| symbol.original == name)
-            .map(|x| x.name.clone())
+            .cloned()
     }
 }
 
@@ -242,7 +242,7 @@ impl CompilerContext {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SymbolTableElement {
     pub name: String,
     pub original: String,

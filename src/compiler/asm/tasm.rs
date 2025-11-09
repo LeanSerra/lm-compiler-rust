@@ -4,9 +4,12 @@ use std::{
     rc::Rc,
 };
 
-use crate::compiler::{
-    ast::{AstAction, Node, NodeValue},
-    context::SymbolTable,
+use crate::{
+    compiler::{
+        ast::{AstAction, Node, NodeValue},
+        context::SymbolTable,
+    },
+    grammar::types::DataType,
 };
 
 pub struct TasmGenerator<'a> {
@@ -122,13 +125,11 @@ impl<'a> TasmGenerator<'a> {
                     todo!()
                 }
                 AstAction::While => self.generate_action_while(node),
-                AstAction::Read => {
-                    todo!()
-                }
+                AstAction::Read => self.generate_action_read(node),
                 AstAction::Write => self.generate_action_write(node),
                 AstAction::Negative => self.generate_action_negative(node),
                 AstAction::Noop => {
-                    panic!("tried to execute noop")
+                    unreachable!("tried to execute noop")
                 }
             },
         }
@@ -136,7 +137,7 @@ impl<'a> TasmGenerator<'a> {
 
     fn generate_node_value_value(&mut self, val: &str) -> Result<(), io::Error> {
         let val = self.symbol_table.get_symbol_asm_name(val).unwrap();
-        writeln!(self.file, "    FLD     {val}")
+        writeln!(self.file, "    FLD     {}", val.name)
     }
 
     fn generate_action_assign(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
@@ -549,5 +550,30 @@ impl<'a> TasmGenerator<'a> {
         writeln!(self.file, "{}:", begin_else_label)?;
         self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
         writeln!(self.file, "{}:", end_if_else_label)
+    }
+
+    fn generate_action_read(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+        let NodeValue::Value(val) = &node.left_child.as_ref().unwrap().value else {
+            panic!("invalid read")
+        };
+        let Some(symbol) = self.symbol_table.get_symbol_asm_name(val) else {
+            panic!("missing symbol")
+        };
+        let Some(symbol_type) = symbol.data_type else {
+            panic!("invalid write");
+        };
+        match symbol_type {
+            DataType::FloatType(_) => {
+                writeln!(self.file, "    GetFloat    {}", symbol.name)?;
+            }
+            DataType::IntType(_) => {
+                writeln!(self.file, "    GetFloat    {}", symbol.name)?;
+            }
+            DataType::StringType(_) => {
+                writeln!(self.file, "    GetString    {}", symbol.name)?;
+            }
+        }
+        writeln!(self.file, "    newLine")?;
+        writeln!(self.file)
     }
 }
