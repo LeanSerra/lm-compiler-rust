@@ -231,32 +231,21 @@ impl<'a> TasmGenerator<'a> {
         self.current_end_label = label_if_false.clone();
         // Create jump to label if false depending on operator
         match &left_child.value {
-            NodeValue::Value(_val) => todo!("handle if(a)"),
-            NodeValue::True => todo!("handle if(True)"),
-            NodeValue::False => todo!("handle if(False)"),
+            NodeValue::Value(_val) => panic!("invalid if"),
+            NodeValue::True => { /* */ }
+            NodeValue::False => {
+                writeln!(self.file, "    JMP    {label_if_false}")?;
+                writeln!(self.file)?;
+            }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {label_if_false}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {label_if_false}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {label_if_false}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JE    {label_if_false}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JAE    {label_if_false}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JA    {label_if_false}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {label_if_false}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And => {}
@@ -288,38 +277,23 @@ impl<'a> TasmGenerator<'a> {
         self.generate_asm_from_tree(left_child)?;
         // If the generated left side is false then jump to the end of the if
         match &left_child.value {
-            NodeValue::True => {
-                todo!("handle AND True")
-            }
-            NodeValue::False => {
-                todo!("handle AND False")
-            }
             NodeValue::Value(_val) => {
-                todo!("handle AND (a)")
+                panic!("invalid and")
+            }
+            NodeValue::True => { /* */ }
+            NodeValue::False => {
+                writeln!(self.file, "    JMP    {label_jmp_to_end}")?;
+                writeln!(self.file)?;
             }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JAE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JA    {label_jmp_to_end}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::Or => {
@@ -336,41 +310,30 @@ impl<'a> TasmGenerator<'a> {
         self.generate_asm_from_tree(right_child)?;
         // If the generated right side is false then jump to the end of the if
         match &right_child.value {
-            NodeValue::True => {
-                todo!("handle AND True")
-            }
-            NodeValue::False => {
-                todo!("handle AND False")
-            }
             NodeValue::Value(_val) => {
-                todo!("handle AND (a)")
+                panic!("invalid and")
+            }
+            NodeValue::True => { /* */ }
+            NodeValue::False => {
+                writeln!(self.file, "    JMP    {label_jmp_to_end}")?;
+                writeln!(self.file)?;
             }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {label_jmp_to_end}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
+                AstAction::Or => {
+                    // TODO maybe we need this
+                    // writeln!(self.file, "    JMP    {label_if_false}")?;
                 }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JAE    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JA    {label_jmp_to_end}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::And | AstAction::Or => {}
+                AstAction::And => {}
                 _ => panic!("invalid"),
             },
         }
@@ -387,38 +350,23 @@ impl<'a> TasmGenerator<'a> {
         self.generate_asm_from_tree(left_child)?;
         // If either the left side or the right side are true we jump to the if body
         match &left_child.value {
-            NodeValue::True => {
-                todo!("handle OR True")
-            }
-            NodeValue::False => {
-                todo!("handle OR False")
-            }
             NodeValue::Value(_val) => {
-                todo!("handle OR (a)")
+                panic!("invalid or")
             }
+            NodeValue::True => {
+                writeln!(self.file, "    JMP    {label_begin_body}")?;
+                writeln!(self.file)?;
+            }
+            NodeValue::False => { /* */ }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JA    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JAE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JNE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JNA    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JNAE    {label_begin_body}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -431,38 +379,23 @@ impl<'a> TasmGenerator<'a> {
         };
         self.generate_asm_from_tree(right_child)?;
         match &right_child.value {
-            NodeValue::True => {
-                todo!("handle AND True")
-            }
-            NodeValue::False => {
-                todo!("handle AND False")
-            }
             NodeValue::Value(_val) => {
-                todo!("handle AND (a)")
+                panic!("invalid or")
             }
+            NodeValue::True => {
+                writeln!(self.file, "    JMP    {label_begin_body}")?;
+                writeln!(self.file)?;
+            }
+            NodeValue::False => { /* */ }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JA    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JAE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JNE    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JNA    {label_begin_body}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JNAE    {label_begin_body}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -524,32 +457,21 @@ impl<'a> TasmGenerator<'a> {
         self.generate_asm_from_tree(left_child)?;
         // When the condition is false jump to the end of while
         match &left_child.value {
-            NodeValue::Value(_val) => todo!("handle while(x)"),
-            NodeValue::False => todo!("handle while(false)"),
-            NodeValue::True => todo!("handle while(True)"),
+            NodeValue::Value(_val) => panic!("invalid while"),
+            NodeValue::False => {
+                writeln!(self.file, "    JMP    {while_end_label}")?;
+                writeln!(self.file)?;
+            }
+            NodeValue::True => { /* */ }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {while_end_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {while_end_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {while_end_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JE    {while_end_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JAE    {while_end_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JA    {while_end_label}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {while_end_label}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -575,32 +497,21 @@ impl<'a> TasmGenerator<'a> {
         self.current_begin_label = begin_else_label.clone();
 
         match &condition_node.value {
-            NodeValue::Value(_val) => todo!("handle if(x) else {{}}"),
-            NodeValue::False => todo!("handle if(false) else {{}}"),
-            NodeValue::True => todo!("handle if(True) else {{}}"),
+            NodeValue::Value(_val) => panic!("invalid if else"),
+            NodeValue::False => {
+                writeln!(self.file, "    JMP    {begin_else_label}")?;
+                writeln!(self.file)?;
+            }
+            NodeValue::True => { /* */ }
             NodeValue::Action(action) => match action {
-                AstAction::GT => {
-                    writeln!(self.file, "    JNAE    {begin_else_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::GTE => {
-                    writeln!(self.file, "    JNA    {begin_else_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::EQ => {
-                    writeln!(self.file, "    JNE    {begin_else_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::NE => {
-                    writeln!(self.file, "    JE    {begin_else_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LT => {
-                    writeln!(self.file, "    JAE    {begin_else_label}")?;
-                    writeln!(self.file)?;
-                }
-                AstAction::LTE => {
-                    writeln!(self.file, "    JA    {begin_else_label}")?;
+                AstAction::GT
+                | AstAction::GTE
+                | AstAction::EQ
+                | AstAction::NE
+                | AstAction::LT
+                | AstAction::LTE => {
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    writeln!(self.file, "    {jmp}    {begin_else_label}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
@@ -638,5 +549,29 @@ impl<'a> TasmGenerator<'a> {
         }
         writeln!(self.file, "    newLine")?;
         writeln!(self.file)
+    }
+
+    const fn jmp_to_opposite_asm_jmp(jmp: &AstAction) -> &'a str {
+        match jmp {
+            AstAction::GT => "JNAE",
+            AstAction::GTE => "JNA",
+            AstAction::EQ => "JNE",
+            AstAction::NE => "JE",
+            AstAction::LT => "JAE",
+            AstAction::LTE => "JA",
+            _ => todo!(),
+        }
+    }
+
+    const fn jmp_to_asm_jmp(jmp: &AstAction) -> &'a str {
+        match jmp {
+            AstAction::GT => "JA",
+            AstAction::GTE => "JAE",
+            AstAction::EQ => "EQ",
+            AstAction::NE => "JNE",
+            AstAction::LT => "JNAE",
+            AstAction::LTE => "JNA",
+            _ => todo!(),
+        }
     }
 }
