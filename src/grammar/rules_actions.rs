@@ -560,9 +560,9 @@ pub fn function_conv_date_function_conv_date_variable_call(
         "<FunctionConvDate> -> {token_conv_date} {token_par_open} {token_date} {token_par_close}"
     ));
 
-    let thousand_symbol = TokenIntLiteral {
-        original: "1000".into(),
-        parsed: 1000,
+    let ten_thousand_symbol = TokenIntLiteral {
+        original: "10000".into(),
+        parsed: 10000,
     };
     let hundread_symbol = TokenIntLiteral {
         original: "100".into(),
@@ -588,8 +588,8 @@ pub fn function_conv_date_function_conv_date_variable_call(
 
     let ast = &mut compiler_context.ast;
 
-    let thousand_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(thousand_symbol.original.clone()),
+    let ten_thousand_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(ten_thousand_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let hundread_leaf = Rc::new(Node::new_leaf(
@@ -617,7 +617,7 @@ pub fn function_conv_date_function_conv_date_variable_call(
     let year_node = ast.create_node(
         AstAction::Mult,
         year_leaf.into(),
-        thousand_leaf.into(),
+        ten_thousand_leaf.into(),
         AstPtr::ConvDate,
         Some(ExpressionType::Int),
     );
@@ -651,7 +651,7 @@ pub fn function_conv_date_function_conv_date_variable_call(
         Some(ExpressionType::Int),
     );
 
-    compiler_context.push_to_symbol_table(thousand_symbol.into());
+    compiler_context.push_to_symbol_table(ten_thousand_symbol.into());
     compiler_context.push_to_symbol_table(hundread_symbol.into());
     compiler_context.push_to_symbol_table(one_symbol.into());
     compiler_context.push_to_symbol_table(year_symbol.into());
