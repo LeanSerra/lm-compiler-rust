@@ -8,6 +8,7 @@ use crate::{
     compiler::{
         ast::{AstAction, ExpressionType, Node, NodeValue},
         context::{SymbolTable, SymbolTableElement, SymbolTableElementType},
+        error::CompilerError,
     },
     grammar::types::DataType,
 };
@@ -37,7 +38,7 @@ impl<'a> TasmGenerator<'a> {
         }
     }
 
-    pub fn generate_asm(mut self, root: Rc<Node>) -> Result<(), io::Error> {
+    pub fn generate_asm(mut self, root: Rc<Node>) -> Result<(), CompilerError> {
         // Header
         self.generate_asm_header()?;
         // Add internal variables to symbol table
@@ -49,7 +50,8 @@ impl<'a> TasmGenerator<'a> {
         // Program
         self.generate_asm_from_tree(&root)?;
         // END Program
-        self.generate_code_epilogue()
+        self.generate_code_epilogue()?;
+        Ok(())
     }
 
     fn add_internal_symbols(&mut self) {
@@ -118,88 +120,111 @@ impl<'a> TasmGenerator<'a> {
         writeln!(file, "    END Program")
     }
 
-    fn generate_asm_from_tree(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+    fn generate_asm_from_tree(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
         match &node.value {
-            NodeValue::Value(val) => self.generate_node_value_value(val),
-            NodeValue::True => Ok(()),
-            NodeValue::False => Ok(()),
+            NodeValue::Value(val) => self.generate_node_value_value(val)?,
+            NodeValue::True => {}
+            NodeValue::False => {}
             NodeValue::Action(action) => match action {
                 AstAction::S => {
                     self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
-                    self.generate_asm_from_tree(node.right_child.as_ref().unwrap())
+                    self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
                 }
-                AstAction::Assign => self.generate_action_assign(node),
+                AstAction::Assign => self.generate_action_assign(node)?,
                 AstAction::GT
                 | AstAction::GTE
                 | AstAction::EQ
                 | AstAction::NE
                 | AstAction::LT
-                | AstAction::LTE => self.generate_action_cmp(node),
+                | AstAction::LTE => self.generate_action_cmp(node)?,
                 AstAction::Plus => {
                     self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
                     self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-                    writeln!(self.file, "    FADD")
+                    writeln!(self.file, "    FADD")?;
                 }
                 AstAction::Div => {
                     self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
                     self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-                    writeln!(self.file, "    FDIV")
+                    writeln!(self.file, "    FDIV")?;
                 }
                 AstAction::Sub => {
                     self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
                     self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-                    writeln!(self.file, "    FSUB")
+                    writeln!(self.file, "    FSUB")?;
                 }
                 AstAction::Mult => {
                     self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
                     self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-                    writeln!(self.file, "    FMUL")
+                    writeln!(self.file, "    FMUL")?;
                 }
 
-                AstAction::If => self.generate_action_if(node),
+                AstAction::If => self.generate_action_if(node)?,
                 AstAction::Else => {
-                    unreachable!("Tried to execute else branch from generate_asm_from_tree")
+                    return Err(CompilerError::Internal(
+                        "Tried to generate code for else node from generate_asm_from_tree".into(),
+                    ));
                 }
-                AstAction::And => self.generate_action_and(node),
-                AstAction::Or => self.generate_action_or(node),
-                AstAction::While => self.generate_action_while(node),
-                AstAction::Read => self.generate_action_read(node),
-                AstAction::Write => self.generate_action_write(node),
-                AstAction::Negative => self.generate_action_negative(node),
-                AstAction::Noop => Ok(()),
+                AstAction::And => self.generate_action_and(node)?,
+                AstAction::Or => self.generate_action_or(node)?,
+                AstAction::While => self.generate_action_while(node)?,
+                AstAction::Read => self.generate_action_read(node)?,
+                AstAction::Write => self.generate_action_write(node)?,
+                AstAction::Negative => self.generate_action_negative(node)?,
+                AstAction::Noop => {}
             },
         }
+        Ok(())
     }
 
-    fn generate_node_value_value(&mut self, val: &str) -> Result<(), io::Error> {
-        let val = self.symbol_table.get_symbol_from_name(val).unwrap();
+    fn generate_node_value_value(&mut self, val: &str) -> Result<(), CompilerError> {
+        let val = self
+            .symbol_table
+            .get_symbol_from_name(val)
+            .ok_or(CompilerError::Internal(
+                "Symbol not found when generating ASM for NodeValue::Value".into(),
+            ))?;
         if let SymbolTableElementType::String = val.data_type {
             return Ok(());
         }
         if let SymbolTableElementType::DataType(DataType::StringType(_)) = val.data_type {
             return Ok(());
         }
-        writeln!(self.file, "    FLD     {}", val.name)
+        writeln!(self.file, "    FLD     {}", val.name)?;
+        Ok(())
     }
 
-    fn generate_action_assign(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-        let NodeValue::Value(lhs) = &node.left_child.as_ref().unwrap().value else {
-            panic!("invalid assign")
+    fn generate_action_assign(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid assignment node")?;
+
+        self.generate_asm_from_tree(&right_child)?;
+        let NodeValue::Value(lhs) = &left_child.value else {
+            return Err(CompilerError::Internal(
+                "Left hand side of an assignment is not an id".into(),
+            ));
         };
 
-        let lhs = self.symbol_table.get_symbol_from_name(lhs).unwrap().name;
+        let lhs_symbol =
+            self.symbol_table
+                .get_symbol_from_name(lhs)
+                .ok_or(CompilerError::Internal(
+                    "Left hand side of an assignment is not in the symbol table".into(),
+                ))?;
 
-        writeln!(self.file, "    FST    {lhs}")?;
+        writeln!(self.file, "    FST    {}", lhs_symbol.name)?;
         writeln!(self.file, "    FFREE")?;
-        writeln!(self.file)
+        writeln!(self.file)?;
+        Ok(())
     }
 
-    fn generate_action_cmp(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
+    fn generate_action_cmp(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid comparison node")?;
+
+        self.generate_asm_from_tree(&left_child)?;
         writeln!(self.file, "    FST     _@l_cond")?;
         writeln!(self.file)?;
-        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
+        self.generate_asm_from_tree(&right_child)?;
         writeln!(self.file, "    FST     _@r_cond")?;
         writeln!(self.file)?;
         writeln!(self.file, "    FLD     _@l_cond")?;
@@ -207,34 +232,35 @@ impl<'a> TasmGenerator<'a> {
         writeln!(self.file, "    FSTSW   AX")?;
         writeln!(self.file, "    SAHF")?;
         writeln!(self.file, "    FFREE")?;
-        writeln!(self.file)
+        writeln!(self.file)?;
+        Ok(())
     }
 
-    fn generate_action_if(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let Some(left_child) = &node.left_child else {
-            panic!("invalid if")
-        };
+    fn generate_action_if(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid If node")?;
+
         if let NodeValue::Action(AstAction::Or) = left_child.value {
             let label_if_body = format!("if_body_{}", self.label_if_body_count);
             self.label_if_body_count += 1;
             self.current_begin_label = label_if_body.clone();
         }
+
         let label_if_false = format!("if_false_{}", self.label_if_false_count);
-
         self.current_end_label = label_if_false.clone();
-        self.generate_asm_from_tree(left_child)?;
-
-        let Some(right_child) = &node.right_child else {
-            panic!("invalid if")
-        };
+        self.generate_asm_from_tree(&left_child)?;
 
         if let NodeValue::Action(AstAction::Else) = right_child.value {
-            return self.generate_action_else(right_child, left_child);
+            return self.generate_action_else(&right_child, &left_child);
         }
 
         // Create jump to label if false depending on operator
         match &left_child.value {
-            NodeValue::Value(_val) => panic!("invalid if"),
+            NodeValue::Value(_val) => {
+                return Err(CompilerError::Internal(
+                    "Invalid If node lhs is a value".into(),
+                ));
+            }
             NodeValue::True => { /* */ }
             NodeValue::False => {
                 writeln!(self.file, "    JMP    {label_if_false}")?;
@@ -247,7 +273,9 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {label_if_false}")?;
                     writeln!(self.file)?;
                 }
@@ -259,28 +287,33 @@ impl<'a> TasmGenerator<'a> {
                     // Generate label to jump if any of the OR statements are true
                     writeln!(self.file, "{label_if_body}:")?;
                 }
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in If node"
+                    )));
+                }
             },
         };
         // Generate If body
-        self.generate_asm_from_tree(right_child)?;
+        self.generate_asm_from_tree(&right_child)?;
         // Label to jump if statement is false
         writeln!(self.file, "{label_if_false}:")?;
-
         Ok(())
     }
 
-    fn generate_action_and(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+    fn generate_action_and(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid AND node")?;
+
         let label_jmp_to_end = &self.current_end_label.clone();
-        let Some(left_child) = node.left_child.as_ref() else {
-            panic!("invalid AND");
-        };
         // Traverse the left subtree generating the comparison
-        self.generate_asm_from_tree(left_child)?;
+        self.generate_asm_from_tree(&left_child)?;
         // If the generated left side is false then jump to the end of the if
         match &left_child.value {
             NodeValue::Value(_val) => {
-                panic!("invalid and")
+                return Err(CompilerError::Internal(
+                    "Invalid And node lhs is a value".into(),
+                ));
             }
             NodeValue::True => { /* */ }
             NodeValue::False => {
@@ -294,7 +327,9 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
@@ -303,17 +338,21 @@ impl<'a> TasmGenerator<'a> {
                     // writeln!(self.file, "    JMP    {label_if_false}")?;
                 }
                 AstAction::And => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in And node"
+                    )));
+                }
             },
         }
-        let Some(right_child) = node.right_child.as_ref() else {
-            panic!("invalid and");
-        };
-        self.generate_asm_from_tree(right_child)?;
+
+        self.generate_asm_from_tree(&right_child)?;
         // If the generated right side is false then jump to the end of the if
         match &right_child.value {
             NodeValue::Value(_val) => {
-                panic!("invalid and")
+                return Err(CompilerError::Internal(
+                    "Invalid And node lhs is a value".into(),
+                ));
             }
             NodeValue::True => { /* */ }
             NodeValue::False => {
@@ -327,7 +366,9 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {label_jmp_to_end}")?;
                     writeln!(self.file)?;
                 }
@@ -336,24 +377,30 @@ impl<'a> TasmGenerator<'a> {
                     // writeln!(self.file, "    JMP    {label_if_false}")?;
                 }
                 AstAction::And => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in And node"
+                    )));
+                }
             },
         }
         Ok(())
     }
 
-    fn generate_action_or(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+    fn generate_action_or(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid AND node")?;
+
         let label_begin_body = &self.current_begin_label.clone();
         let label_end_body = &self.current_end_label.clone();
-        let Some(left_child) = node.left_child.as_ref() else {
-            panic!("invalid OR");
-        };
         // Traverse the left subtree generating the comparison
-        self.generate_asm_from_tree(left_child)?;
+        self.generate_asm_from_tree(&left_child)?;
         // If either the left side or the right side are true we jump to the if body
         match &left_child.value {
             NodeValue::Value(_val) => {
-                panic!("invalid or")
+                return Err(CompilerError::Internal(
+                    "Invalid Or node lhs is a value".into(),
+                ));
             }
             NodeValue::True => {
                 writeln!(self.file, "    JMP    {label_begin_body}")?;
@@ -367,22 +414,27 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_asm_jmp(action);
+                    let jmp = Self::jmp_to_asm_jmp(action).ok_or(CompilerError::Internal(
+                        "Tried to jump to invalid action".into(),
+                    ))?;
                     writeln!(self.file, "    {jmp}    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in Or node"
+                    )));
+                }
             },
         }
 
-        let Some(right_child) = node.right_child.as_ref() else {
-            panic!("invalid and");
-        };
-        self.generate_asm_from_tree(right_child)?;
+        self.generate_asm_from_tree(&right_child)?;
         match &right_child.value {
             NodeValue::Value(_val) => {
-                panic!("invalid or")
+                return Err(CompilerError::Internal(
+                    "Invalid Or node lhs is a value".into(),
+                ));
             }
             NodeValue::True => {
                 writeln!(self.file, "    JMP    {label_begin_body}")?;
@@ -396,37 +448,51 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {label_begin_body}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in Or node"
+                    )));
+                }
             },
         }
         // None of the conditions are met jump to the end of the statement
-        writeln!(self.file, "    JMP    {label_end_body}")
+        writeln!(self.file, "    JMP    {label_end_body}")?;
+        Ok(())
     }
 
-    fn generate_action_negative(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let NodeValue::Value(lhs) = &node.left_child.as_ref().unwrap().value else {
-            panic!("invalid negative")
+    fn generate_action_negative(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let left_child = Self::get_left_child_or_error(node, "No left child on Negative node")?;
+        let NodeValue::Value(lhs) = &left_child.value else {
+            return Err(CompilerError::Internal(
+                "Left child of Negative node is not a value ".into(),
+            ));
         };
-        let symbol = self.symbol_table.get_symbol_from_name(lhs).unwrap();
+        let symbol = self
+            .symbol_table
+            .get_symbol_from_name(lhs)
+            .ok_or(CompilerError::Internal(
+                "Left side of Negative node is not in the symbol table".into(),
+            ))?;
 
         writeln!(self.file, "    FLD    _@1")?;
         writeln!(self.file, "    FMUL   {}", symbol.name)?;
-        writeln!(self.file)
+        writeln!(self.file)?;
+        Ok(())
     }
 
-    fn generate_action_write(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let Some(left_child) = &node.left_child else {
-            panic!("invalid write")
-        };
-        self.generate_asm_from_tree(left_child)?;
-        let Some(write_type) = &left_child.r#type else {
-            panic!("invalid write")
-        };
+    fn generate_action_write(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let left_child = Self::get_left_child_or_error(node, "No left child on Write node")?;
+        self.generate_asm_from_tree(&left_child)?;
+        let write_type = left_child.r#type.as_ref().ok_or(CompilerError::Internal(
+            "Left child of write expression has no type".into(),
+        ))?;
 
         match write_type {
             ExpressionType::Float => {
@@ -439,17 +505,27 @@ impl<'a> TasmGenerator<'a> {
             }
             ExpressionType::String => {
                 let NodeValue::Value(val) = &left_child.value else {
-                    panic!("")
+                    return Err(CompilerError::Internal(
+                        "Left child of Write node of String type is not a Value".into(),
+                    ));
                 };
-                let name = self.symbol_table.get_symbol_from_name(val).unwrap();
+                let name =
+                    self.symbol_table
+                        .get_symbol_from_name(val)
+                        .ok_or(CompilerError::Internal(
+                            "Left child symbol is not in the symbol table in write node".into(),
+                        ))?;
                 writeln!(self.file, "    DisplayString    {}", name.name)?;
             }
         }
         writeln!(self.file, "    newLine")?;
-        writeln!(self.file)
+        writeln!(self.file)?;
+        Ok(())
     }
 
-    fn generate_action_while(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
+    fn generate_action_while(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let (left_child, right_child) =
+            Self::get_left_and_right_child_or_error(node, "Invalid While node")?;
         let while_cond_label = format!("while_cond_{}", self.label_while_cond_count);
         let while_end_label = format!("while_end_{}", self.label_while_cond_count);
         self.label_while_cond_count += 1;
@@ -458,13 +534,14 @@ impl<'a> TasmGenerator<'a> {
 
         // Set the label to the beggining of the loop
         writeln!(self.file, "{while_cond_label}:")?;
-        let Some(left_child) = node.left_child.as_ref() else {
-            panic!("invalid while");
-        };
-        self.generate_asm_from_tree(left_child)?;
+        self.generate_asm_from_tree(&left_child)?;
         // When the condition is false jump to the end of while
         match &left_child.value {
-            NodeValue::Value(_val) => panic!("invalid while"),
+            NodeValue::Value(_val) => {
+                return Err(CompilerError::Internal(
+                    "Invalid While node lhs is a value".into(),
+                ));
+            }
             NodeValue::False => {
                 writeln!(self.file, "    JMP    {while_end_label}")?;
                 writeln!(self.file)?;
@@ -477,34 +554,45 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {while_end_label}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in While node"
+                    )));
+                }
             },
         };
         // Generate body of the while
-        self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
+        self.generate_asm_from_tree(&right_child)?;
         // Jump to begging of while
         writeln!(self.file, "    JMP    {while_cond_label}")?;
         writeln!(self.file)?;
         // End of while label
-        writeln!(self.file, "{while_end_label}:")
+        writeln!(self.file, "{while_end_label}:")?;
+        Ok(())
     }
 
     fn generate_action_else(
         &mut self,
         node: &Rc<Node>,
         condition_node: &Rc<Node>,
-    ) -> Result<(), io::Error> {
+    ) -> Result<(), CompilerError> {
         let begin_else_label = format!("else_{}", self.label_if_else_body_count);
         let end_if_else_label = format!("end_if_else{}", self.label_if_else_body_count);
         self.current_begin_label = begin_else_label.clone();
 
         match &condition_node.value {
-            NodeValue::Value(_val) => panic!("invalid if else"),
+            NodeValue::Value(_val) => {
+                return Err(CompilerError::Internal(
+                    "Invalid If Else node lhs is a value".into(),
+                ));
+            }
             NodeValue::False => {
                 writeln!(self.file, "    JMP    {begin_else_label}")?;
                 writeln!(self.file)?;
@@ -517,12 +605,18 @@ impl<'a> TasmGenerator<'a> {
                 | AstAction::NE
                 | AstAction::LT
                 | AstAction::LTE => {
-                    let jmp = Self::jmp_to_opposite_asm_jmp(action);
+                    let jmp = Self::jmp_to_opposite_asm_jmp(action).ok_or(
+                        CompilerError::Internal("Tried to jump to invalid action".into()),
+                    )?;
                     writeln!(self.file, "    {jmp}    {begin_else_label}")?;
                     writeln!(self.file)?;
                 }
                 AstAction::And | AstAction::Or => {}
-                _ => panic!("invalid"),
+                action => {
+                    return Err(CompilerError::Internal(format!(
+                        "Invalid action: {action} in If Else node"
+                    )));
+                }
             },
         }
         self.generate_asm_from_tree(node.left_child.as_ref().unwrap())?;
@@ -530,18 +624,28 @@ impl<'a> TasmGenerator<'a> {
         writeln!(self.file)?;
         writeln!(self.file, "{}:", begin_else_label)?;
         self.generate_asm_from_tree(node.right_child.as_ref().unwrap())?;
-        writeln!(self.file, "{}:", end_if_else_label)
+        writeln!(self.file, "{}:", end_if_else_label)?;
+        Ok(())
     }
 
-    fn generate_action_read(&mut self, node: &Rc<Node>) -> Result<(), io::Error> {
-        let NodeValue::Value(val) = &node.left_child.as_ref().unwrap().value else {
-            panic!("invalid read")
+    fn generate_action_read(&mut self, node: &Rc<Node>) -> Result<(), CompilerError> {
+        let left_child = Self::get_left_child_or_error(node, "No left child on Read node")?;
+        let NodeValue::Value(val) = &left_child.value else {
+            return Err(CompilerError::Internal(
+                "Invalid Read node left child is not a value".into(),
+            ));
         };
-        let Some(symbol) = self.symbol_table.get_symbol_from_name(val) else {
-            panic!("missing symbol")
-        };
+        let symbol = self
+            .symbol_table
+            .get_symbol_from_name(val)
+            .ok_or(CompilerError::Internal(
+                "Left child symbol is not in the symbol table in read node".into(),
+            ))?;
+
         let SymbolTableElementType::DataType(symbol_type) = symbol.data_type else {
-            panic!("invalid read")
+            return Err(CompilerError::Internal(
+                "Left child symbol is not a variable".into(),
+            ));
         };
         match symbol_type {
             DataType::FloatType(_) => {
@@ -555,30 +659,54 @@ impl<'a> TasmGenerator<'a> {
             }
         }
         writeln!(self.file, "    newLine")?;
-        writeln!(self.file)
+        writeln!(self.file)?;
+        Ok(())
     }
 
-    const fn jmp_to_opposite_asm_jmp(jmp: &AstAction) -> &'a str {
-        match jmp {
+    const fn jmp_to_opposite_asm_jmp(jmp: &AstAction) -> Option<&'a str> {
+        Some(match jmp {
             AstAction::GT => "JNAE",
             AstAction::GTE => "JNA",
             AstAction::EQ => "JNE",
             AstAction::NE => "JE",
             AstAction::LT => "JAE",
             AstAction::LTE => "JA",
-            _ => todo!(),
-        }
+            _ => return None,
+        })
     }
 
-    const fn jmp_to_asm_jmp(jmp: &AstAction) -> &'a str {
-        match jmp {
+    const fn jmp_to_asm_jmp(jmp: &AstAction) -> Option<&'a str> {
+        Some(match jmp {
             AstAction::GT => "JA",
             AstAction::GTE => "JAE",
             AstAction::EQ => "EQ",
             AstAction::NE => "JNE",
             AstAction::LT => "JNAE",
             AstAction::LTE => "JNA",
-            _ => todo!(),
-        }
+            _ => return None,
+        })
+    }
+
+    fn get_left_and_right_child_or_error(
+        node: &Rc<Node>,
+        err: &str,
+    ) -> Result<(Rc<Node>, Rc<Node>), CompilerError> {
+        let left_child = Self::get_left_child_or_error(node, err)?;
+        let right_child = Self::get_right_child_or_error(node, err)?;
+        Ok((left_child, right_child))
+    }
+
+    fn get_left_child_or_error(node: &Rc<Node>, err: &str) -> Result<Rc<Node>, CompilerError> {
+        node.left_child
+            .as_ref()
+            .cloned()
+            .ok_or(CompilerError::Internal(err.into()))
+    }
+
+    fn get_right_child_or_error(node: &Rc<Node>, err: &str) -> Result<Rc<Node>, CompilerError> {
+        node.right_child
+            .as_ref()
+            .cloned()
+            .ok_or(CompilerError::Internal(err.into()))
     }
 }

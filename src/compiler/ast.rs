@@ -2,6 +2,7 @@ use crate::{
     compiler::{
         asm::TasmGenerator,
         context::{SymbolTable, SymbolTableElementType},
+        error::CompilerError,
     },
     grammar::types::{ComparisonOp, DataType},
 };
@@ -359,7 +360,7 @@ impl Ast {
         &self,
         file: &mut File,
         symbol_table: &mut SymbolTable,
-    ) -> Result<(), io::Error> {
+    ) -> Result<(), CompilerError> {
         let node = self.get_node_from_ptr(AstPtr::Program);
         TasmGenerator::new(symbol_table, file).generate_asm(node)
     }

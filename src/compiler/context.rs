@@ -129,54 +129,48 @@ impl CompilerContext {
     }
 
     fn read_source_to_string(path: &PathBuf) -> Result<String, CompilerError> {
-        read_to_string(path)
-            .map_err(|e| CompilerError::IO(format!("Failed to read input file: {e}")))
+        Ok(read_to_string(path)?)
     }
 
     fn open_lexer_file(path: &Path) -> Result<File, CompilerError> {
-        OpenOptions::new()
+        Ok(OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(path.with_extension("lexer"))
-            .map_err(|e| CompilerError::IO(e.to_string()))
+            .open(path.with_extension("lexer"))?)
     }
 
     fn open_parser_file(path: &Path) -> Result<File, CompilerError> {
-        OpenOptions::new()
+        Ok(OpenOptions::new()
             .create(true)
             .truncate(true)
             .read(true)
             .write(true)
-            .open(path.with_extension("parser"))
-            .map_err(|e| CompilerError::IO(e.to_string()))
+            .open(path.with_extension("parser"))?)
     }
 
     fn open_symbol_table_file(path: &Path) -> Result<File, CompilerError> {
-        OpenOptions::new()
+        Ok(OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(path.with_extension("symbol_table"))
-            .map_err(|e| CompilerError::IO(e.to_string()))
+            .open(path.with_extension("symbol_table"))?)
     }
 
     fn open_graph_file(path: &Path) -> Result<File, CompilerError> {
-        OpenOptions::new()
+        Ok(OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(path.with_extension("dot"))
-            .map_err(|e| CompilerError::IO(e.to_string()))
+            .open(path.with_extension("dot"))?)
     }
 
     fn open_asm_file(path: &Path) -> Result<File, CompilerError> {
-        OpenOptions::new()
+        Ok(OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(path.with_extension("asm"))
-            .map_err(|e| CompilerError::IO(e.to_string()))
+            .open(path.with_extension("asm"))?)
     }
 
     pub fn path(&self) -> String {
@@ -189,10 +183,8 @@ impl CompilerContext {
 
     pub fn dump_symbol_table_to_file(&mut self) -> Result<(), CompilerError> {
         for symbol in self.symbol_table.iter() {
-            writeln!(self.symbol_table_file, "{symbol}")
-                .map_err(|e| CompilerError::IO(e.to_string()))?;
+            writeln!(self.symbol_table_file, "{symbol}")?
         }
-
         Ok(())
     }
 
@@ -212,12 +204,8 @@ impl CompilerContext {
 
     pub fn read_parser_file_to_string(&mut self) -> Result<String, CompilerError> {
         let mut buf = String::new();
-        self.parser_file
-            .rewind()
-            .map_err(|e| CompilerError::IO(format!("Failed to rewind parser file: {e:?}")))?;
-        self.parser_file.read_to_string(&mut buf).map_err(|e| {
-            CompilerError::IO(format!("Failed to read parser file to string: {e:?}"))
-        })?;
+        self.parser_file.rewind()?;
+        self.parser_file.read_to_string(&mut buf)?;
         Ok(buf)
     }
 
@@ -237,19 +225,16 @@ impl CompilerContext {
     }
 
     pub fn create_ast_graph(&mut self, from: AstPtr) -> Result<(), CompilerError> {
-        self.ast
-            .graph_ast(
-                from,
-                &self.source_code_path.to_string_lossy(),
-                &mut self.graph_file,
-            )
-            .map_err(|e| CompilerError::IO(e.to_string()))
+        Ok(self.ast.graph_ast(
+            from,
+            &self.source_code_path.to_string_lossy(),
+            &mut self.graph_file,
+        )?)
     }
 
     pub fn generate_asm(&mut self) -> Result<(), CompilerError> {
         self.ast
             .generate_asm(&mut self.asm_file, &mut self.symbol_table)
-            .map_err(|e| CompilerError::IO(e.to_string()))
     }
 }
 
