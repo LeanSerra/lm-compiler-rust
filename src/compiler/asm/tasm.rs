@@ -81,19 +81,11 @@ impl<'a> TasmGenerator<'a> {
             data_type: DataType::FloatType("".into()).into(),
             length: None,
         };
-        let write_string_symbol = SymbolTableElement {
-            name: String::from("_@write_string"),
-            value: None,
-            original: String::from("_@write_string"),
-            data_type: DataType::StringType("".into()).into(),
-            length: None,
-        };
         for symbol in [
             neg_one_symbol,
             l_comp_symbol,
             r_comp_symbol,
             write_number_symbol,
-            write_string_symbol,
         ] {
             self.symbol_table.insert(symbol);
         }
