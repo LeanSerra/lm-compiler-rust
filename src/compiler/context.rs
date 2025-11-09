@@ -354,6 +354,7 @@ impl From<TokenStringLiteral> for SymbolTableElement {
         let mut name = String::with_capacity(value.len() + 1);
         name.push('_');
         name.push_str(&value);
+        name = name.replace(" ", "_");
 
         Self {
             name,

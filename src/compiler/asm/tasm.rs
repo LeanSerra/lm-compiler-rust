@@ -420,8 +420,10 @@ impl<'a> TasmGenerator<'a> {
         let NodeValue::Value(lhs) = &node.left_child.as_ref().unwrap().value else {
             panic!("invalid negative")
         };
+        let symbol = self.symbol_table.get_symbol_from_name(lhs).unwrap();
+
         writeln!(self.file, "    FLD    _@1")?;
-        writeln!(self.file, "    FMUL   {lhs}")?;
+        writeln!(self.file, "    FMUL   {}", symbol.name)?;
         writeln!(self.file)
     }
 
