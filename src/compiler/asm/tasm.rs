@@ -7,7 +7,7 @@ use std::{
 use crate::{
     compiler::{
         ast::{AstAction, Node, NodeValue},
-        context::SymbolTable,
+        context::{SymbolTable, SymbolTableElement},
     },
     grammar::types::DataType,
 };
@@ -40,6 +40,8 @@ impl<'a> TasmGenerator<'a> {
     pub fn generate_asm(mut self, root: Rc<Node>) -> Result<(), io::Error> {
         // Header
         self.generate_asm_header()?;
+        // Add internal variables to symbol table
+        self.add_internal_symbols();
         // .DATA
         self.symbol_table.to_data(self.file)?;
         // .PROGRAM header
@@ -48,6 +50,40 @@ impl<'a> TasmGenerator<'a> {
         self.generate_asm_from_tree(&root)?;
         // END Program
         self.generate_code_epilogue()
+    }
+
+    fn add_internal_symbols(&mut self) {
+        let neg_one_symbol = SymbolTableElement {
+            name: String::from("_@1"),
+            value: Some(String::from("-1.0")),
+            original: String::from("_@1"),
+            data_type: None,
+            length: None,
+        };
+        let l_comp_symbol = SymbolTableElement {
+            name: String::from("_@l_cond"),
+            value: None,
+            original: String::from("_@l_cond"),
+            data_type: Some(DataType::FloatType("".into())),
+            length: None,
+        };
+        let r_comp_symbol = SymbolTableElement {
+            name: String::from("_@r_cond"),
+            value: None,
+            original: String::from("_@r_cond"),
+            data_type: Some(DataType::FloatType("".into())),
+            length: None,
+        };
+        let write_symbol = SymbolTableElement {
+            name: String::from("_@write"),
+            value: None,
+            original: String::from("_@write"),
+            data_type: Some(DataType::FloatType("".into())),
+            length: None,
+        };
+        for symbol in [neg_one_symbol, l_comp_symbol, r_comp_symbol, write_symbol] {
+            self.symbol_table.insert(symbol);
+        }
     }
 
     fn generate_asm_header(&mut self) -> Result<(), io::Error> {
@@ -143,7 +179,7 @@ impl<'a> TasmGenerator<'a> {
 
         let lhs = self.symbol_table.get_symbol_asm_name(lhs).unwrap().name;
 
-        writeln!(self.file, "    FST   {lhs}")?;
+        writeln!(self.file, "    FST    {lhs}")?;
         writeln!(self.file, "    FFREE")?;
         writeln!(self.file)
     }
