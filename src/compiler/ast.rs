@@ -76,8 +76,8 @@ impl From<Rc<Node>> for AstNodeRef {
 pub struct Node {
     pub value: NodeValue,
     parent: Cell<Option<Rc<Node>>>,
-    pub(super) left_child: Option<Rc<Node>>,
-    pub(super) right_child: Option<Rc<Node>>,
+    pub left_child: Option<Rc<Node>>,
+    pub right_child: Option<Rc<Node>>,
     pub r#type: Option<ExpressionType>,
 }
 
@@ -156,7 +156,6 @@ pub enum AstAction {
     Else,
     And,
     Or,
-    Not,
     GT,
     GTE,
     EQ,
@@ -189,7 +188,6 @@ impl Display for AstAction {
             Self::Else => write!(f, "ELSE"),
             Self::And => write!(f, "AND"),
             Self::Or => write!(f, "OR"),
-            Self::Not => write!(f, "NOT"),
             Self::While => write!(f, "WHILE"),
             Self::Read => write!(f, "READ"),
             Self::Write => write!(f, "WRITE"),

@@ -121,9 +121,6 @@ impl<'a> TasmGenerator<'a> {
                 }
                 AstAction::And => self.generate_action_and(node),
                 AstAction::Or => self.generate_action_or(node),
-                AstAction::Not => {
-                    todo!()
-                }
                 AstAction::While => self.generate_action_while(node),
                 AstAction::Read => self.generate_action_read(node),
                 AstAction::Write => self.generate_action_write(node),
@@ -146,7 +143,7 @@ impl<'a> TasmGenerator<'a> {
             panic!("invalid assign")
         };
 
-        let lhs = self.symbol_table.get_symbol_asm_name(lhs).unwrap();
+        let lhs = self.symbol_table.get_symbol_asm_name(lhs).unwrap().name;
 
         writeln!(self.file, "    FST   {lhs}")?;
         writeln!(self.file, "    FFREE")?;

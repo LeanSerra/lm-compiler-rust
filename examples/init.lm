@@ -2,4 +2,5 @@ main(){
     init {
         a1 : float
     }
+    a1:=1.0
 }

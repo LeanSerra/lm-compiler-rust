@@ -1250,8 +1250,25 @@ pub fn boolean_expression_boolean_expression_token_id(
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_id}"));
 
+    let zero_symbol = TokenIntLiteral {
+        original: "0".into(),
+        parsed: 0,
+    };
+    let token_id_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_id.clone()), None));
+    let zero_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(zero_symbol.original.clone()),
+        None,
+    ));
+    compiler_context.push_to_symbol_table(zero_symbol.into());
+
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_id.clone(), AstPtr::BooleanExpression, None);
+    let node = ast.create_node(
+        AstAction::NE,
+        token_id_leaf.into(),
+        zero_leaf.into(),
+        AstPtr::BooleanExpression,
+        None,
+    );
     ast.boolean_expression_stack.push(node);
 
     BooleanExpression::BooleanExpressionTokenId(token_id)
@@ -1650,11 +1667,36 @@ pub fn not_statement_not(
         );
     };
 
-    let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop), None);
+    let opposite = match &boolean_expression_node.value {
+        NodeValue::Action(AstAction::GT) => AstAction::LTE,
+        NodeValue::Action(AstAction::GTE) => AstAction::LT,
+        NodeValue::Action(AstAction::EQ) => AstAction::NE,
+        NodeValue::Action(AstAction::NE) => AstAction::EQ,
+        NodeValue::Action(AstAction::LT) => AstAction::GTE,
+        NodeValue::Action(AstAction::LTE) => AstAction::GT,
+        _ => log_ast_error(
+            "invalid value for booleanExpression in NotStatement",
+            ctx,
+            compiler_context,
+        ),
+    };
+
+    let (left_child, right_child) = match (
+        boolean_expression_node.left_child.as_ref().cloned(),
+        boolean_expression_node.right_child.as_ref().cloned(),
+    ) {
+        (Some(l), Some(r)) => (l, r),
+        _ => log_ast_error(
+            "Invalid booleanExpression in NotStatement ",
+            ctx,
+            compiler_context,
+        ),
+    };
+
     ast.create_node(
-        AstAction::Not,
-        boolean_expression_node.into(),
-        Rc::new(dummy).into(),
+        opposite,
+        left_child.into(),
+        right_child.into(),
         AstPtr::Not,
         None,
     );
