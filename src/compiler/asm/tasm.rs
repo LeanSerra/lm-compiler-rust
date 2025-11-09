@@ -181,6 +181,12 @@ impl<'a> TasmGenerator<'a> {
 
     fn generate_node_value_value(&mut self, val: &str) -> Result<(), io::Error> {
         let val = self.symbol_table.get_symbol_from_name(val).unwrap();
+        if let SymbolTableElementType::String = val.data_type {
+            return Ok(());
+        }
+        if let SymbolTableElementType::DataType(DataType::StringType(_)) = val.data_type {
+            return Ok(());
+        }
         writeln!(self.file, "    FLD     {}", val.name)
     }
 
@@ -434,8 +440,11 @@ impl<'a> TasmGenerator<'a> {
                 writeln!(self.file, "    DisplayInteger    _@write_number")?;
             }
             ExpressionType::String => {
-                writeln!(self.file, "    FST    _@write_string")?;
-                writeln!(self.file, "    DisplayString    _@write_string")?;
+                let NodeValue::Value(val) = &left_child.value else {
+                    panic!("")
+                };
+                let name = self.symbol_table.get_symbol_from_name(val).unwrap();
+                writeln!(self.file, "    DisplayString    {}", name.name)?;
             }
         }
         writeln!(self.file, "    newLine")?;
