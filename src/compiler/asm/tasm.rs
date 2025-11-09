@@ -125,9 +125,7 @@ impl<'a> TasmGenerator<'a> {
                 AstAction::Read => self.generate_action_read(node),
                 AstAction::Write => self.generate_action_write(node),
                 AstAction::Negative => self.generate_action_negative(node),
-                AstAction::Noop => {
-                    unreachable!("tried to execute noop")
-                }
+                AstAction::Noop => Ok(()),
             },
         }
     }
