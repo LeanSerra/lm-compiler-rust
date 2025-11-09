@@ -493,18 +493,19 @@ impl<'a> TasmGenerator<'a> {
 
         match write_type {
             ExpressionType::Float => {
-                writeln!(self.file, "    FST _@write_number")?;
-                writeln!(self.file, "    DisplayFloat _@write_number, 2")?;
+                writeln!(self.file, "    FST    _@write_number")?;
+                writeln!(self.file, "    DisplayFloat    _@write_number, 2")?;
             }
             ExpressionType::Int => {
-                writeln!(self.file, "    FST _@write_number")?;
-                writeln!(self.file, "    DisplayInteger _@write_number")?;
+                writeln!(self.file, "    FST    _@write_number")?;
+                writeln!(self.file, "    DisplayInteger    _@write_number")?;
             }
             ExpressionType::String => {
-                writeln!(self.file, "    FST _@write_string")?;
-                writeln!(self.file, "    DisplayString _@write_string")?;
+                writeln!(self.file, "    FST    _@write_string")?;
+                writeln!(self.file, "    DisplayString    _@write_string")?;
             }
         }
+        writeln!(self.file, "    newLine")?;
         writeln!(self.file)
     }
 
