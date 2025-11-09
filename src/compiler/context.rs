@@ -39,21 +39,32 @@ impl SymbolTable {
     pub fn to_data(&self, file: &mut File) -> Result<(), io::Error> {
         writeln!(file, ".DATA")?;
         for symbol in &self.table {
-            if let Some(data_type) = &symbol.data_type {
-                let var = match data_type {
-                    DataType::FloatType(_) => "dd\t?",
-                    DataType::IntType(_) => "dd\t?",
-                    DataType::StringType(_) => "db\t'?',\t'$'",
-                };
-
-                writeln!(file, "\t{}\t{}", symbol.name, var,)?;
-            } else {
-                writeln!(
-                    file,
-                    "\t{}\tdd\t{}",
-                    symbol.name,
-                    symbol.value.as_ref().unwrap()
-                )?
+            match symbol.data_type {
+                SymbolTableElementType::String => {
+                    writeln!(
+                        file,
+                        "{:<25}    db    '{}', '$'",
+                        symbol.name,
+                        symbol.value.as_ref().unwrap()
+                    )?;
+                }
+                SymbolTableElementType::Int | SymbolTableElementType::Float => {
+                    writeln!(
+                        file,
+                        "{:<25}    dd    {}",
+                        symbol.name,
+                        symbol.value.as_ref().unwrap()
+                    )?;
+                }
+                SymbolTableElementType::DataType(DataType::FloatType(_)) => {
+                    writeln!(file, "{:<25}    dd    '?'", symbol.name)?;
+                }
+                SymbolTableElementType::DataType(DataType::IntType(_)) => {
+                    writeln!(file, "{:<25}    dd    '?'", symbol.name)?;
+                }
+                SymbolTableElementType::DataType(DataType::StringType(_)) => {
+                    writeln!(file, "{:<25}    db    '?', '$'", symbol.name)?;
+                }
             }
         }
         Ok(())
@@ -218,7 +229,7 @@ impl CompilerContext {
         self.symbol_table.symbol_exists(symbol)
     }
 
-    pub fn get_symbol_type(&self, symbol_name: &str) -> Option<Option<DataType>> {
+    pub fn get_symbol_type(&self, symbol_name: &str) -> Option<SymbolTableElementType> {
         self.symbol_table
             .iter()
             .find(|x| x.original == symbol_name)
@@ -246,19 +257,44 @@ impl CompilerContext {
 pub struct SymbolTableElement {
     pub name: String,
     pub original: String,
-    pub data_type: Option<DataType>,
+    pub data_type: SymbolTableElementType,
     pub value: Option<String>,
     pub length: Option<usize>,
+}
+
+#[derive(Clone, Default)]
+pub enum SymbolTableElementType {
+    DataType(DataType),
+    #[default]
+    Int,
+    Float,
+    String,
+}
+
+impl Display for SymbolTableElementType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DataType(t) => write!(f, "{t}"),
+            Self::Int => write!(f, "int"),
+            Self::Float => write!(f, "float"),
+            Self::String => write!(f, "string"),
+        }
+    }
+}
+
+impl From<DataType> for SymbolTableElementType {
+    fn from(value: DataType) -> Self {
+        Self::DataType(value)
+    }
 }
 
 impl Display for SymbolTableElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = &self.name;
-        let data_type = self
-            .data_type
-            .as_ref()
-            .map(|r#type| r#type.to_string())
-            .unwrap_or_else(|| String::from("-"));
+        let data_type = match &self.data_type {
+            SymbolTableElementType::DataType(t) => t.to_string(),
+            _ => String::from("-"),
+        };
         let value = self
             .value
             .as_ref()
@@ -290,7 +326,7 @@ impl From<TokenIntLiteral> for SymbolTableElement {
         Self {
             name,
             original: value.original.clone(),
-            data_type: None,
+            data_type: SymbolTableElementType::Int,
             value: Some(value.original),
             length: None,
         }
@@ -306,7 +342,7 @@ impl From<TokenFloatLiteral> for SymbolTableElement {
         Self {
             name,
             original: value.original.clone(),
-            data_type: None,
+            data_type: SymbolTableElementType::Float,
             value: Some(value.original),
             length: None,
         }
@@ -322,7 +358,7 @@ impl From<TokenStringLiteral> for SymbolTableElement {
         Self {
             name,
             original: value.clone(),
-            data_type: None,
+            data_type: SymbolTableElementType::String,
             length: Some(value.len()),
             value: Some(value),
         }

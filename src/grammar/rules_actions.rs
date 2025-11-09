@@ -448,7 +448,7 @@ pub fn function_read_function_read_call(
         "<FunctionRead> -> {token_read} {token_par_open} {token_id} {token_par_close}"
     ));
 
-    let Some(rhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(rhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
 
@@ -872,7 +872,7 @@ pub fn assignment_assignment_expression(
         "<Assignment> -> {token_id} {token_assign} <SimpleExpression>"
     ));
 
-    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
     let lhs_type = lhs_type.into();
@@ -921,7 +921,7 @@ pub fn assignment_assignment_conv_date(
         "<Assignment> -> {token_id} {token_assign} <FunctionConvDate>"
     ));
 
-    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
     let lhs_type = lhs_type.into();
@@ -1999,7 +1999,7 @@ pub fn factor_factor_id(
 ) -> Factor {
     compiler_context.write_to_parser_file(&format!("<Factor> -> {token_id}"));
 
-    let Some(id_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(id_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
 

@@ -317,7 +317,7 @@ impl VarDeclaration {
                 let symbol = SymbolTableElement {
                     name: format!("_{}", single.token_id),
                     original: single.token_id.clone(),
-                    data_type: Some(single.data_type.clone()),
+                    data_type: single.data_type.clone().into(),
                     value: None,
                     length: Some(single.token_id.len()),
                 };
@@ -346,7 +346,7 @@ impl VarDeclaration {
                 let symbol = SymbolTableElement {
                     name: format!("_{}", recursive.token_id),
                     original: recursive.token_id.clone(),
-                    data_type: Some(data_type.clone()),
+                    data_type: data_type.clone().into(),
                     value: None,
                     length: Some(recursive.token_id.len()),
                 };

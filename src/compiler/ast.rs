@@ -1,5 +1,8 @@
 use crate::{
-    compiler::{asm::TasmGenerator, context::SymbolTable},
+    compiler::{
+        asm::TasmGenerator,
+        context::{SymbolTable, SymbolTableElementType},
+    },
     grammar::types::{ComparisonOp, DataType},
 };
 use std::{
@@ -141,6 +144,17 @@ impl From<DataType> for ExpressionType {
             DataType::FloatType(_) => ExpressionType::Float,
             DataType::IntType(_) => ExpressionType::Int,
             DataType::StringType(_) => ExpressionType::String,
+        }
+    }
+}
+
+impl From<SymbolTableElementType> for ExpressionType {
+    fn from(value: SymbolTableElementType) -> Self {
+        match value {
+            SymbolTableElementType::DataType(t) => t.into(),
+            SymbolTableElementType::Float => Self::Float,
+            SymbolTableElementType::Int => Self::Int,
+            SymbolTableElementType::String => Self::String,
         }
     }
 }

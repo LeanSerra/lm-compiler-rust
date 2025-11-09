@@ -7,7 +7,7 @@ use std::{
 use crate::{
     compiler::{
         ast::{AstAction, ExpressionType, Node, NodeValue},
-        context::{SymbolTable, SymbolTableElement},
+        context::{SymbolTable, SymbolTableElement, SymbolTableElementType},
     },
     grammar::types::DataType,
 };
@@ -57,35 +57,35 @@ impl<'a> TasmGenerator<'a> {
             name: String::from("_@1"),
             value: Some(String::from("-1.0")),
             original: String::from("_@1"),
-            data_type: None,
+            data_type: SymbolTableElementType::Float,
             length: None,
         };
         let l_comp_symbol = SymbolTableElement {
             name: String::from("_@l_cond"),
             value: None,
             original: String::from("_@l_cond"),
-            data_type: Some(DataType::FloatType("".into())),
+            data_type: DataType::FloatType("".into()).into(),
             length: None,
         };
         let r_comp_symbol = SymbolTableElement {
             name: String::from("_@r_cond"),
             value: None,
             original: String::from("_@r_cond"),
-            data_type: Some(DataType::FloatType("".into())),
+            data_type: DataType::FloatType("".into()).into(),
             length: None,
         };
         let write_number_symbol = SymbolTableElement {
             name: String::from("_@write_number"),
             value: None,
             original: String::from("_@write_number"),
-            data_type: Some(DataType::FloatType("".into())),
+            data_type: DataType::FloatType("".into()).into(),
             length: None,
         };
         let write_string_symbol = SymbolTableElement {
             name: String::from("_@write_string"),
             value: None,
             original: String::from("_@write_string"),
-            data_type: Some(DataType::FloatType("".into())),
+            data_type: DataType::StringType("".into()).into(),
             length: None,
         };
         for symbol in [
@@ -621,8 +621,8 @@ impl<'a> TasmGenerator<'a> {
         let Some(symbol) = self.symbol_table.get_symbol_asm_name(val) else {
             panic!("missing symbol")
         };
-        let Some(symbol_type) = symbol.data_type else {
-            panic!("invalid write");
+        let SymbolTableElementType::DataType(symbol_type) = symbol.data_type else {
+            panic!("invalid read")
         };
         match symbol_type {
             DataType::FloatType(_) => {
