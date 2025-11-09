@@ -180,7 +180,7 @@ impl<'a> TasmGenerator<'a> {
     }
 
     fn generate_node_value_value(&mut self, val: &str) -> Result<(), io::Error> {
-        let val = self.symbol_table.get_symbol_asm_name(val).unwrap();
+        let val = self.symbol_table.get_symbol_from_name(val).unwrap();
         writeln!(self.file, "    FLD     {}", val.name)
     }
 
@@ -190,7 +190,7 @@ impl<'a> TasmGenerator<'a> {
             panic!("invalid assign")
         };
 
-        let lhs = self.symbol_table.get_symbol_asm_name(lhs).unwrap().name;
+        let lhs = self.symbol_table.get_symbol_from_name(lhs).unwrap().name;
 
         writeln!(self.file, "    FST    {lhs}")?;
         writeln!(self.file, "    FFREE")?;
@@ -530,7 +530,7 @@ impl<'a> TasmGenerator<'a> {
         let NodeValue::Value(val) = &node.left_child.as_ref().unwrap().value else {
             panic!("invalid read")
         };
-        let Some(symbol) = self.symbol_table.get_symbol_asm_name(val) else {
+        let Some(symbol) = self.symbol_table.get_symbol_from_name(val) else {
             panic!("missing symbol")
         };
         let SymbolTableElementType::DataType(symbol_type) = symbol.data_type else {

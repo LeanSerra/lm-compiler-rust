@@ -84,7 +84,7 @@ impl SymbolTable {
         self.table.iter()
     }
 
-    pub fn get_symbol_asm_name(&self, name: &str) -> Option<SymbolTableElement> {
+    pub fn get_symbol_from_name(&self, name: &str) -> Option<SymbolTableElement> {
         self.table
             .iter()
             .find(|symbol| symbol.original == name)
