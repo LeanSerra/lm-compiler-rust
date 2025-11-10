@@ -31,5 +31,5 @@ fn main() -> Result<(), CompilerError> {
         .borrow_mut()
         .create_ast_graph(AstPtr::Program)?;
 
-    Ok(())
+    compiler.inner.borrow_mut().generate_asm()
 }

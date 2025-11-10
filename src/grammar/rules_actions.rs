@@ -448,7 +448,7 @@ pub fn function_read_function_read_call(
         "<FunctionRead> -> {token_read} {token_par_open} {token_id} {token_par_close}"
     ));
 
-    let Some(rhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(rhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
 
@@ -520,6 +520,13 @@ pub fn function_is_zero_function_is_zero_call(
         "<FunctionIsZero> -> {token_is_zero} {token_par_open} <E> {token_par_close}"
     ));
 
+    compiler_context.push_to_symbol_table(
+        TokenIntLiteral {
+            original: "0".into(),
+            parsed: 0,
+        }
+        .into(),
+    );
     let zero_leaf = Rc::new(Node::new_leaf(
         NodeValue::Value("0".into()),
         Some(ExpressionType::Int),
@@ -553,38 +560,64 @@ pub fn function_conv_date_function_conv_date_variable_call(
         "<FunctionConvDate> -> {token_conv_date} {token_par_open} {token_date} {token_par_close}"
     ));
 
+    let ten_thousand_symbol = TokenIntLiteral {
+        original: "10000".into(),
+        parsed: 10000,
+    };
+    let hundread_symbol = TokenIntLiteral {
+        original: "100".into(),
+        parsed: 100,
+    };
+    let one_symbol = TokenIntLiteral {
+        original: "1".into(),
+        parsed: 1,
+    };
+
+    let year_symbol = TokenIntLiteral {
+        original: token_date.year.clone(),
+        parsed: token_date.year.parse().unwrap(),
+    };
+    let month_symbol = TokenIntLiteral {
+        original: token_date.month.clone(),
+        parsed: token_date.month.parse().unwrap(),
+    };
+    let day_symbol = TokenIntLiteral {
+        original: token_date.day.clone(),
+        parsed: token_date.day.parse().unwrap(),
+    };
+
     let ast = &mut compiler_context.ast;
 
-    let thousand_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("1000".into()),
+    let ten_thousand_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(ten_thousand_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let hundread_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("100".into()),
+        NodeValue::Value(hundread_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let one_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value("1".into()),
+        NodeValue::Value(one_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
 
     let year_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.year.clone()),
+        NodeValue::Value(year_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let month_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.month.clone()),
+        NodeValue::Value(month_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
     let day_leaf = Rc::new(Node::new_leaf(
-        NodeValue::Value(token_date.day.clone()),
+        NodeValue::Value(day_symbol.original.clone()),
         Some(ExpressionType::Int),
     ));
 
     let year_node = ast.create_node(
         AstAction::Mult,
         year_leaf.into(),
-        thousand_leaf.into(),
+        ten_thousand_leaf.into(),
         AstPtr::ConvDate,
         Some(ExpressionType::Int),
     );
@@ -617,6 +650,13 @@ pub fn function_conv_date_function_conv_date_variable_call(
         AstPtr::ConvDate,
         Some(ExpressionType::Int),
     );
+
+    compiler_context.push_to_symbol_table(ten_thousand_symbol.into());
+    compiler_context.push_to_symbol_table(hundread_symbol.into());
+    compiler_context.push_to_symbol_table(one_symbol.into());
+    compiler_context.push_to_symbol_table(year_symbol.into());
+    compiler_context.push_to_symbol_table(month_symbol.into());
+    compiler_context.push_to_symbol_table(day_symbol.into());
 
     FunctionConvDate {
         token_conv_date,
@@ -832,7 +872,7 @@ pub fn assignment_assignment_expression(
         "<Assignment> -> {token_id} {token_assign} <SimpleExpression>"
     ));
 
-    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
     let lhs_type = lhs_type.into();
@@ -881,7 +921,7 @@ pub fn assignment_assignment_conv_date(
         "<Assignment> -> {token_id} {token_assign} <FunctionConvDate>"
     ));
 
-    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(lhs_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
     let lhs_type = lhs_type.into();
@@ -1181,8 +1221,8 @@ pub fn boolean_expression_boolean_expression_true(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_true}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_true.clone(), AstPtr::BooleanExpression, None);
-    ast.boolean_expression_stack.push(node);
+    let leaf = Rc::new(Node::new_leaf(NodeValue::True, None));
+    ast.boolean_expression_stack.push(leaf);
 
     BooleanExpression::BooleanExpressionTrue(token_true)
 }
@@ -1196,8 +1236,8 @@ pub fn boolean_expression_boolean_expression_false(
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_false}"));
 
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_false.clone(), AstPtr::BooleanExpression, None);
-    ast.boolean_expression_stack.push(node);
+    let leaf = Rc::new(Node::new_leaf(NodeValue::False, None));
+    ast.boolean_expression_stack.push(leaf);
 
     BooleanExpression::BooleanExpressionFalse(token_false)
 }
@@ -1210,8 +1250,25 @@ pub fn boolean_expression_boolean_expression_token_id(
 ) -> BooleanExpression {
     compiler_context.write_to_parser_file(&format!("<BooleanExpression> -> {token_id}"));
 
+    let zero_symbol = TokenIntLiteral {
+        original: "0".into(),
+        parsed: 0,
+    };
+    let token_id_leaf = Rc::new(Node::new_leaf(NodeValue::Value(token_id.clone()), None));
+    let zero_leaf = Rc::new(Node::new_leaf(
+        NodeValue::Value(zero_symbol.original.clone()),
+        None,
+    ));
+    compiler_context.push_to_symbol_table(zero_symbol.into());
+
     let ast = &mut compiler_context.ast;
-    let node = ast.create_leaf(token_id.clone(), AstPtr::BooleanExpression, None);
+    let node = ast.create_node(
+        AstAction::NE,
+        token_id_leaf.into(),
+        zero_leaf.into(),
+        AstPtr::BooleanExpression,
+        None,
+    );
     ast.boolean_expression_stack.push(node);
 
     BooleanExpression::BooleanExpressionTokenId(token_id)
@@ -1270,7 +1327,7 @@ pub fn simple_expression_simple_expression_string(
     token_string_literal: TokenStringLiteral,
     compiler_context: &mut CompilerContext,
 ) -> SimpleExpression {
-    compiler_context.push_to_symbol_table(token_string_literal.clone().into());
+    compiler_context.push_string_literal_to_symbol_table(token_string_literal.clone());
     compiler_context.write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
 
     let ast = &mut compiler_context.ast;
@@ -1610,11 +1667,36 @@ pub fn not_statement_not(
         );
     };
 
-    let dummy = Node::new_leaf(NodeValue::Action(AstAction::Noop), None);
+    let opposite = match &boolean_expression_node.value {
+        NodeValue::Action(AstAction::GT) => AstAction::LTE,
+        NodeValue::Action(AstAction::GTE) => AstAction::LT,
+        NodeValue::Action(AstAction::EQ) => AstAction::NE,
+        NodeValue::Action(AstAction::NE) => AstAction::EQ,
+        NodeValue::Action(AstAction::LT) => AstAction::GTE,
+        NodeValue::Action(AstAction::LTE) => AstAction::GT,
+        _ => log_ast_error(
+            "invalid value for booleanExpression in NotStatement",
+            ctx,
+            compiler_context,
+        ),
+    };
+
+    let (left_child, right_child) = match (
+        boolean_expression_node.left_child.as_ref().cloned(),
+        boolean_expression_node.right_child.as_ref().cloned(),
+    ) {
+        (Some(l), Some(r)) => (l, r),
+        _ => log_ast_error(
+            "Invalid booleanExpression in NotStatement ",
+            ctx,
+            compiler_context,
+        ),
+    };
+
     ast.create_node(
-        AstAction::Not,
-        boolean_expression_node.into(),
-        Rc::new(dummy).into(),
+        opposite,
+        left_child.into(),
+        right_child.into(),
         AstPtr::Not,
         None,
     );
@@ -1917,7 +1999,7 @@ pub fn factor_factor_id(
 ) -> Factor {
     compiler_context.write_to_parser_file(&format!("<Factor> -> {token_id}"));
 
-    let Some(id_type) = compiler_context.get_symbol_type(&token_id).flatten() else {
+    let Some(id_type) = compiler_context.get_symbol_type(&token_id) else {
         log_undeclared_variable_error(&token_id, ctx, compiler_context)
     };
 

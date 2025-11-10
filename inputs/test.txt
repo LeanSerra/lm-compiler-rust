@@ -1,7 +1,9 @@
 init {
-    a1, b2 : int
-    c33, d4, e5 : float
-    f6f, g : string
+    xFib, yFib, tempFib, countFib: int
+    num : float
+    cuentaRegresiva: int
+    fecha: int
+    nombre : string
 
     #+ Ejemplo de una variable mal declarada +#
     #+ fecha : date +#
@@ -11,39 +13,54 @@ init {
     #+ a1: int +#
 }
 
-a1 := -125
-b2 := -125
-b2 := a1
+write("Hola! Antes de empezar cual es tu nombre?")
+read(nombre)
 
-c33 := 5.34
-d4 := c33-2.1
-e5 := -5.1 #+ numero "negativo" +#
+write("Hola!")
+write(nombre)
+countFib := 0
+xFib := 0
+yFib := 1
 
-f6f := "hola \n como estas"
-g := "que onda"
+write("Estos son los primeros 10 numeros de la secuencia fibonacci")
 
-#+ comentario +#
-
-if(a1 > b2) {
-    a1 := 10
+while (countFib < 10) {
+    write(xFib)
+    tempFib := yFib
+    yFib := xFib + yFib
+    xFib :=tempFib
+    countFib := countFib + 1
 }
-else {
-    b2 := 20
+
+write("adivina el numero: ")
+read(num)
+if(num == 4.0) {
+    write("Adivinaste!")
+} else {
+    write("Numero incorrecto ")
 }
 
-while(c33 == 5.34 and d4 <= 2 and not c33 or e5 >= 1) {
-    a1 := a1+1
-    while(d4 >= 1) {
-        if(not isZero(a1)) {
-            a1 := -125
-        }
+cuentaRegresiva := 10
+
+while (not isZero(cuentaRegresiva)) {
+    write(cuentaRegresiva)
+
+    if (cuentaRegresiva == 5) {
+        write("Vamos por la mitad, la fecha de hoy es 11-11-2025 o:")
+        fecha := convDate(11-11-2025)
+        write(fecha)
     }
+
+    cuentaRegresiva := cuentaRegresiva - 1
+
 }
 
-write("hola")
-write(g)
 
-read(f6f)
+write("Todo salio bien!")
+write("Saludos:")
+
+write(nombre)
+
 
 #+ Ejemplo de error por asignacion incorrecta +#
 #+ x = 10 +#
@@ -62,5 +79,3 @@ read(f6f)
 
 #+ Ejemplo de error por asignacion de con tipos incorrectos +#
 #+ a1 := 33 + 1.33 +#
-
-a1 := convDate(01-02-1900)

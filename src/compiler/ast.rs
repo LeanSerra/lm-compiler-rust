@@ -1,4 +1,11 @@
-use crate::grammar::types::{ComparisonOp, DataType};
+use crate::{
+    compiler::{
+        asm::TasmGenerator,
+        context::{SymbolTable, SymbolTableElementType},
+        error::CompilerError,
+    },
+    grammar::types::{ComparisonOp, DataType},
+};
 use std::{
     array,
     cell::Cell,
@@ -73,8 +80,8 @@ impl From<Rc<Node>> for AstNodeRef {
 pub struct Node {
     pub value: NodeValue,
     parent: Cell<Option<Rc<Node>>>,
-    left_child: Option<Rc<Node>>,
-    right_child: Option<Rc<Node>>,
+    pub left_child: Option<Rc<Node>>,
+    pub right_child: Option<Rc<Node>>,
     pub r#type: Option<ExpressionType>,
 }
 
@@ -100,6 +107,8 @@ impl Node {
 pub enum NodeValue {
     Action(AstAction),
     Value(String),
+    True,
+    False,
 }
 
 impl Display for NodeValue {
@@ -107,6 +116,8 @@ impl Display for NodeValue {
         match self {
             Self::Value(value) => write!(f, "{value}"),
             Self::Action(action) => write!(f, "{action}"),
+            Self::True => write!(f, "True"),
+            Self::False => write!(f, "False"),
         }
     }
 }
@@ -138,6 +149,17 @@ impl From<DataType> for ExpressionType {
     }
 }
 
+impl From<SymbolTableElementType> for ExpressionType {
+    fn from(value: SymbolTableElementType) -> Self {
+        match value {
+            SymbolTableElementType::DataType(t) => t.into(),
+            SymbolTableElementType::Float => Self::Float,
+            SymbolTableElementType::Int => Self::Int,
+            SymbolTableElementType::String => Self::String,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum AstAction {
     Plus,
@@ -149,8 +171,6 @@ pub enum AstAction {
     Else,
     And,
     Or,
-    Not,
-    IsZero,
     GT,
     GTE,
     EQ,
@@ -183,8 +203,6 @@ impl Display for AstAction {
             Self::Else => write!(f, "ELSE"),
             Self::And => write!(f, "AND"),
             Self::Or => write!(f, "OR"),
-            Self::Not => write!(f, "NOT"),
-            Self::IsZero => write!(f, "ISZERO"),
             Self::While => write!(f, "WHILE"),
             Self::Read => write!(f, "READ"),
             Self::Write => write!(f, "WRITE"),
@@ -287,6 +305,10 @@ impl Ast {
         leaf
     }
 
+    pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
+        self.tree[from as usize].clone()
+    }
+
     pub fn graph_ast(
         &self,
         from: AstPtr,
@@ -334,7 +356,12 @@ impl Ast {
         Ok(node_count)
     }
 
-    pub fn get_node_from_ptr(&self, from: AstPtr) -> Rc<Node> {
-        self.tree[from as usize].clone()
+    pub fn generate_asm(
+        &self,
+        file: &mut File,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<(), CompilerError> {
+        let node = self.get_node_from_ptr(AstPtr::Program);
+        TasmGenerator::new(symbol_table, file).generate_asm(node)
     }
 }

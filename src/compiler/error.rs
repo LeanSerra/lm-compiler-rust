@@ -1,6 +1,6 @@
 use crate::compiler::context::CompilerContext;
 use owo_colors::OwoColorize;
-use std::ops::Range;
+use std::{io, ops::Range};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -21,6 +21,12 @@ pub enum CompilerError {
     IO(String),
     #[error("Compiler internal error: {0}. This is a bug.")]
     Internal(String),
+}
+
+impl From<io::Error> for CompilerError {
+    fn from(value: io::Error) -> Self {
+        Self::IO(value.to_string())
+    }
 }
 
 pub fn log_error_and_exit(
