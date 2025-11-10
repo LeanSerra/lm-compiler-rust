@@ -5,7 +5,7 @@ use crate::{
     },
     grammar::{
         rules_builder::Symbol,
-        types::{DataType, TokenFloatLiteral, TokenIntLiteral, TokenStringLiteral},
+        types::{DataType, TokenFloatLiteral, TokenIntLiteral},
     },
 };
 use std::{
@@ -33,6 +33,7 @@ impl Compiler {
 #[derive(Default)]
 pub struct SymbolTable {
     table: Vec<SymbolTableElement>,
+    str_count: usize,
 }
 
 impl SymbolTable {
@@ -48,7 +49,15 @@ impl SymbolTable {
                         symbol.value.as_ref().unwrap()
                     )?;
                 }
-                SymbolTableElementType::Int | SymbolTableElementType::Float => {
+                SymbolTableElementType::Int => {
+                    writeln!(
+                        file,
+                        "{:<25}    dd    {}.0",
+                        symbol.name,
+                        symbol.value.as_ref().unwrap()
+                    )?;
+                }
+                SymbolTableElementType::Float => {
                     writeln!(
                         file,
                         "{:<25}    dd    {}",
@@ -57,13 +66,13 @@ impl SymbolTable {
                     )?;
                 }
                 SymbolTableElementType::DataType(DataType::FloatType(_)) => {
-                    writeln!(file, "{:<25}    dd    '?'", symbol.name)?;
+                    writeln!(file, "{:<25}    dd    ?", symbol.name)?;
                 }
                 SymbolTableElementType::DataType(DataType::IntType(_)) => {
-                    writeln!(file, "{:<25}    dd    '?'", symbol.name)?;
+                    writeln!(file, "{:<25}    dd    ?", symbol.name)?;
                 }
                 SymbolTableElementType::DataType(DataType::StringType(_)) => {
-                    writeln!(file, "{:<25}    db    '?', '$'", symbol.name)?;
+                    writeln!(file, "{:<25}    db    20 dup(' '), '$'", symbol.name)?;
                 }
             }
         }
@@ -89,6 +98,19 @@ impl SymbolTable {
             .iter()
             .find(|symbol| symbol.original == name)
             .cloned()
+    }
+
+    pub fn insert_string_literal(&mut self, s: String) {
+        let name = format!("_string_{}", self.str_count);
+        self.str_count += 1;
+        let symbol = SymbolTableElement {
+            name,
+            original: s.clone(),
+            data_type: SymbolTableElementType::String,
+            length: Some(s.len()),
+            value: Some(s),
+        };
+        self.insert(symbol);
     }
 }
 
@@ -213,6 +235,10 @@ impl CompilerContext {
         self.symbol_table.insert(symbol)
     }
 
+    pub fn push_string_literal_to_symbol_table(&mut self, s: String) {
+        self.symbol_table.insert_string_literal(s);
+    }
+
     pub fn symbol_exists(&self, symbol: &SymbolTableElement) -> bool {
         self.symbol_table.symbol_exists(symbol)
     }
@@ -323,6 +349,7 @@ impl From<TokenFloatLiteral> for SymbolTableElement {
         let mut name = String::with_capacity(value.original.len() + 1);
         name.push('_');
         name.push_str(&value.original);
+        name = name.replace(".", "_");
 
         Self {
             name,
@@ -330,23 +357,6 @@ impl From<TokenFloatLiteral> for SymbolTableElement {
             data_type: SymbolTableElementType::Float,
             value: Some(value.original),
             length: None,
-        }
-    }
-}
-
-impl From<TokenStringLiteral> for SymbolTableElement {
-    fn from(value: TokenStringLiteral) -> Self {
-        let mut name = String::with_capacity(value.len() + 1);
-        name.push('_');
-        name.push_str(&value);
-        name = name.replace(" ", "_");
-
-        Self {
-            name,
-            original: value.clone(),
-            data_type: SymbolTableElementType::String,
-            length: Some(value.len()),
-            value: Some(value),
         }
     }
 }

@@ -1327,7 +1327,7 @@ pub fn simple_expression_simple_expression_string(
     token_string_literal: TokenStringLiteral,
     compiler_context: &mut CompilerContext,
 ) -> SimpleExpression {
-    compiler_context.push_to_symbol_table(token_string_literal.clone().into());
+    compiler_context.push_string_literal_to_symbol_table(token_string_literal.clone());
     compiler_context.write_to_parser_file(&format!("<SimpleExpression> -> {token_string_literal}"));
 
     let ast = &mut compiler_context.ast;

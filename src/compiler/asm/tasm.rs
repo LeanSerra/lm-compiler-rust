@@ -95,14 +95,17 @@ impl<'a> TasmGenerator<'a> {
 
     fn generate_asm_header(&mut self) -> Result<(), io::Error> {
         let file = &mut self.file;
+        writeln!(file, "include macros2.asm")?;
+        writeln!(file, "include number.asm")?;
+        writeln!(file)?;
         writeln!(file, ".MODEL LARGE")?;
         writeln!(file, ".386")?;
-        writeln!(file, ".STACK 200h")
+        writeln!(file, ".STACK 200h")?;
+        writeln!(file)
     }
 
     fn generate_code_prologue(&mut self) -> Result<(), io::Error> {
         let file = &mut self.file;
-        writeln!(file)?;
         writeln!(file, ".CODE")?;
         writeln!(file)?;
         writeln!(file, "Program:")?;
@@ -490,13 +493,9 @@ impl<'a> TasmGenerator<'a> {
         ))?;
 
         match write_type {
-            ExpressionType::Float => {
+            ExpressionType::Float | ExpressionType::Int => {
                 writeln!(self.file, "    FST    _@write_number")?;
                 writeln!(self.file, "    DisplayFloat    _@write_number, 2")?;
-            }
-            ExpressionType::Int => {
-                writeln!(self.file, "    FST    _@write_number")?;
-                writeln!(self.file, "    DisplayInteger    _@write_number")?;
             }
             ExpressionType::String => {
                 let NodeValue::Value(val) = &left_child.value else {
